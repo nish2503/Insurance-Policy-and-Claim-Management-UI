@@ -1,0 +1,182 @@
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Segoe UI",Arial,sans-serif;
+}
+
+body{
+  background:#eef5fb;
+  color:#1f2937;
+}
+
+/* LOGIN PAGE */
+
+.login-container{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#0f3057,#00587a);
+}
+
+.login-container h1{
+  color:white;
+  font-size:42px;
+  margin-bottom:30px;
+}
+
+.login-container input{
+  width:330px;
+  padding:14px;
+  margin:10px;
+  border-radius:8px;
+  border:none;
+  outline:none;
+  font-size:15px;
+}
+
+.login-container button{
+  width:330px;
+  padding:13px;
+  margin-top:15px;
+  border:none;
+  border-radius:8px;
+  background:#00a8cc;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.login-container button:hover{
+  background:#0077a3;
+}
+
+
+/* ADMIN DASHBOARD */
+
+.dashboard{
+  min-height:100vh;
+  padding:40px 70px;
+}
+
+.dashboard h1{
+  text-align:center;
+  font-size:42px;
+  color:#0f3057;
+  margin-bottom:40px;
+}
+
+
+/* CARDS */
+
+.cards{
+  display:flex;
+  justify-content:center;
+  gap:35px;
+  margin-bottom:50px;
+}
+
+
+.dashboard-card{
+  width:280px;
+  height:160px;
+  background:white;
+  border-radius:18px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.12);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:.3s;
+  border-left:7px solid #00a8cc;
+}
+
+
+.dashboard-card:hover{
+  transform:translateY(-8px);
+  box-shadow:0 15px 35px rgba(0,0,0,0.18);
+}
+
+
+.dashboard-card h2{
+  color:#0f3057;
+  font-size:26px;
+  margin-bottom:18px;
+}
+
+
+.dashboard-card h3{
+  color:#64748b;
+  font-size:22px;
+}
+
+
+/* TABLE AREA */
+
+.dashboard > h2{
+  text-align:center;
+  color:#0f3057;
+  margin-bottom:20px;
+}
+
+
+table{
+  width:90%;
+  margin:20px auto;
+  border-collapse:collapse;
+  background:white;
+  border-radius:15px;
+  overflow:hidden;
+  box-shadow:0 8px 20px rgba(0,0,0,.12);
+}
+
+
+thead{
+  background:#0f3057;
+  color:white;
+}
+
+
+th{
+  padding:16px;
+  font-size:16px;
+}
+
+
+td{
+  padding:14px;
+  text-align:center;
+  border-bottom:1px solid #e5e7eb;
+}
+
+
+tbody tr:hover{
+  background:#f0f9ff;
+}
+
+
+h3{
+  text-align:center;
+  color:#64748b;
+  margin-top:30px;
+}
+
+
+/* RESPONSIVE */
+
+@media(max-width:900px){
+
+.cards{
+  flex-direction:column;
+  align-items:center;
+}
+
+.dashboard{
+  padding:30px;
+}
+
+}
