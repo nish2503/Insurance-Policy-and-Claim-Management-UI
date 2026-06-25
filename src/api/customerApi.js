@@ -79,3 +79,9 @@ data
 );
 
 }
+
+export const payPremium = (data) =>
+    api.post("/premium-payments", data);
+
+export const raiseClaim = (data) =>
+    api.post("/claims", data);

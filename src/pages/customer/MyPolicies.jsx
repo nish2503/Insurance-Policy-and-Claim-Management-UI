@@ -84,13 +84,21 @@ function MyPolicies() {
               {
                 key: "policyStatus",
                 label: "Status"
-              }
+              },
+
+              {
+ key:"coverageAmount",
+ label:"Coverage"
+}
 
             ]}
 
             data={policies.map(p => ({
 
     ...p,
+
+    coverageAmount:
+      `₹${p.coverageAmount}`,
 
     premiumAmount:
       `₹${p.premiumAmount} (${p.premiumType})`

@@ -20,6 +20,8 @@ mobileNumber:""
 
 });
 
+// Added independent state for toggling password visibility
+const [showPassword, setShowPassword] = useState(false);
 
 const navigate = useNavigate();
 
@@ -85,7 +87,9 @@ error.response?.data?.message ||
 
 };
 
-
+const togglePasswordVisibility = () => {
+  setShowPassword(!showPassword);
+};
 
 
 
@@ -172,22 +176,36 @@ onChange={handleChange}
 
 
 
+{/* Wrapped inside an input-group for the clean bootstrap icon layout */}
+<div className="input-group mb-3">
+  <input
 
-<input
+  className="form-control"
 
-className="form-control mb-3"
+  type={showPassword ? "text" : "password"}
 
-type="password"
+  name="password"
 
-name="password"
+  placeholder="Password"
 
-placeholder="Password"
+  value={form.password}
 
-value={form.password}
+  onChange={handleChange}
 
-onChange={handleChange}
-
-/>
+  />
+  <button
+    className="btn btn-outline-secondary"
+    type="button"
+    onClick={togglePasswordVisibility}
+    style={{ borderLeft: "none", zIndex: 5 }}
+  >
+    {showPassword ? (
+      <i className="bi bi-eye-slash-fill text-muted"></i>
+    ) : (
+      <i className="bi bi-eye-fill text-muted"></i>
+    )}
+  </button>
+</div>
 
 
 

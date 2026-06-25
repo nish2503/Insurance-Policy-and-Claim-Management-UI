@@ -1,36 +1,66 @@
-import { useState } from "react";
-
-import { useNavigate } from "react-router-dom";
+import {useState} from "react";
+import {useNavigate,useParams,useLocation} from "react-router-dom";
 
 import {
 forgotPassword,
 resetPassword
-} from "../../api/authApi";
-
+}
+from "../../api/authApi";
 
 
 function ForgotPassword(){
 
 
-const [email,setEmail]=useState("");
+const {token:routeToken}=useParams();
 
-const [otp,setOtp]=useState("");
+const location=useLocation();
+
+
+const queryToken =
+new URLSearchParams(location.search)
+.get("token");
+
+
+const token =
+routeToken || queryToken;
+
+
+
+const [email,setEmail]=useState("");
 
 const [newPassword,setNewPassword]=useState("");
 
-const [step,setStep]=useState(1);
+const [confirmPassword,setConfirmPassword]=useState("");
 
 
-const navigate = useNavigate();
+const [showPassword,setShowPassword]=useState(false);
+
+const [showConfirmPassword,setShowConfirmPassword]=useState(false);
+
+
+const [loading,setLoading]=useState(false);
+
+
+
+const navigate=useNavigate();
+
+
+
+const hasToken =
+Boolean(token);
 
 
 
 
+async function sendLink(e){
 
-const sendOtp = async()=>{
+e.preventDefault();
 
 
 try{
+
+
+setLoading(true);
 
 
 await forgotPassword({
@@ -40,65 +70,86 @@ email
 });
 
 
-alert("OTP sent");
-
-
-setStep(2);
-
+alert(
+"Reset link sent"
+);
 
 
 }
 catch(error){
 
-
 alert(
-
 error.response?.data?.message ||
-
-"Failed to send OTP"
-
+"Failed"
 );
 
 
 }
+finally{
+
+setLoading(false);
+
+}
+
+}
 
 
-};
 
 
 
-
-
-
-
-const changePassword = async(e)=>{
+async function reset(e){
 
 
 e.preventDefault();
 
 
 
+if(newPassword !== confirmPassword){
+
+alert(
+"Passwords do not match"
+);
+
+return;
+
+}
+
+
+
+
+if(newPassword.length < 8){
+
+alert(
+"Password must contain minimum 8 characters"
+);
+
+return;
+
+}
+
+
+
 try{
+
+
+setLoading(true);
 
 
 await resetPassword({
 
-email,
-
-otp,
+token,
 
 newPassword
-
 
 });
 
 
-
-alert("Password changed successfully");
+alert(
+"Password changed successfully"
+);
 
 
 navigate("/login");
-
 
 
 }
@@ -106,21 +157,20 @@ catch(error){
 
 
 alert(
-
 error.response?.data?.message ||
-
-"Reset failed"
-
+"Invalid reset link"
 );
 
 
 }
+finally{
+
+setLoading(false);
+
+}
 
 
-
-};
-
-
+}
 
 
 
@@ -132,16 +182,13 @@ return(
 <div className="container mt-5">
 
 
-<div
-
+<div 
 className="card p-4 mx-auto"
-
 style={{maxWidth:"400px"}}
-
 >
 
 
-<h3>
+<h3 className="mb-4 text-center">
 
 Forgot Password
 
@@ -150,29 +197,29 @@ Forgot Password
 
 
 
-
 {
 
-step===1 &&
+!hasToken ?
 
 
-<>
+<form onSubmit={sendLink}>
 
 
 <input
 
-
 className="form-control mb-3"
 
+type="email"
 
 placeholder="Email"
 
-
 value={email}
 
+onChange={
+e=>setEmail(e.target.value)
+}
 
-onChange={e=>setEmail(e.target.value)}
-
+required
 
 />
 
@@ -182,62 +229,183 @@ onChange={e=>setEmail(e.target.value)}
 
 className="btn btn-primary w-100"
 
-onClick={sendOtp}
+disabled={loading}
 
 >
 
-Send OTP
+
+{
+loading ?
+"Sending..." :
+"Send Reset Link"
+}
+
 
 </button>
 
 
+</form>
 
-</>
+
+
+:
+
+
+<form onSubmit={reset}>
+
+
+<div className="input-group mb-3">
+
+
+<input
+
+
+className="form-control"
+
+
+type={
+showPassword
+?
+"text"
+:
+"password"
+}
+
+
+placeholder="New Password"
+
+
+value={newPassword}
+
+
+onChange={
+e=>setNewPassword(e.target.value)
+}
+
+
+required
+
+
+/>
+
+
+
+<button
+
+className="btn btn-outline-secondary"
+
+type="button"
+
+onClick={
+()=>setShowPassword(!showPassword)
+}
+
+style={{
+borderLeft:"none",
+zIndex:5
+}}
+
+>
+
+
+{
+
+showPassword ?
+
+<i className="bi bi-eye-slash-fill text-muted"></i>
+
+:
+
+<i className="bi bi-eye-fill text-muted"></i>
 
 
 }
 
 
+</button>
 
 
+
+</div>
+
+
+
+
+
+
+<div className="input-group mb-3">
+
+
+<input
+
+
+className="form-control"
+
+
+type={
+showConfirmPassword
+?
+"text"
+:
+"password"
+}
+
+
+placeholder="Confirm Password"
+
+
+value={confirmPassword}
+
+
+onChange={
+e=>setConfirmPassword(e.target.value)
+}
+
+
+required
+
+
+/>
+
+
+
+<button
+
+className="btn btn-outline-secondary"
+
+type="button"
+
+onClick={
+()=>setShowConfirmPassword(!showConfirmPassword)
+}
+
+style={{
+borderLeft:"none",
+zIndex:5
+}}
+
+>
 
 
 {
 
-step===2 &&
+showConfirmPassword ?
+
+<i className="bi bi-eye-slash-fill text-muted"></i>
+
+:
+
+<i className="bi bi-eye-fill text-muted"></i>
 
 
-<form onSubmit={changePassword}>
+}
 
 
-<input
-
-className="form-control mb-3"
-
-placeholder="OTP"
-
-value={otp}
-
-onChange={e=>setOtp(e.target.value)}
-
-/>
+</button>
 
 
+</div>
 
-
-<input
-
-className="form-control mb-3"
-
-type="password"
-
-placeholder="New Password"
-
-value={newPassword}
-
-onChange={e=>setNewPassword(e.target.value)}
-
-/>
 
 
 
@@ -246,9 +414,21 @@ onChange={e=>setNewPassword(e.target.value)}
 
 className="btn btn-success w-100"
 
+disabled={loading}
+
 >
 
-Reset Password
+
+{
+
+loading ?
+
+"Updating..." :
+
+"Reset Password"
+
+}
+
 
 </button>
 
@@ -261,15 +441,13 @@ Reset Password
 
 
 
-
 </div>
 
 
 </div>
 
 
-);
-
+)
 
 }
 

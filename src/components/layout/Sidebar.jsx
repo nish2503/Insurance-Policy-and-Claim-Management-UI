@@ -127,8 +127,12 @@ My Claims
 </Link>
 
 
-<Link to="/customer/payments">
+<Link to="/customer/premium-payments">
 Payments
+</Link>
+
+<Link to="/customer/raise-claim">
+Raise Claim
 </Link>
 
 
