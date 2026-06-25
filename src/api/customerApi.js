@@ -1,20 +1,17 @@
-import axios from "./axios";
+import api from "./axios";
 
 
-export function getCustomers(){
+export const getCustomers = ()=>{
 
-    return axios.get(
-        "/customers"
-    );
+    return api.get("/customers");
 
-}
+};
+
 
 
 export const getMyClaims = ()=>{
 
-    return axios.get(
-        "/claims/my"
-    );
+    return api.get("/claims/my");
 
 };
 
@@ -22,9 +19,7 @@ export const getMyClaims = ()=>{
 
 export const getMyPolicies = ()=>{
 
-    return axios.get(
-        "/policies/my"
-    );
+    return api.get("/policies/my");
 
 };
 
@@ -32,9 +27,7 @@ export const getMyPolicies = ()=>{
 
 export const getProducts = ()=>{
 
-    return axios.get(
-        "/products"
-    );
+    return api.get("/products");
 
 };
 
@@ -42,9 +35,7 @@ export const getProducts = ()=>{
 
 export const getPlans = ()=>{
 
-    return axios.get(
-        "/plans"
-    );
+    return api.get("/plans");
 
 };
 
@@ -52,8 +43,39 @@ export const getPlans = ()=>{
 
 export const getMyPremiumPayments = ()=>{
 
-    return axios.get(
-        "/premium-payments/my"
+    return api.get("/premium-payments/my");
+
+};
+
+export const getMyProfile = ()=>{
+
+    return api.get("/customers/me");
+
+};
+
+
+export const createCustomerProfile = (data)=>{
+
+    return api.post(
+        "/customers/profile",
+        data
     );
 
 };
+
+export const getPlansByProduct=(productId)=>{
+
+return api.get(
+`/plans/product/${productId}`
+);
+
+};      
+
+export const purchasePolicy=(data)=>{
+
+return api.post(
+"/policies/purchase",
+data
+);
+
+}

@@ -1,7 +1,12 @@
-function DashboardCard({title,count,onClick}){
+function DashboardCard({
+title,
+count,
+onClick
+}){
 
 
-return (
+return(
+
 
 <div className="col-md-3 mb-4">
 
@@ -20,7 +25,7 @@ style={{cursor:"pointer"}}
 <div className="card-body text-center">
 
 
-<h5 className="card-title">
+<h5>
 
 {title}
 
@@ -34,7 +39,12 @@ style={{cursor:"pointer"}}
 </h2>
 
 
-<button className="btn btn-outline-primary">
+
+<button
+
+className="btn btn-outline-primary"
+
+>
 
 View
 

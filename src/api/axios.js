@@ -8,9 +8,12 @@ const api = axios.create({
 });
 
 
+
 api.interceptors.request.use((config)=>{
 
+
     const token = localStorage.getItem("token");
+
 
     if(token){
 
@@ -19,11 +22,54 @@ api.interceptors.request.use((config)=>{
 
     }
 
+
     config.headers["Content-Type"] = "application/json";
+
 
     return config;
 
+
 });
+
+
+
+
+// handle expired token
+
+api.interceptors.response.use(
+
+
+(response)=>{
+
+    return response;
+
+},
+
+
+(error)=>{
+
+
+    if(error.response?.status === 401){
+
+
+        localStorage.clear();
+
+
+        window.location.href="/login";
+
+
+    }
+
+
+    return Promise.reject(error);
+
+
+}
+
+
+
+);
+
 
 
 export default api;
