@@ -8,7 +8,6 @@ import Loader from "../../components/common/Loader";
 import { getProducts } from "../../api/customerApi";
 
 function BrowseProducts() {
-
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,77 +16,47 @@ function BrowseProducts() {
   }, []);
 
   async function loadProducts() {
-
     try {
-
       const response = await getProducts();
 
       setProducts(response.data.records || []);
-
-    }
-    catch (error) {
-
+    } catch (error) {
       console.log(error);
-
-    }
-    finally {
-
+    } finally {
       setLoading(false);
-
     }
-
   }
 
   if (loading) {
-
     return (
       <DashboardLayout>
         <Loader />
       </DashboardLayout>
     );
-
   }
 
   return (
-
     <DashboardLayout>
-
       <h2>Insurance Products</h2>
 
       <div className="row">
+        {products.map((product) => (
+          <div className="col-md-4 mb-3" key={product.productId}>
+            <Card title={product.productName}>
+              <p>{product.description}</p>
 
-        {
-          products.map(product => (
-
-            <div
-              className="col-md-4 mb-3"
-              key={product.productId}
-            >
-
-              <Card title={product.productName}>
-
-                <p>{product.description}</p>
-
-                <Link
-                  className="btn btn-primary"
-                  to={`/customer/plans/${product.productId}`}
-                >
-                  View Plans
-                </Link>
-
-              </Card>
-
-            </div>
-
-          ))
-        }
-
+              <Link
+                className="btn btn-primary"
+                to={`/customer/plans/${product.productId}`}
+              >
+                View Plans
+              </Link>
+            </Card>
+          </div>
+        ))}
       </div>
-
     </DashboardLayout>
-
   );
-
 }
 
 export default BrowseProducts;

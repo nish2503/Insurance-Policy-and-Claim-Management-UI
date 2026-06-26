@@ -4,18 +4,12 @@ import authReducer from "../features/auth/authSlice";
 
 import uiReducer from "../features/ui/uiSlice";
 
-
 const store = configureStore({
+  reducer: {
+    auth: authReducer,
 
-    reducer:{
-
-        auth: authReducer,
-
-        ui: uiReducer
-
-    }
-
+    ui: uiReducer,
+  },
 });
-
 
 export default store;

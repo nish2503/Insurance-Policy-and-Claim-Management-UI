@@ -3,7 +3,6 @@ import AgentDashboard from "./AgentDashboard";
 import CustomerDashboard from "./CustomerDashboard";
 
 function Dashboard() {
-
   const role = localStorage.getItem("role");
 
   if (role === "ADMIN") {

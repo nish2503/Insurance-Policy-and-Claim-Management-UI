@@ -8,7 +8,7 @@ function Register() {
     fullName: "",
     email: "",
     password: "",
-    mobileNumber: ""
+    mobileNumber: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -17,7 +17,7 @@ function Register() {
   const handleChange = (e) => {
     setForm({
       ...form,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -207,18 +207,21 @@ function Register() {
               type="button"
               onClick={togglePasswordVisibility}
             >
-              {showPassword ? <i className="bi bi-eye-slash-fill"></i> : <i className="bi bi-eye-fill"></i>}
+              {showPassword ? (
+                <i className="bi bi-eye-slash-fill"></i>
+              ) : (
+                <i className="bi bi-eye-fill"></i>
+              )}
             </button>
           </div>
 
-          <button className="btn-submit-action">
-            Register Account
-          </button>
+          <button className="btn-submit-action">Register Account</button>
         </form>
 
         <div className="auth-footer-nav">
           <p style={{ margin: 0, color: "var(--text-muted)" }}>
-            Already have a profile? <span onClick={() => navigate("/login")}>Login</span>
+            Already have a profile?{" "}
+            <span onClick={() => navigate("/login")}>Login</span>
           </p>
         </div>
       </div>

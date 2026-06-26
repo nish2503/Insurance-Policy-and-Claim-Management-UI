@@ -25,10 +25,8 @@ function Card({ title, children }) {
       `}</style>
 
       {title && <h4 className="card-heading-title">{title}</h4>}
-      
-      <div className="card-body-content">
-        {children}
-      </div>
+
+      <div className="card-body-content">{children}</div>
     </div>
   );
 }

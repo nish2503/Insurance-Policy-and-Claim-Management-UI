@@ -51,7 +51,10 @@ function ForgotPassword() {
       alert("Password verification database update successful.");
       navigate("/login");
     } catch (error) {
-      alert(error.response?.data?.message || "Invalid or broken validation link token.");
+      alert(
+        error.response?.data?.message ||
+          "Invalid or broken validation link token.",
+      );
     } finally {
       setLoading(false);
     }
@@ -195,7 +198,10 @@ function ForgotPassword() {
 
         {!hasToken ? (
           <>
-            <p className="recovery-subheading-text">Provide your registered email signature token path to generate an offsite access reset sequence link.</p>
+            <p className="recovery-subheading-text">
+              Provide your registered email signature token path to generate an
+              offsite access reset sequence link.
+            </p>
             <form onSubmit={sendLink}>
               <div className="mb-3">
                 <input
@@ -208,13 +214,18 @@ function ForgotPassword() {
                 />
               </div>
               <button className="btn-submit-action" disabled={loading}>
-                {loading ? "Dispatching Route Link..." : "Issue Recovery Sequence"}
+                {loading
+                  ? "Dispatching Route Link..."
+                  : "Issue Recovery Sequence"}
               </button>
             </form>
           </>
         ) : (
           <>
-            <p className="recovery-subheading-text">Link verified. Establish a fresh high-entropy cryptographic password entry inside database matrix cells.</p>
+            <p className="recovery-subheading-text">
+              Link verified. Establish a fresh high-entropy cryptographic
+              password entry inside database matrix cells.
+            </p>
             <form onSubmit={reset}>
               <div className="input-pill-wrapper mb-3">
                 <input
@@ -225,8 +236,16 @@ function ForgotPassword() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                 />
-                <button className="btn-input-reveal" type="button" onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <i className="bi bi-eye-slash-fill"></i> : <i className="bi bi-eye-fill"></i>}
+                <button
+                  className="btn-input-reveal"
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <i className="bi bi-eye-slash-fill"></i>
+                  ) : (
+                    <i className="bi bi-eye-fill"></i>
+                  )}
                 </button>
               </div>
 
@@ -239,13 +258,23 @@ function ForgotPassword() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
-                <button className="btn-input-reveal" type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                  {showConfirmPassword ? <i className="bi bi-eye-slash-fill"></i> : <i className="bi bi-eye-fill"></i>}
+                <button
+                  className="btn-input-reveal"
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <i className="bi bi-eye-slash-fill"></i>
+                  ) : (
+                    <i className="bi bi-eye-fill"></i>
+                  )}
                 </button>
               </div>
 
               <button className="btn-submit-action" disabled={loading}>
-                {loading ? "Re-structuring Crypt Key..." : "Finalize Key Override"}
+                {loading
+                  ? "Re-structuring Crypt Key..."
+                  : "Finalize Key Override"}
               </button>
             </form>
           </>

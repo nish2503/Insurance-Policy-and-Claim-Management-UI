@@ -8,7 +8,6 @@ import Card from "../../components/common/Card";
 import { purchasePolicy } from "../../api/customerApi";
 
 function PurchasePolicy() {
-
   const { planId } = useParams();
 
   const navigate = useNavigate();
@@ -16,45 +15,29 @@ function PurchasePolicy() {
   const [startDate, setStartDate] = useState("");
 
   async function handlePurchase(e) {
-
     e.preventDefault();
 
     try {
-
       await purchasePolicy({
-
         planId: Number(planId),
 
-        startDate
-
+        startDate,
       });
 
       alert("Policy Purchased Successfully");
 
       navigate("/customer/policies");
-
-    }
-    catch (error) {
-
+    } catch (error) {
       console.log(error);
 
-      alert(
-        error.response?.data?.message ||
-        "Purchase Failed"
-      );
-
+      alert(error.response?.data?.message || "Purchase Failed");
     }
-
   }
 
   return (
-
     <DashboardLayout>
-
       <Card title="Purchase Policy">
-
         <form onSubmit={handlePurchase}>
-
           <label>Start Date</label>
 
           <input
@@ -62,25 +45,14 @@ function PurchasePolicy() {
             required
             className="form-control"
             value={startDate}
-            onChange={
-              e => setStartDate(e.target.value)
-            }
+            onChange={(e) => setStartDate(e.target.value)}
           />
 
-          <button
-            className="btn btn-success mt-3"
-          >
-            Confirm Purchase
-          </button>
-
+          <button className="btn btn-success mt-3">Confirm Purchase</button>
         </form>
-
       </Card>
-
     </DashboardLayout>
-
   );
-
 }
 
 export default PurchasePolicy;

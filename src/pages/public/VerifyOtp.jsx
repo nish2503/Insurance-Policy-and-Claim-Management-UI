@@ -196,9 +196,7 @@ function VerifyOtp() {
             />
           </div>
 
-          <button className="btn-submit-action">
-            Verify & Activate Vault
-          </button>
+          <button className="btn-submit-action">Verify & Activate Vault</button>
         </form>
 
         <hr className="divider-line" />
@@ -209,7 +207,8 @@ function VerifyOtp() {
           </button>
         ) : (
           <p className="otp-timer-message">
-            Resend entry available in <span style={{ color: "#3b82f6" }}>{timeLeft}s</span>
+            Resend entry available in{" "}
+            <span style={{ color: "#3b82f6" }}>{timeLeft}s</span>
           </p>
         )}
       </div>

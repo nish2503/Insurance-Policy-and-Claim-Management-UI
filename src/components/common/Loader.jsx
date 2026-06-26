@@ -37,7 +37,7 @@ function Loader() {
           100% { transform: rotate(360deg); }
         }
       `}</style>
-      
+
       <div className="fintech-spinner-circle"></div>
       <p>Syncing Ledger...</p>
     </div>

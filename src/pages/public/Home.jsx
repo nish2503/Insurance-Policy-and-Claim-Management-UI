@@ -159,21 +159,33 @@ function Home() {
       <div className="landing-portal-card">
         <div className="portal-logo-icon">🛡️</div>
         <h1>Insurance Management System</h1>
-        <p>Welcome to the premium secure claims matrix routing pipeline. Authorize access or setup new credentials below.</p>
+        <p>
+          Welcome to the premium secure claims matrix routing pipeline.
+          Authorize access or setup new credentials below.
+        </p>
 
         <div className="auth-actions-vertical-stack">
           {/* Action route handling user entry */}
-          <button className="btn-portal-primary" onClick={() => navigate("/login")}>
+          <button
+            className="btn-portal-primary"
+            onClick={() => navigate("/login")}
+          >
             <i className="bi bi-box-arrow-in-right"></i> Sign In to Account
           </button>
-          
+
           {/* Action route handling profile setup registration */}
-          <button className="btn-portal-secondary" onClick={() => navigate("/register")}>
+          <button
+            className="btn-portal-secondary"
+            onClick={() => navigate("/register")}
+          >
             <i className="bi bi-person-plus-fill"></i> Register New Account
           </button>
         </div>
 
-        <button className="portal-meta-link" onClick={() => navigate("/forgot-password")}>
+        <button
+          className="portal-meta-link"
+          onClick={() => navigate("/forgot-password")}
+        >
           Need password recovery? Click here
         </button>
       </div>

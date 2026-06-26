@@ -93,8 +93,11 @@ function Unauthorized() {
       <div className="error-panel-card">
         <div className="error-code-badge">403</div>
         <h3>Access Blocked</h3>
-        <p>Your authentication token layer lacks the security clearance parameters required to access this system panel path.</p>
-        
+        <p>
+          Your authentication token layer lacks the security clearance
+          parameters required to access this system panel path.
+        </p>
+
         <button className="btn-return-home" onClick={() => navigate("/")}>
           <i className="bi bi-house-door-fill"></i> Go Back Home
         </button>

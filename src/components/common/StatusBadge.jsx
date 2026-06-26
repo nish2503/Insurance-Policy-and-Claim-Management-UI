@@ -7,27 +7,27 @@ function StatusBadge({ status }) {
       case "COMPLETED":
         return {
           bg: "rgba(16, 185, 129, 0.12)", // Soft translucent emerald
-          text: "#10b981",                // High-visibility vibrant mint
-          border: "rgba(16, 185, 129, 0.2)"
+          text: "#10b981", // High-visibility vibrant mint
+          border: "rgba(16, 185, 129, 0.2)",
         };
       case "PENDING":
         return {
-          bg: "rgba(245, 158, 11, 0.12)",  // Soft translucent amber
-          text: "#f59e0b",                 // Rich high-contrast gold
-          border: "rgba(245, 158, 11, 0.2)"
+          bg: "rgba(245, 158, 11, 0.12)", // Soft translucent amber
+          text: "#f59e0b", // Rich high-contrast gold
+          border: "rgba(245, 158, 11, 0.2)",
         };
       case "REJECTED":
       case "FAILED":
         return {
-          bg: "rgba(239, 68, 68, 0.12)",   // Soft translucent crimson
-          text: "#ef4444",                 // Sharp vibrant ruby
-          border: "rgba(239, 68, 68, 0.2)"
+          bg: "rgba(239, 68, 68, 0.12)", // Soft translucent crimson
+          text: "#ef4444", // Sharp vibrant ruby
+          border: "rgba(239, 68, 68, 0.2)",
         };
       default:
         return {
           bg: "rgba(148, 163, 184, 0.15)", // Soft slate gray
           text: "var(--text-muted, #94a3b8)",
-          border: "rgba(148, 163, 184, 0.2)"
+          border: "rgba(148, 163, 184, 0.2)",
         };
     }
   };

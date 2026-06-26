@@ -68,9 +68,7 @@ function Navbar() {
       `}</style>
 
       {/* Brand Identification Left Block */}
-      <div className="nav-branding-title">
-        🛡️ Insurance System Terminal
-      </div>
+      <div className="nav-branding-title">🛡️ Insurance System Terminal</div>
 
       {/* Utility Integration Action Block */}
       <div className="nav-controls-box">

@@ -1,7 +1,17 @@
-function Button({ children, type = "button", className = "", onClick, disabled }) {
+function Button({
+  children,
+  type = "button",
+  className = "",
+  onClick,
+  disabled,
+}) {
   // If your code uses standard bootstrap tracking names, we intercept and blend them smoothly
-  const isDanger = className.includes("btn-danger") || className.includes("danger");
-  const isSecondary = className.includes("btn-secondary") || className.includes("secondary") || className.includes("outline");
+  const isDanger =
+    className.includes("btn-danger") || className.includes("danger");
+  const isSecondary =
+    className.includes("btn-secondary") ||
+    className.includes("secondary") ||
+    className.includes("outline");
 
   const getButtonStyles = () => {
     if (isDanger) {
@@ -51,7 +61,7 @@ function Button({ children, type = "button", className = "", onClick, disabled }
 
         .modern-action-trigger:hover:not(:disabled) {
           transform: translateY(-2px) !important;
-          box-shadow: ${isDanger ? '0 10px 15px -3px rgba(239, 68, 68, 0.25)' : '0 10px 15px -3px rgba(37, 99, 235, 0.25)'} !important;
+          box-shadow: ${isDanger ? "0 10px 15px -3px rgba(239, 68, 68, 0.25)" : "0 10px 15px -3px rgba(37, 99, 235, 0.25)"} !important;
           filter: brightness(1.05) !important;
         }
 

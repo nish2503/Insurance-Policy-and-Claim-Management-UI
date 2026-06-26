@@ -1,10 +1,5 @@
 import api from "./axios";
 
-
-export function getProducts(){
-
-return api.get(
-"/products"
-);
-
+export function getProducts() {
+  return api.get("/products");
 }

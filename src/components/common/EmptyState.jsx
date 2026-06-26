@@ -45,12 +45,15 @@ function EmptyState({ message = "No Data Found" }) {
           transition: color 0.25s ease !important;
         }
       `}</style>
-      
+
       <div className="empty-graphic-ring">
         <i className="bi bi-folder-x"></i>
       </div>
       <h4>{message}</h4>
-      <p>The requested directory matrix node currently holds zero verified datasets inside this tracking branch queue.</p>
+      <p>
+        The requested directory matrix node currently holds zero verified
+        datasets inside this tracking branch queue.
+      </p>
     </div>
   );
 }

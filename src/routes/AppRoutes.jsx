@@ -149,34 +149,31 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/customer/premium-payments"
+        element={
+          <ProtectedRoute allowedRole="CUSTOMER">
+            <PayPremium />
+          </ProtectedRoute>
+        }
+      />
 
-path="/customer/premium-payments"
+      <Route
+        path="/customer/raise-claim"
+        element={
+          <ProtectedRoute allowedRole="CUSTOMER">
+            <RaiseClaim />
+          </ProtectedRoute>
+        }
+      />
 
-element={<ProtectedRoute allowedRole="CUSTOMER"><PayPremium/></ProtectedRoute>}
-
-/>
-
-<Route
-
-path="/customer/raise-claim"
-
-element={<ProtectedRoute allowedRole="CUSTOMER">
-  <RaiseClaim/>
-</ProtectedRoute>
-}
-
-/>
-
-
-<Route
-
-path="/customer/claims"
-
-element={<ProtectedRoute allowedRole="CUSTOMER">
-  <MyClaims/>
-</ProtectedRoute>}
-
-/>
+      <Route
+        path="/customer/claims"
+        element={
+          <ProtectedRoute allowedRole="CUSTOMER">
+            <MyClaims />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }

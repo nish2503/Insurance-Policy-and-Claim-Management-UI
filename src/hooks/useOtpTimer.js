@@ -1,67 +1,29 @@
 import { useEffect, useState } from "react";
 
+function useOtpTimer(initialTime = 60) {
+  const [timeLeft, setTimeLeft] = useState(initialTime);
 
-function useOtpTimer(initialTime = 60){
+  useEffect(() => {
+    if (timeLeft <= 0) return;
 
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
 
-const [timeLeft,setTimeLeft] = useState(initialTime);
+    return () => clearInterval(timer);
+  }, [timeLeft]);
 
+  const resetTimer = () => {
+    setTimeLeft(initialTime);
+  };
 
+  return {
+    timeLeft,
 
-useEffect(()=>{
+    canResend: timeLeft === 0,
 
-
-if(timeLeft <= 0) return;
-
-
-
-const timer = setInterval(()=>{
-
-
-setTimeLeft(prev => prev - 1);
-
-
-
-},1000);
-
-
-
-return ()=>clearInterval(timer);
-
-
-
-},[timeLeft]);
-
-
-
-
-
-const resetTimer = ()=>{
-
-
-setTimeLeft(initialTime);
-
-
-};
-
-
-
-
-return {
-
-
-timeLeft,
-
-canResend: timeLeft === 0,
-
-resetTimer
-
-
-};
-
-
-
+    resetTimer,
+  };
 }
-
 
 export default useOtpTimer;

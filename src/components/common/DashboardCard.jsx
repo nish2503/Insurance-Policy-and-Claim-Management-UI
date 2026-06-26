@@ -5,11 +5,16 @@ function DashboardCard({ title, count, variant }) {
 
   const getAccentColor = () => {
     switch (variant) {
-      case "success": return "#10b981"; 
-      case "primary": return "#3b82f6"; 
-      case "info":    return "#06b6d4"; 
-      case "warning": return "#f59e0b"; 
-      default:        return "#3b82f6";
+      case "success":
+        return "#10b981";
+      case "primary":
+        return "#3b82f6";
+      case "info":
+        return "#06b6d4";
+      case "warning":
+        return "#f59e0b";
+      default:
+        return "#3b82f6";
     }
   };
 
@@ -71,8 +76,8 @@ function DashboardCard({ title, count, variant }) {
         <h4 className="metric-count">{count}</h4>
       </div>
 
-      <div 
-        className="metric-indicator-line" 
+      <div
+        className="metric-indicator-line"
         style={{ background: getAccentColor() }}
       />
     </div>
