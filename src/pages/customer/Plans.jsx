@@ -9,6 +9,7 @@ import Loader from "../../components/common/Loader";
 import {
   getPlansByProduct
 } from "../../api/customerApi";
+import BackButton from "../../components/common/BackButton";
 
 function Plans() {
 
@@ -55,6 +56,7 @@ function Plans() {
 
       <DashboardLayout>
         <Loader />
+        <BackButton/>
       </DashboardLayout>
 
     );

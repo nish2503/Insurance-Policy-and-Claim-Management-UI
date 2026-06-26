@@ -11,6 +11,7 @@ from "../../components/common/Button";
 
 import {issuePolicy}
 from "../../api/agentApi";
+import BackButton from "../../components/common/BackButton";
 
 
 function IssuePolicy(){
@@ -92,6 +93,7 @@ return(
 
 
 <Card title="Issue Policy">
+    <BackButton/>
 
 
 

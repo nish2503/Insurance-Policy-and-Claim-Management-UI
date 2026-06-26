@@ -7,6 +7,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 
 import { getMyPolicies } from "../../api/customerApi";
+import BackButton from "../../components/common/BackButton";
 
 function MyPolicies() {
 
@@ -42,6 +43,7 @@ function MyPolicies() {
     return (
       <DashboardLayout>
         <Loader />
+        
       </DashboardLayout>
     );
 
@@ -52,6 +54,7 @@ function MyPolicies() {
     <DashboardLayout>
 
       <Card title="My Policies">
+        <BackButton/>
 
         {
 
@@ -104,6 +107,16 @@ function MyPolicies() {
       `₹${p.premiumAmount} (${p.premiumType})`
 
   }))}
+
+  searchKeys={[
+"policyNumber",
+
+"planName",
+
+"productType",
+
+"policyStatus"
+]}
 
           />
 

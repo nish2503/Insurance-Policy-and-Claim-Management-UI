@@ -33,6 +33,7 @@ import {
     getAgentClaims,
     reviewClaim
 } from "../../api/agentApi";
+import BackButton from "../../components/common/BackButton";
 
 
 
@@ -203,6 +204,7 @@ function ReviewClaims(){
             <DashboardLayout>
 
                 <Loader/>
+                
 
             </DashboardLayout>
 
@@ -237,6 +239,8 @@ function ReviewClaims(){
 
 
             <Card title="Review Claims">
+
+                <BackButton/>
 
 
 
@@ -398,6 +402,11 @@ function ReviewClaims(){
 
 
                     data={pendingClaims}
+                    searchKeys={[
+"claimNumber",
+"policyNumber",
+"customerName"
+]}
 
 
 

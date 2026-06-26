@@ -2,7 +2,7 @@ import {useEffect,useState} from "react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
-
+import BackButton from "../../components/common/BackButton";
 import {
  getMyPolicies,
  raiseClaim,
@@ -149,7 +149,7 @@ return(
 
 <DashboardLayout>
 
-
+<BackButton/>
 <Card title="Raise Claim">
 
 

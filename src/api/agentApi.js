@@ -3,11 +3,14 @@ import api from "./axios";
 
 // Agent dashboard claims
 
-export const getAgentClaims = ()=>{
+export const getAgentClaims = (params)=>{
 
-    return api.get(
-        "/claims/agent"
-    );
+return api.get(
+"/claims/agent",
+{
+params
+}
+);
 
 };
 
@@ -34,12 +37,14 @@ export const reviewClaim = (claimId,data)=>{
 
 // Agent customers
 
-export const getAgentCustomers = ()=>{
+export const getAgentCustomers = (params)=>{
 
 
     return api.get(
 
-        "/customers"
+        "/customers",{
+            params
+        }
 
     );
 
@@ -70,12 +75,14 @@ export const issuePolicy = (data)=>{
 
 // Agent policies
 
-export const getAgentPolicies = ()=>{
+export const getAgentPolicies = (params)=>{
 
 
     return api.get(
 
-        "/policies/agent"
+        "/policies/agent",{
+            params
+        }
 
     );
 
@@ -87,12 +94,14 @@ export const getAgentPolicies = ()=>{
 
 // Agent payments
 
-export const getAgentPayments = ()=>{
+export const getAgentPayments = (params)=>{
 
 
     return api.get(
 
-        "/premium-payments/agent"
+        "/premium-payments/agent",{
+            params
+        }
 
     );
 

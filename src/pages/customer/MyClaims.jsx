@@ -15,6 +15,7 @@ import EmptyState from "../../components/common/EmptyState";
 import {
 getMyClaims
 } from "../../api/customerApi";
+import BackButton from "../../components/common/BackButton";
 
 
 
@@ -77,6 +78,7 @@ return(
 
 <Loader/>
 
+
 </DashboardLayout>
 
 )
@@ -92,6 +94,7 @@ return(
 
 
 <Card title="My Claims">
+    <BackButton/>
 
 
 {
@@ -149,6 +152,12 @@ claimAmount:
 
 
 }))}
+
+searchKeys={[
+"claimNumber",
+"policyNumber",
+"customerName"
+]}
 
 
 />

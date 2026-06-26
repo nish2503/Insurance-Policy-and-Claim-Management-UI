@@ -10,6 +10,7 @@ import {
 getAgentPayments
 }
 from "../../api/agentApi";
+import BackButton from "../../components/common/BackButton";
 
 
 function Payments(){
@@ -68,6 +69,7 @@ return(
 
 <Loader/>
 
+
 </DashboardLayout>
 
 )
@@ -83,6 +85,7 @@ return(
 
 
 <Card title="Premium Payments">
+    <BackButton/>
 
 
 {
@@ -130,6 +133,13 @@ label:"Status"
 
 data={payments}
 
+searchKeys={[
+"policyNumber",
+
+"customerName",
+
+"paymentStatus"
+]}
 
 />
 

@@ -6,6 +6,7 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 
 import { purchasePolicy } from "../../api/customerApi";
+import BackButton from "../../components/common/BackButton";
 
 function PurchasePolicy() {
 
@@ -50,6 +51,7 @@ function PurchasePolicy() {
   return (
 
     <DashboardLayout>
+      <BackButton/>
 
       <Card title="Purchase Policy">
 

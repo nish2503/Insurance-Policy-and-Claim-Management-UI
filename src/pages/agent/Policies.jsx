@@ -11,6 +11,7 @@ import {
 getAgentPolicies
 }
 from "../../api/agentApi";
+import BackButton from "../../components/common/BackButton";
 
 
 
@@ -70,6 +71,7 @@ return(
 
 <Loader/>
 
+
 </DashboardLayout>
 
 )
@@ -85,6 +87,7 @@ return(
 
 
 <Card title="Policies">
+    <BackButton/>
 
 
 {
@@ -123,6 +126,15 @@ label:"Status"
 
 data={policies}
 
+searchKeys={[
+"policyNumber",
+
+"customerName",
+
+"planName",
+
+"policyStatus"
+]}
 
 />
 

@@ -9,17 +9,26 @@ export const getCustomers = ()=>{
 
 
 
-export const getMyClaims = ()=>{
+export const getMyClaims = (params)=>{
 
-    return api.get("/claims/my");
+return api.get(
+"/claims/my",
+{
+params
+}
+);
 
 };
 
 
+export const getMyPolicies = (params)=>{
 
-export const getMyPolicies = ()=>{
-
-    return api.get("/policies/my");
+return api.get(
+"/policies/my",
+{
+params
+}
+);
 
 };
 
@@ -41,9 +50,14 @@ export const getPlans = ()=>{
 
 
 
-export const getMyPremiumPayments = ()=>{
+export const getMyPremiumPayments = (params)=>{
 
-    return api.get("/premium-payments/my");
+return api.get(
+"/premium-payments/my",
+{
+params
+}
+);
 
 };
 

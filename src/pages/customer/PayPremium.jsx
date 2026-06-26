@@ -7,6 +7,7 @@ import {
  getMyPolicies,
  payPremium
 } from "../../api/customerApi";
+import BackButton from "../../components/common/BackButton";
 
 
 function PayPremium(){
@@ -118,6 +119,7 @@ return(
 
 
 <Card title="Pay Premium">
+    <BackButton/>
 
 
 

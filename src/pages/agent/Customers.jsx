@@ -25,6 +25,7 @@ import {
 getAgentCustomers
 }
 from "../../api/agentApi";
+import BackButton from "../../components/common/BackButton";
 
 
 
@@ -103,6 +104,7 @@ return(
 
 <Loader/>
 
+
 </DashboardLayout>
 
 )
@@ -122,6 +124,7 @@ return(
 
 
 <Card title="Customers">
+    <BackButton/>
 
 
 
@@ -171,7 +174,13 @@ label:"Mobile"
 
 data={customers}
 
+searchKeys={[
+"fullName",
 
+"email",
+
+"mobileNumber"
+]}
 
 />
 
