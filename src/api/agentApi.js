@@ -1,45 +1,109 @@
 import api from "./axios";
 
+
 // Agent dashboard claims
 
-export const getAgentClaims = () => {
-  return api.get("/claims/agent");
+export const getAgentClaims = (params)=>{
+
+return api.get(
+"/claims/agent",
+{
+params
+}
+);
+
 };
+
+
 
 // Review claim
 
-export const reviewClaim = (claimId, data) => {
-  return api.put(
-    `/claims/${claimId}/review`,
+export const reviewClaim = (claimId,data)=>{
 
-    data,
-  );
+
+    return api.put(
+
+        `/claims/${claimId}/review`,
+
+        data
+
+    );
+
+
 };
+
+
+
 
 // Agent customers
 
-export const getAgentCustomers = () => {
-  return api.get("/customers");
+export const getAgentCustomers = (params)=>{
+
+
+    return api.get(
+
+        "/customers",{
+            params
+        }
+
+    );
+
+
 };
+
+
+
 
 // Issue policy
 
-export const issuePolicy = (data) => {
-  return api.post(
-    "/policies/issue",
+export const issuePolicy = (data)=>{
 
-    data,
-  );
+
+    return api.post(
+
+        "/policies/issue",
+
+        data
+
+    );
+
+
 };
+
+
+
 
 // Agent policies
 
-export const getAgentPolicies = () => {
-  return api.get("/policies/agent");
+export const getAgentPolicies = (params)=>{
+
+
+    return api.get(
+
+        "/policies/agent",{
+            params
+        }
+
+    );
+
+
 };
+
+
+
 
 // Agent payments
 
-export const getAgentPayments = () => {
-  return api.get("/premium-payments/agent");
+export const getAgentPayments = (params)=>{
+
+
+    return api.get(
+
+        "/premium-payments/agent",{
+            params
+        }
+
+    );
+
+
 };

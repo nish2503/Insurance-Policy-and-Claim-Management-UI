@@ -6,7 +6,10 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 import Loader from "../../components/common/Loader";
 
-import { getPlansByProduct } from "../../api/customerApi";
+import {
+  getPlansByProduct
+} from "../../api/customerApi";
+import BackButton from "../../components/common/BackButton";
 
 function Plans() {
   const { productId } = useParams();
@@ -35,6 +38,7 @@ function Plans() {
     return (
       <DashboardLayout>
         <Loader />
+        <BackButton/>
       </DashboardLayout>
     );
   }

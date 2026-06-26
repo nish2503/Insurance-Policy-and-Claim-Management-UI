@@ -7,6 +7,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 
 import { getMyPolicies } from "../../api/customerApi";
+import BackButton from "../../components/common/BackButton";
 
 function MyPolicies() {
   const [policies, setPolicies] = useState([]);
@@ -32,6 +33,7 @@ function MyPolicies() {
     return (
       <DashboardLayout>
         <Loader />
+        
       </DashboardLayout>
     );
   }
@@ -39,7 +41,12 @@ function MyPolicies() {
   return (
     <DashboardLayout>
       <Card title="My Policies">
-        {policies.length ? (
+        <BackButton/>
+
+        {
+
+          policies.length ?
+
           <DataTable
             columns={[
               {
@@ -77,8 +84,21 @@ function MyPolicies() {
 
               coverageAmount: `₹${p.coverageAmount}`,
 
-              premiumAmount: `₹${p.premiumAmount} (${p.premiumType})`,
-            }))}
+    premiumAmount:
+      `₹${p.premiumAmount} (${p.premiumType})`
+
+  }))}
+
+  searchKeys={[
+"policyNumber",
+
+"planName",
+
+"productType",
+
+"policyStatus"
+]}
+
           />
         ) : (
           <EmptyState message="No Policies Found" />

@@ -1,107 +1,461 @@
-function DataTable({ columns, data }) {
-  return (
-    <div className="modern-table-container">
-      {/* 🚀 Dynamic stylesheet engine adjusting row parameters automatically */}
-      <style>{`
-        .modern-table-container {
-          width: 100% !important;
-          overflow-x: auto !important; /* Prevents layout clipping on narrow viewports */
-          border-radius: 12px !important;
-          border: 1px solid var(--border-color) !important;
-          background: var(--panel-bg) !important;
-          transition: background-color 0.25s ease, border-color 0.25s ease !important;
-        }
+import { useState } from "react";
 
-        .insurtech-data-table {
-          width: 100% !important;
-          border-collapse: collapse !important;
-          text-align: left !important;
-          font-family: 'Inter', system-ui, sans-serif !important;
-          margin: 0 !important;
-        }
 
-        /* 📋 Table Header Viewport Banding */
-        .insurtech-data-table thead tr {
-          background-color: var(--bg-main) !important;
-          border-bottom: 1px solid var(--border-color) !important;
-          transition: background-color 0.25s ease, border-color 0.25s ease !important;
-        }
+function DataTable({
 
-        .insurtech-data-table th {
-          padding: 16px 20px !important;
-          font-size: 0.8rem !important;
-          font-weight: 600 !important;
-          text-transform: uppercase !important;
-          letter-spacing: 0.05em !important;
-          color: var(--text-muted) !important;
-          transition: color 0.25s ease !important;
-        }
+    columns,
 
-        /* 📄 Content Cells and Striping Structures */
-        .insurtech-data-table td {
-          padding: 16px 20px !important;
-          font-size: 0.9rem !important;
-          color: var(--text-main) !important;
-          border-bottom: 1px solid var(--border-color) !important;
-          transition: color 0.25s ease, border-color 0.25s ease !important;
-        }
+    data,
 
-        /* ✨ Interactive line-item ambient elevation matrix tracking */
-        .insurtech-data-table tbody tr {
-          background-color: var(--panel-bg) !important;
-          transition: background-color 0.2s ease !important;
-        }
+    rowsPerPageOptions=[5,10,20],
 
-        .insurtech-data-table tbody tr:hover {
-          background-color: var(--bg-main) !important; /* Subtle highlight pop row focus */
-        }
+    searchable=true,
 
-        /* Cleans the border offset trace layer line at the very base of the grid */
-        .insurtech-data-table tbody tr:last-child td {
-          border-bottom: none !important;
-        }
+    searchKeys=[]
 
-        /* Empty state notification parameter box padding alignment override */
-        .table-empty-cell {
-          padding: 40px !important;
-          font-size: 0.95rem !important;
-          color: var(--text-muted) !important;
-          font-weight: 500 !important;
-          text-align: center !important;
-        }
-      `}</style>
+}){
 
-      <table className="insurtech-data-table">
-        <thead>
-          <tr>
-            {columns.map((col) => (
-              <th key={col.key}>{col.label}</th>
-            ))}
-          </tr>
-        </thead>
 
-        <tbody>
-          {data.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length} className="table-empty-cell">
-                No active records or datasets available inside this queue.
-              </td>
-            </tr>
-          ) : (
-            data.map((row, index) => (
-              <tr key={index}>
-                {columns.map((col) => (
-                  <td key={col.key}>
-                    {col.render ? col.render(row) : row[col.key]}
-                  </td>
-                ))}
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
+const [search,setSearch] = useState("");
+
+const [rowsPerPage,setRowsPerPage] = useState(5);
+
+const [currentPage,setCurrentPage] = useState(1);
+
+
+
+
+// SEARCH
+
+const filteredData = data.filter(row=>{
+
+
+if(!searchable || !search)
+
+return true;
+
+
+return searchKeys.some(key =>
+
+
+String(row[key] || "")
+
+.toLowerCase()
+
+.includes(
+
+search.toLowerCase()
+
+)
+
+
+);
+
+
+});
+
+
+
+
+
+// PAGINATION
+
+const totalPages = Math.ceil(
+
+filteredData.length / rowsPerPage
+
+);
+
+
+
+const startIndex =
+
+(currentPage - 1) * rowsPerPage;
+
+
+
+const paginatedData = filteredData.slice(
+
+startIndex,
+
+startIndex + rowsPerPage
+
+);
+
+
+
+
+
+
+return(
+
+
+<div>
+
+
+{/* SEARCH + ROW SELECT */}
+
+
+{
+
+searchable &&
+
+
+<div className="d-flex justify-content-between mb-3">
+
+
+<input
+
+
+className="form-control"
+
+
+style={{maxWidth:"300px"}}
+
+
+placeholder="Search..."
+
+
+value={search}
+
+
+onChange={(e)=>{
+
+
+setSearch(e.target.value);
+
+
+setCurrentPage(1);
+
+
+}}
+
+
+/>
+
+
+
+
+
+<select
+
+
+className="form-select"
+
+
+style={{maxWidth:"120px"}}
+
+
+value={rowsPerPage}
+
+
+onChange={(e)=>{
+
+
+setRowsPerPage(
+
+Number(e.target.value)
+
+);
+
+
+setCurrentPage(1);
+
+
+}}
+
+
+>
+
+
+{
+
+
+rowsPerPageOptions.map(size=>(
+
+
+<option
+
+
+key={size}
+
+
+value={size}
+
+
+>
+
+
+{size} rows
+
+
+</option>
+
+
+))
+
+
 }
+
+
+
+</select>
+
+
+
+</div>
+
+
+}
+
+
+
+
+
+
+<table className="table table-hover table-bordered">
+
+
+
+<thead className="table-dark">
+
+
+<tr>
+
+
+{
+
+
+columns.map(col=>(
+
+
+<th key={col.key}>
+
+
+{col.label}
+
+
+</th>
+
+
+))
+
+
+}
+
+
+
+</tr>
+
+
+</thead>
+
+
+
+
+
+<tbody>
+
+
+{
+
+
+paginatedData.length ?
+
+
+
+paginatedData.map((row,index)=>(
+
+
+<tr key={index}>
+
+
+{
+
+
+columns.map(col=>(
+
+
+
+<td key={col.key}>
+
+
+{
+
+
+col.render ?
+
+
+col.render(row)
+
+
+:
+
+
+row[col.key]
+
+
+
+}
+
+
+</td>
+
+
+
+))
+
+
+}
+
+
+
+</tr>
+
+
+
+))
+
+
+:
+
+
+
+<tr>
+
+
+<td
+
+
+colSpan={columns.length}
+
+
+className="text-center"
+
+
+>
+
+
+No Records Found
+
+
+</td>
+
+
+</tr>
+
+
+
+}
+
+
+
+</tbody>
+
+
+
+
+</table>
+
+
+
+
+
+
+
+{/* PAGINATION BUTTONS */}
+
+
+
+{
+
+
+totalPages > 1 &&
+
+
+
+<div className="d-flex justify-content-center gap-2 mt-3">
+
+
+<button
+
+
+className="btn btn-outline-primary"
+
+
+disabled={currentPage===1}
+
+
+onClick={()=>setCurrentPage(currentPage-1)}
+
+
+>
+
+
+Previous
+
+
+</button>
+
+
+
+
+
+
+<span className="pt-2">
+
+
+Page {currentPage} of {totalPages}
+
+
+</span>
+
+
+
+
+
+
+<button
+
+
+className="btn btn-outline-primary"
+
+
+disabled={currentPage===totalPages}
+
+
+onClick={()=>setCurrentPage(currentPage+1)}
+
+
+>
+
+
+Next
+
+
+</button>
+
+
+
+
+</div>
+
+
+
+}
+
+
+
+
+
+</div>
+
+
+)
+
+
+}
+
+
 
 export default DataTable;

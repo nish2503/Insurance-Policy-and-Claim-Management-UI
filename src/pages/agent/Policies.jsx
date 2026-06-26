@@ -6,7 +6,12 @@ import DataTable from "../../components/common/DataTable";
 import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 
-import { getAgentPolicies } from "../../api/agentApi";
+
+import {
+getAgentPolicies
+}
+from "../../api/agentApi";
+import BackButton from "../../components/common/BackButton";
 
 function Policies() {
   const [policies, setPolicies] = useState([]);
@@ -48,6 +53,69 @@ function Policies() {
                 label: "Policy Number",
               },
 
+setPolicies(
+res.data.records || []
+);
+
+
+}
+catch(error){
+
+console.log(error);
+
+}
+finally{
+
+setLoading(false);
+
+}
+
+}
+
+
+
+if(loading){
+
+return(
+
+<DashboardLayout>
+
+<Loader/>
+
+
+</DashboardLayout>
+
+)
+
+}
+
+
+
+return(
+
+
+<DashboardLayout>
+
+
+<Card title="Policies">
+    <BackButton/>
+
+
+{
+
+policies.length ?
+
+
+<DataTable
+
+
+columns={[
+
+{
+key:"policyNumber",
+label:"Policy Number"
+},
+
               {
                 key: "customerName",
                 label: "Customer",
@@ -71,6 +139,60 @@ function Policies() {
       </Card>
     </DashboardLayout>
   );
+{
+key:"customerName",
+label:"Customer"
+},
+
+{
+key:"planName",
+label:"Plan"
+},
+
+{
+key:"policyStatus",
+label:"Status"
+}
+
+
+]}
+
+
+data={policies}
+
+searchKeys={[
+"policyNumber",
+
+"customerName",
+
+"planName",
+
+"policyStatus"
+]}
+
+/>
+
+
+:
+
+<EmptyState
+message="No Policies Found"
+/>
+
+
+}
+
+
+</Card>
+
+
+</DashboardLayout>
+
+
+);
+
+
+
 }
 
 export default Policies;

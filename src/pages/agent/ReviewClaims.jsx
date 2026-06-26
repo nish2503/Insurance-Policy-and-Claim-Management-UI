@@ -14,7 +14,14 @@ import EmptyState from "../../components/common/EmptyState";
 
 import Card from "../../components/common/Card";
 
-import { getAgentClaims, reviewClaim } from "../../api/agentApi";
+import {
+    getAgentClaims,
+    reviewClaim
+} from "../../api/agentApi";
+import BackButton from "../../components/common/BackButton";
+
+
+
 
 function ReviewClaims() {
   const [claims, setClaims] = useState([]);
@@ -71,32 +78,91 @@ function ReviewClaims() {
         data,
       );
 
-      loadClaims();
-    } catch (error) {
-      console.log(error);
-    }
-  }
+            loadClaims();
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <Loader />
-      </DashboardLayout>
-    );
-  }
+
+        }
+        catch(error){
+
+
+            console.log(error);
+
+
+        }
+
+
+    }
+
+
+
+
+
+
+
+
+    if(loading){
+
+
+        return(
+
+            <DashboardLayout>
+
+                <Loader/>
+                
+
+            </DashboardLayout>
+
+        )
+
+    }
+
+
+
+
+
 
   // Agent receives SUBMITTED claims
 
-  const pendingClaims = claims.filter((c) => c.claimStatus === "SUBMITTED");
+    const pendingClaims = claims.filter(
 
-  return (
-    <DashboardLayout>
-      <Card title="Review Claims">
-        {pendingClaims.length ? (
-          <DataTable
-            columns={[
-              {
-                key: "claimNumber",
+        c => c.claimStatus === "SUBMITTED"
+
+    );
+
+
+
+
+
+
+
+
+    return(
+
+
+        <DashboardLayout>
+
+
+            <Card title="Review Claims">
+
+                <BackButton/>
+
+
+
+            {
+
+                pendingClaims.length ?
+
+
+
+                <DataTable
+
+
+
+                    columns={[
+
+
+
+                        {
 
                 label: "Claim ID",
               },
@@ -138,24 +204,90 @@ function ReviewClaims() {
                       Approve
                     </Button>
 
-                    <Button
-                      className="btn btn-danger"
-                      onClick={() => rejectClaim(row.claimId)}
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                ),
-              },
-            ]}
-            data={pendingClaims}
-          />
-        ) : (
-          <EmptyState message="No Pending Claims" />
-        )}
-      </Card>
-    </DashboardLayout>
-  );
+                                    <Button
+
+
+                                        className="btn btn-danger"
+
+
+                                        onClick={
+
+                                            ()=>rejectClaim(
+
+                                                row.claimId
+
+                                            )
+
+                                        }
+
+                                    >
+
+                                        Reject
+
+
+                                    </Button>
+
+
+
+
+                                </div>
+
+
+                            )
+
+
+                        }
+
+
+
+
+                    ]}
+
+
+
+
+
+                    data={pendingClaims}
+                    searchKeys={[
+"claimNumber",
+"policyNumber",
+"customerName"
+]}
+
+
+
+
+                />
+
+
+
+
+
+                :
+
+
+
+                <EmptyState
+
+                    message="No Pending Claims"
+
+                />
+
+
+
+            }
+
+
+
+            </Card>
+
+
+        </DashboardLayout>
+
+
+    );
+
+
 }
 
 export default ReviewClaims;

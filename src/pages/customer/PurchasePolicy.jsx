@@ -6,6 +6,7 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 
 import { purchasePolicy } from "../../api/customerApi";
+import BackButton from "../../components/common/BackButton";
 
 function PurchasePolicy() {
   const { planId } = useParams();
@@ -36,6 +37,8 @@ function PurchasePolicy() {
 
   return (
     <DashboardLayout>
+      <BackButton/>
+
       <Card title="Purchase Policy">
         <form onSubmit={handlePurchase}>
           <label>Start Date</label>

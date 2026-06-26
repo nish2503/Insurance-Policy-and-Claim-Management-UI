@@ -6,6 +6,7 @@ import Card from "../../components/common/Card";
 import Loader from "../../components/common/Loader";
 
 import { getProducts } from "../../api/customerApi";
+import BackButton from "../../components/common/BackButton";
 
 function BrowseProducts() {
   const [products, setProducts] = useState([]);
@@ -31,6 +32,7 @@ function BrowseProducts() {
     return (
       <DashboardLayout>
         <Loader />
+        <BackButton/>
       </DashboardLayout>
     );
   }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
-
+import BackButton from "../../components/common/BackButton";
 import {
   getMyPolicies,
   raiseClaim,
@@ -74,15 +74,38 @@ function RaiseClaim() {
     } catch (error) {
       console.log(error);
 
-      alert(error.response?.data?.message || "Claim failed");
-    }
-  }
 
-  return (
-    <DashboardLayout>
-      <Card title="Raise Claim">
-        <form onSubmit={handleSubmit}>
-          <label>Select Policy</label>
+alert(
+
+error.response?.data?.message ||
+
+"Claim failed"
+
+);
+
+
+}
+
+}
+
+
+
+return(
+
+
+<DashboardLayout>
+
+<BackButton/>
+<Card title="Raise Claim">
+
+
+<form onSubmit={handleSubmit}>
+
+
+<label>
+Select Policy
+</label>
+
 
           <select
             className="form-control"

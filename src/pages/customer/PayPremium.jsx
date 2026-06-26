@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 
-import { getMyPolicies, payPremium } from "../../api/customerApi";
+import {
+ getMyPolicies,
+ payPremium
+} from "../../api/customerApi";
+import BackButton from "../../components/common/BackButton";
+
 
 function PayPremium() {
   const [policies, setPolicies] = useState([]);
@@ -48,15 +53,38 @@ function PayPremium() {
     } catch (error) {
       console.log(error);
 
-      alert(error.response?.data?.message || "Payment Failed");
-    }
-  }
 
-  return (
-    <DashboardLayout>
-      <Card title="Pay Premium">
-        <form onSubmit={handlePayment}>
-          <label>Select Policy</label>
+alert(
+error.response?.data?.message ||
+"Payment Failed"
+);
+
+
+}
+
+
+}
+
+
+
+return(
+
+
+<DashboardLayout>
+
+
+<Card title="Pay Premium">
+    <BackButton/>
+
+
+
+<form onSubmit={handlePayment}>
+
+
+<label>
+Select Policy
+</label>
+
 
           <select
             className="form-control"
