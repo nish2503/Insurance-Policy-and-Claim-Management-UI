@@ -85,3 +85,27 @@ export const payPremium = (data) =>
 
 export const raiseClaim = (data) =>
     api.post("/claims", data);
+
+export const uploadClaimDocument=(file)=>{
+
+
+const formData = new FormData();
+
+
+formData.append(
+"file",
+file
+);
+
+
+
+return api.post(
+
+"/files/upload",
+
+formData
+
+);
+
+
+};

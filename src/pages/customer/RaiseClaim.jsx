@@ -5,7 +5,8 @@ import Card from "../../components/common/Card";
 
 import {
  getMyPolicies,
- raiseClaim
+ raiseClaim,
+ uploadClaimDocument
 } from "../../api/customerApi";
 
 
@@ -21,6 +22,10 @@ const [claimAmount,setClaimAmount]=useState("");
 const [claimReason,setClaimReason]=useState("");
 
 const [incidentDate,setIncidentDate]=useState("");
+
+const [file,setFile]=useState(null);
+
+const [document,setDocument]=useState(null);
 
 
 
@@ -52,10 +57,6 @@ console.log(error);
 
 }
 
-
-
-
-
 async function handleSubmit(e){
 
 e.preventDefault();
@@ -64,22 +65,53 @@ e.preventDefault();
 try{
 
 
+let uploadedDocument=[];
+
+
+
+if(file){
+
+
+const uploadResponse =
+await uploadClaimDocument(file);
+
+
+
+uploadedDocument=[
+
+{
+
+documentName:file.name,
+
+documentType:file.type,
+
+documentReference:
+uploadResponse.data.fileUrl
+
+}
+
+];
+
+
+}
+
+
+
 await raiseClaim({
 
 
-policyId:policyId,
+policyId,
+
+claimAmount,
+
+claimReason,
+
+incidentDate,
 
 
-claimAmount:claimAmount,
+supportingDocuments:
+uploadedDocument
 
-
-claimReason:claimReason,
-
-
-incidentDate:incidentDate,
-
-
-supportingDocuments:[]
 
 });
 
@@ -90,9 +122,7 @@ alert(
 );
 
 
-
 }
-
 
 catch(error){
 
@@ -100,13 +130,15 @@ console.log(error);
 
 
 alert(
+
 error.response?.data?.message ||
+
 "Claim failed"
+
 );
 
 
 }
-
 
 }
 
@@ -250,7 +282,24 @@ e=>setIncidentDate(e.target.value)
 
 />
 
+<label className="mt-3">
 
+Supporting Document
+
+</label>
+
+
+<input
+
+type="file"
+
+className="form-control"
+
+onChange={
+e=>setFile(e.target.files[0])
+}
+
+/>
 
 
 
