@@ -5,9 +5,9 @@ import Card from "../../components/common/Card";
 import DataTable from "../../components/common/DataTable";
 import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
+import BackButton from "../../components/common/BackButton";
 
 import { getMyPolicies } from "../../api/customerApi";
-import BackButton from "../../components/common/BackButton";
 
 function MyPolicies() {
   const [policies, setPolicies] = useState([]);
@@ -20,7 +20,6 @@ function MyPolicies() {
   async function loadPolicies() {
     try {
       const res = await getMyPolicies();
-
       setPolicies(res.data.records || []);
     } catch (error) {
       console.log(error);
@@ -33,7 +32,6 @@ function MyPolicies() {
     return (
       <DashboardLayout>
         <Loader />
-        
       </DashboardLayout>
     );
   }
@@ -41,39 +39,31 @@ function MyPolicies() {
   return (
     <DashboardLayout>
       <Card title="My Policies">
-        <BackButton/>
+        <BackButton />
 
-        {
-
-          policies.length ?
-
+        {policies.length ? (
           <DataTable
             columns={[
               {
                 key: "policyNumber",
                 label: "Policy Number",
               },
-
               {
                 key: "planName",
                 label: "Plan",
               },
-
               {
                 key: "productType",
                 label: "Product",
               },
-
               {
                 key: "premiumAmount",
                 label: "Premium",
               },
-
               {
                 key: "policyStatus",
                 label: "Status",
               },
-
               {
                 key: "coverageAmount",
                 label: "Coverage",
@@ -81,24 +71,15 @@ function MyPolicies() {
             ]}
             data={policies.map((p) => ({
               ...p,
-
               coverageAmount: `₹${p.coverageAmount}`,
-
-    premiumAmount:
-      `₹${p.premiumAmount} (${p.premiumType})`
-
-  }))}
-
-  searchKeys={[
-"policyNumber",
-
-"planName",
-
-"productType",
-
-"policyStatus"
-]}
-
+              premiumAmount: `₹${p.premiumAmount} (${p.premiumType})`,
+            }))}
+            searchKeys={[
+              "policyNumber",
+              "planName",
+              "productType",
+              "policyStatus",
+            ]}
           />
         ) : (
           <EmptyState message="No Policies Found" />

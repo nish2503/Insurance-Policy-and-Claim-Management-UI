@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import Customers from "../pages/admin/Customers";
 
 import Home from "../pages/public/Home";
 import Login from "../pages/public/Login";
@@ -45,6 +46,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRole="ADMIN">
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/customers"
+        element={
+          <ProtectedRoute allowedRole="ADMIN">
+            <Customers />
           </ProtectedRoute>
         }
       />
