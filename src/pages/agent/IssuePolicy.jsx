@@ -1,174 +1,165 @@
-import {useState} from "react";
+import { useEffect, useState } from "react";
 
-import DashboardLayout 
-from "../../components/layout/DashboardLayout";
+import DashboardLayout from "../../components/layout/DashboardLayout";
+import Card from "../../components/common/Card";
+import Button from "../../components/common/Button";
 
-import Card 
-from "../../components/common/Card";
+import { issuePolicy, getAgentCustomers, getPlans } from "../../api/agentApi";
 
-import Button 
-from "../../components/common/Button";
-
-import {issuePolicy}
-from "../../api/agentApi";
 import BackButton from "../../components/common/BackButton";
 
+function IssuePolicy() {
+  const [customers, setCustomers] = useState([]);
+  const [plans, setPlans] = useState([]);
+  const [message,setMessage] = useState("");
+  const [error,setError] = useState("");
 
-function IssuePolicy(){
+  const [form, setForm] = useState({
+    customerId: "",
+    planId: "",
+    startDate: "",
+  });
 
+  useEffect(() => {
+    loadCustomers();
+    loadPlans();
+  }, []);
 
-const [form,setForm]=useState({
+  async function loadCustomers() {
+    try {
+      const res = await getAgentCustomers();
 
-customerId:"",
-planId:"",
-startDate:""
+      setCustomers(res.data.records || []);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
+  async function loadPlans() {
+    try {
+      const res = await getPlans();
+
+      console.log("PLANS RESPONSE", res.data);
+
+      setPlans(res.data.records || []);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  function handleChange(e) {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  }
+
+  async function submit(e) {
+    e.preventDefault();
+
+    if (!form.customerId) {
+      setError("Please select customer");
+      return;
+    }
+
+    if (!form.planId) {
+      setError("Please select plan");
+      return;
+    }
+
+    if (!form.startDate) {
+      setError("Please select start date");
+      return;
+    }
+
+    try {
+      const payload = {
+        customerId: Number(form.customerId),
+
+        planId: Number(form.planId),
+
+        startDate: form.startDate,
+      };
+
+      console.log("Sending policy data:", payload);
+
+      const response = await issuePolicy(payload);
+
+      setMessage("Policy issued successfully");
+setError("");
+
+      setForm({
+  customerId:"",
+  planId:"",
+  startDate:""
 });
+    } catch (error) {
+      console.log(error);
 
+      setError(error.response?.data?.message || "Failed to issue policy");
+    }
+  }
 
+  return (
+    <DashboardLayout>
+      <BackButton />
 
-function handleChange(e){
+      <Card title="Issue Policy">
+        {message && (
+  <div className="alert alert-success">
+    {message}
+  </div>
+)}
 
-setForm({
+{error && (
+  <div className="alert alert-danger">
+    {error}
+  </div>
+)}
+        <form onSubmit={submit}>
+          <select
+            className="form-control mb-3"
+            name="customerId"
+            value={form.customerId}
+            onChange={handleChange}
+          >
+            <option  key="customer-empty" value="">Select Customer</option>
 
-...form,
+            {customers.map((c) => (
+              <option key={c.customerId} value={c.customerId}>
+                {c.fullName}
+              </option>
+            ))}
+          </select>
 
-[e.target.name]:e.target.value
+          <select
+            className="form-control mb-3"
+            name="planId"
+            value={form.planId}
+            onChange={handleChange}
+          >
+            <option  key="plan-empty" value="">Select Plan</option>
 
-});
+            {plans.map((p) => (
+              <option key={p.planId} value={p.planId}>
+                {p.planName}
+              </option>
+            ))}
+          </select>
 
+          <input
+            className="form-control mb-3"
+            type="date"
+            name="startDate"
+            value={form.startDate}
+            onChange={handleChange}
+          />
+
+          <Button type="submit">Issue Policy</Button>
+        </form>
+      </Card>
+    </DashboardLayout>
+  );
 }
-
-
-
-
-async function submit(e){
-
-e.preventDefault();
-
-
-try{
-
-
-await issuePolicy(form);
-
-
-alert("Policy issued successfully");
-
-
-setForm({
-
-customerId:"",
-planId:"",
-startDate:""
-
-});
-
-
-}
-catch(error){
-
-
-console.log(error);
-
-alert(
-error.response?.data?.message ||
-"Failed to issue policy"
-);
-
-
-}
-
-
-
-}
-
-
-
-
-return(
-
-
-<DashboardLayout>
-
-
-<Card title="Issue Policy">
-    <BackButton/>
-
-
-
-<form onSubmit={submit}>
-
-
-<input
-
-className="form-control mb-3"
-
-name="customerId"
-
-placeholder="Customer ID"
-
-value={form.customerId}
-
-onChange={handleChange}
-
-/>
-
-
-
-<input
-
-className="form-control mb-3"
-
-name="planId"
-
-placeholder="Plan ID"
-
-value={form.planId}
-
-onChange={handleChange}
-
-/>
-
-
-
-<input
-
-className="form-control mb-3"
-
-type="date"
-
-name="startDate"
-
-value={form.startDate}
-
-onChange={handleChange}
-
-/>
-
-
-
-<Button>
-
-Issue Policy
-
-</Button>
-
-
-
-</form>
-
-
-</Card>
-
-
-</DashboardLayout>
-
-
-);
-
-
-}
-
 
 export default IssuePolicy;
