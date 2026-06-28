@@ -1,27 +1,16 @@
-import "./Modal.css";
-
-function Modal({ show, onClose, title, children, size = "md" }) {
+function Modal({ show, onClose, title, children }) {
   if (!show) return null;
 
   return (
-    <div className="custom-modal-overlay" onClick={onClose}>
-      <div
-        className={`custom-modal custom-modal-${size}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="custom-modal-header">
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
           <h5>{title}</h5>
 
-          <button
-            type="button"
-            className={`btn-close ${
-              document.body.classList.contains("dark") ? "btn-close-white" : ""
-            }`}
-            onClick={onClose}
-          />
+          <button className="btn-close" onClick={onClose}></button>
         </div>
 
-        <div className="custom-modal-body">{children}</div>
+        <div className="modal-body">{children}</div>
       </div>
     </div>
   );

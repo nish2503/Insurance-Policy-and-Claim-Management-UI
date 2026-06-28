@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import Card from "../../components/common/Card";
+import DataTable from "../../components/common/DataTable";
+import Button from "../../components/common/Button";
+import StatusBadge from "../../components/common/StatusBadge";
+import Loader from "../../components/common/Loader";
+import EmptyState from "../../components/common/EmptyState";
+import Modal from "../../components/common/Modal";
+import BackButton from "../../components/common/BackButton";
+import DashboardLayout from "../../components/layout/DashboardLayout";
 
 import DataTable from "../../components/common/DataTable";
 
@@ -15,18 +24,25 @@ import EmptyState from "../../components/common/EmptyState";
 import Card from "../../components/common/Card";
 
 import {
-    getAgentClaims,
-    reviewClaim
+  getAgentClaims,
+  reviewClaim,
+  getClaimDetails,
+  getClaimHistory,
+  viewClaimDocument,
 } from "../../api/agentApi";
-import BackButton from "../../components/common/BackButton";
-
-
-
 
 function ReviewClaims() {
   const [claims, setClaims] = useState([]);
 
-  const [loading, setLoading] = useState(true);
+    const [loading,setLoading] = useState(true);
+
+  const [selectedClaim, setSelectedClaim] = useState(null);
+
+  const [showModal, setShowModal] = useState(false);
+
+  const [decision, setDecision] = useState("");
+
+  const [remarks, setRemarks] = useState("");
 
   useEffect(() => {
     loadClaims();
@@ -34,149 +50,135 @@ function ReviewClaims() {
 
   async function loadClaims() {
     try {
-      const res = await getAgentClaims();
+      const response = await getAgentClaims();
 
-      setClaims(res.data.records || []);
+      setClaims(response.data.records || []);
     } catch (error) {
-      console.log(error);
+      console.log("Loading claims error", error);
     } finally {
       setLoading(false);
     }
   }
 
-  async function approveClaim(claimId) {
-    const data = {
-      recommendedStatus: "RECOMMENDED_APPROVAL",
-
-      remarks: "Documents verified",
-    };
-
+  async function openReview(claim) {
     try {
-      await reviewClaim(
-        claimId,
+      const details = await getClaimDetails(claim.claimId);
 
-        data,
-      );
+      const history = await getClaimHistory(claim.claimId);
 
-      loadClaims();
+      console.log("CLAIM DETAILS", details.data);
+
+      console.log("CLAIM HISTORY", history.data);
+
+      setSelectedClaim({
+        ...claim,
+
+        documents: details.data.documents || [],
+
+        history: history.data.records || history.data || [],
+
+        policyCoverageAmount: details.data.policyCoverageAmount,
+
+        remainingCoverageAmount: details.data.remainingCoverageAmount,
+      });
+
+      setShowModal(true);
     } catch (error) {
-      console.log(error);
+      console.log("Open review error", error);
     }
   }
 
-  async function rejectClaim(claimId) {
-    const data = {
-      recommendedStatus: "RECOMMENDED_REJECTION",
+ async function openDocument(documentId){
 
-      remarks: "Documents not verified",
+ try{
+
+ const response =
+ await viewClaimDocument(documentId);
+
+
+ window.open(response.request.responseURL,"_blank");
+
+
+ }catch(error){
+
+ console.log(error);
+
+ }
+
+}
+
+  async function submitReview() {
+    if (!decision) {
+      alert("Select recommendation");
+
+      return;
+    }
+
+    if (!remarks) {
+      alert("Enter remarks");
+
+      return;
+    }
+
+    const request = {
+      recommendedStatus: decision,
+
+      remarks: remarks,
     };
 
     try {
       await reviewClaim(
-        claimId,
+        selectedClaim.claimId,
 
-        data,
+        request,
       );
 
-            loadClaims();
+      alert("Claim reviewed successfully");
 
+      setShowModal(false);
 
-        }
-        catch(error){
+      setDecision("");
 
+      setRemarks("");
 
-            console.log(error);
+      setSelectedClaim(null);
 
-
-        }
-
-
+      loadClaims();
+    } catch (error) {
+      console.log("Review error", error);
     }
+  }
 
-
-
-
-
-
-
-
-    if(loading){
-
-
-        return(
-
-            <DashboardLayout>
-
-                <Loader/>
-                
-
-            </DashboardLayout>
-
-        )
-
-    }
-
-
-
-
-
-
-  // Agent receives SUBMITTED claims
-
-    const pendingClaims = claims.filter(
-
-        c => c.claimStatus === "SUBMITTED"
-
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <Loader />
+      </DashboardLayout>
     );
+  }
 
+  const pendingClaims = claims.filter(
+    (claim) => claim.claimStatus === "SUBMITTED",
+  );
 
+  return (
+    <DashboardLayout>
+      <Card title="Review Claims">
+        <BackButton />
 
+        {pendingClaims.length > 0 ? (
+          <DataTable
+            columns={[
+              {
+                key: "claimNumber",
 
-
-
-
-
-    return(
-
-
-        <DashboardLayout>
-
-
-            <Card title="Review Claims">
-
-                <BackButton/>
-
-
-
-            {
-
-                pendingClaims.length ?
-
-
-
-                <DataTable
-
-
-
-                    columns={[
-
-
-
-                        {
-
-                label: "Claim ID",
+                label: "Claim",
               },
 
               {
                 key: "customerName",
 
                 label: "Customer",
-              },
-
-              {
-                key: "policyNumber",
-
-                label: "Policy",
               },
 
               {
@@ -199,95 +201,102 @@ function ReviewClaims() {
                 label: "Action",
 
                 render: (row) => (
-                  <div className="d-flex gap-2">
-                    <Button onClick={() => approveClaim(row.claimId)}>
-                      Approve
-                    </Button>
+                  <Button onClick={() => openReview(row)}>Review</Button>
+                ),
+              },
+            ]}
+            data={pendingClaims}
+          />
+        ) : (
+          <EmptyState message="No Pending Claims" />
+        )}
+      </Card>
 
-                                    <Button
+      <Modal
+        show={showModal}
+        onClose={() => {
+          setShowModal(false);
 
+          setSelectedClaim(null);
+        }}
+        title="Claim Review"
+      >
+        {selectedClaim && (
+          <>
+            <h6>Customer :{selectedClaim.customerName}</h6>
 
-                                        className="btn btn-danger"
+            <p>Policy :{selectedClaim.policyNumber}</p>
 
+            <p>Claim Amount :{selectedClaim.claimAmount}</p>
 
-                                        onClick={
+            <p>Coverage :{selectedClaim.policyCoverageAmount}</p>
 
-                                            ()=>rejectClaim(
+            <p>Remaining :{selectedClaim.remainingCoverageAmount}</p>
 
-                                                row.claimId
+            <h6>Documents</h6>
 
-                                            )
+            {selectedClaim.documents.length > 0 ? (
+              selectedClaim.documents.map((doc) => (
+                <div key={doc.documentId}>
+                  <Button onClick={() => openDocument(doc.documentId)}>
+                    {doc.documentName}
+                    
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <p>No documents submitted</p>
+            )}
 
-                                        }
+            <h6>Claim History</h6>
 
-                                    >
+            {selectedClaim.history.length > 0 ? (
+              selectedClaim.history.map((item, index) => (
+                <div key={index}>
+                  <p>
+                    {item.previousStatus}
 
-                                        Reject
+                    {" → "}
 
+                    {item.newStatus}
+                  </p>
 
-                                    </Button>
+                  <p>{item.remarks}</p>
 
+                  <hr />
+                </div>
+              ))
+            ) : (
+              <p>No history available</p>
+            )}
 
+            <h6>Recommendation</h6>
 
+            <select
+              className="form-control mb-3"
+              value={decision}
+              onChange={(e) => setDecision(e.target.value)}
+            >
+              <option value="">Select</option>
 
-                                </div>
+              <option value="RECOMMENDED_APPROVAL">Recommend Approval</option>
 
+              <option value="RECOMMENDED_REJECTION">Recommend Rejection</option>
+            </select>
 
-                            )
+            <textarea
+              className="form-control mb-3"
+              placeholder="Remarks"
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+            />
 
-
-                        }
-
-
-
-
-                    ]}
-
-
-
-
-
-                    data={pendingClaims}
-                    searchKeys={[
-"claimNumber",
-"policyNumber",
-"customerName"
-]}
-
-
-
-
-                />
-
-
-
-
-
-                :
-
-
-
-                <EmptyState
-
-                    message="No Pending Claims"
-
-                />
-
-
-
-            }
-
-
-
-            </Card>
-
-
-        </DashboardLayout>
-
-
-    );
-
-
+            <Button onClick={submitReview}>Submit Review</Button>
+          </>
+        )}
+      </Modal>
+    </DashboardLayout>
+  );
 }
 
 export default ReviewClaims;
