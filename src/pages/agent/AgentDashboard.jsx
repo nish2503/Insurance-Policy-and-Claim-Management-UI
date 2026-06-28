@@ -31,7 +31,7 @@ function AgentDashboard() {
   async function handleReview(id) {
     const data = {
       recommendedStatus: "APPROVED",
-      remarks: "Documents verified"
+      remarks: "Documents verified",
     };
 
     try {
@@ -50,12 +50,11 @@ function AgentDashboard() {
     );
   }
 
-  const pendingClaims = claims.filter(c => c.status === "PENDING");
+  const pendingClaims = claims.filter((c) => c.status === "PENDING");
 
   return (
     <DashboardLayout>
       <div className="agent-dashboard-container">
-        
         <style>{`
           .agent-dashboard-container {
             font-family: 'Inter', system-ui, sans-serif !important;
@@ -104,7 +103,10 @@ function AgentDashboard() {
 
         <div className="agent-header-panel">
           <h2>Agent Processing Center ⚡</h2>
-          <p>Reviewing and auditing incoming policy claims pending manual security clearance confirmation.</p>
+          <p>
+            Reviewing and auditing incoming policy claims pending manual
+            security clearance confirmation.
+          </p>
         </div>
 
         <Card title="Claims Verification Queue">
@@ -117,7 +119,7 @@ function AgentDashboard() {
                 {
                   key: "status",
                   label: "Status",
-                  render: (row) => <StatusBadge status={row.status} />
+                  render: (row) => <StatusBadge status={row.status} />,
                 },
                 {
                   key: "action",
@@ -126,8 +128,8 @@ function AgentDashboard() {
                     <Button onClick={() => handleReview(row.id)}>
                       Review Verification
                     </Button>
-                  )
-                }
+                  ),
+                },
               ]}
               data={pendingClaims}
             />

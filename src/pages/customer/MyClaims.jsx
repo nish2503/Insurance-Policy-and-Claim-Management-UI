@@ -1,5 +1,4 @@
-import {useEffect,useState} from "react";
-
+import { useEffect, useState } from "react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 
@@ -17,22 +16,14 @@ getMyClaims
 } from "../../api/customerApi";
 import BackButton from "../../components/common/BackButton";
 
+function MyClaims() {
+  const [claims, setClaims] = useState([]);
 
+  const [loading, setLoading] = useState(true);
 
-function MyClaims(){
-
-
-const [claims,setClaims]=useState([]);
-
-const [loading,setLoading]=useState(true);
-
-
-
-useEffect(()=>{
-
-loadClaims();
-
-},[]);
+  useEffect(() => {
+    loadClaims();
+  }, []);
 
 
 
@@ -187,6 +178,5 @@ message="No Claims Found"
 
 
 }
-
 
 export default MyClaims;

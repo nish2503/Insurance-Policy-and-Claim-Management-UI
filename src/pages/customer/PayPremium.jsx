@@ -1,4 +1,4 @@
-import {useEffect,useState} from "react";
+import { useEffect, useState } from "react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
@@ -10,93 +10,48 @@ import {
 import BackButton from "../../components/common/BackButton";
 
 
-function PayPremium(){
+function PayPremium() {
+  const [policies, setPolicies] = useState([]);
 
+  const [selectedPolicy, setSelectedPolicy] = useState("");
 
-const [policies,setPolicies]=useState([]);
+  const [amount, setAmount] = useState("");
 
-const [selectedPolicy,setSelectedPolicy]=useState("");
+  useEffect(() => {
+    loadPolicies();
+  }, []);
 
-const [amount,setAmount]=useState("");
+  async function loadPolicies() {
+    try {
+      const res = await getMyPolicies();
 
+      setPolicies(res.data.records || []);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
+  async function handlePayment(e) {
+    e.preventDefault();
 
-useEffect(()=>{
+    try {
+      await payPremium({
+        policyId: selectedPolicy,
 
-loadPolicies();
+        amount: amount,
 
-},[]);
+        paymentMode: "UPI",
 
+        transactionReference: "TXN" + Date.now(),
 
+        paymentStatus: "SUCCESS",
+      });
 
-async function loadPolicies(){
+      alert("Premium Paid Successfully");
 
-try{
-
-const res=await getMyPolicies();
-
-setPolicies(
-res.data.records || []
-);
-
-
-}
-catch(error){
-
-console.log(error);
-
-}
-
-}
-
-
-
-
-async function handlePayment(e){
-
-e.preventDefault();
-
-
-try{
-
-
-await payPremium({
-
-
-policyId:selectedPolicy,
-
-
-amount:amount,
-
-
-paymentMode:"UPI",
-
-
-transactionReference:
-"TXN"+Date.now(),
-
-
-paymentStatus:"SUCCESS"
-
-
-});
-
-
-
-alert(
-"Premium Paid Successfully"
-);
-
-
-
-setAmount("");
-
-
-
-}
-catch(error){
-
-console.log(error);
+      setAmount("");
+    } catch (error) {
+      console.log(error);
 
 
 alert(
@@ -131,106 +86,34 @@ Select Policy
 </label>
 
 
-<select
+          <select
+            className="form-control"
+            value={selectedPolicy}
+            onChange={(e) => setSelectedPolicy(e.target.value)}
+          >
+            <option value="">Select</option>
 
-className="form-control"
+            {policies.map((p) => (
+              <option key={p.policyId} value={p.policyId}>
+                {p.policyNumber}-{p.planName}
+              </option>
+            ))}
+          </select>
 
-value={selectedPolicy}
+          <label className="mt-3">Amount</label>
 
-onChange={
-e=>setSelectedPolicy(e.target.value)
+          <input
+            type="number"
+            className="form-control"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+
+          <button className="btn btn-success mt-3">Pay Now</button>
+        </form>
+      </Card>
+    </DashboardLayout>
+  );
 }
-
->
-
-
-<option value="">
-Select
-</option>
-
-
-{
-
-policies.map(p=>(
-
-
-<option
-
-key={p.policyId}
-
-value={p.policyId}
-
->
-
-
-{p.policyNumber}
--
-{p.planName}
-
-
-</option>
-
-
-))
-
-
-}
-
-
-</select>
-
-
-
-
-<label className="mt-3">
-
-Amount
-
-</label>
-
-
-<input
-
-type="number"
-
-className="form-control"
-
-value={amount}
-
-onChange={
-e=>setAmount(e.target.value)
-}
-
-/>
-
-
-
-<button
-
-className="btn btn-success mt-3"
-
->
-
-Pay Now
-
-</button>
-
-
-
-</form>
-
-
-
-</Card>
-
-
-</DashboardLayout>
-
-
-)
-
-
-}
-
 
 export default PayPremium;

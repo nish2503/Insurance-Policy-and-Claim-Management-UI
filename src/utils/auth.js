@@ -1,27 +1,17 @@
-export function logout(){
+export function logout() {
+  localStorage.removeItem("token");
 
-localStorage.removeItem("token");
+  localStorage.removeItem("role");
 
-localStorage.removeItem("role");
+  localStorage.removeItem("email");
 
-localStorage.removeItem("email");
-
-window.location.href="/";
-
+  window.location.href = "/";
 }
 
-
-
-export function getRole(){
-
-return localStorage.getItem("role");
-
+export function getRole() {
+  return localStorage.getItem("role");
 }
 
-
-
-export function isLoggedIn(){
-
-return !!localStorage.getItem("token");
-
+export function isLoggedIn() {
+  return !!localStorage.getItem("token");
 }

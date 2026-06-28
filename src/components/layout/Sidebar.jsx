@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "../../features/auth/authSlice"; // Adjust if authSlice path differs
-import ThemeButton from "../common/ThemeButton"; 
+import ThemeButton from "../common/ThemeButton";
 
 function Sidebar() {
   const role = localStorage.getItem("role");
@@ -139,35 +139,120 @@ function Sidebar() {
         {/* --- 👑 ADMIN NAVIGATION CHANNELS --- */}
         {role === "ADMIN" && (
           <>
-            <Link to="/admin" className={`sidebar-link ${isActive("/admin") ? "active" : ""}`}>📊 Dashboard</Link>
-            <Link to="/admin/customers" className={`sidebar-link ${isActive("/admin/customers") ? "active" : ""}`}>👥 Customers</Link>
-            <Link to="/admin/products" className={`sidebar-link ${isActive("/admin/products") ? "active" : ""}`}>📦 Products</Link>
-            <Link to="/admin/plans" className={`sidebar-link ${isActive("/admin/plans") ? "active" : ""}`}>📋 Plans</Link>
+            <Link
+              to="/admin"
+              className={`sidebar-link ${isActive("/admin") ? "active" : ""}`}
+            >
+              📊 Dashboard
+            </Link>
+            <Link
+              to="/admin/customers"
+              className={`sidebar-link ${isActive("/admin/customers") ? "active" : ""}`}
+            >
+              👥 Customers
+            </Link>
+            <Link
+              to="/admin/products"
+              className={`sidebar-link ${isActive("/admin/products") ? "active" : ""}`}
+            >
+              📦 Products
+            </Link>
+            <Link
+              to="/admin/plans"
+              className={`sidebar-link ${isActive("/admin/plans") ? "active" : ""}`}
+            >
+              📋 Plans
+            </Link>
           </>
         )}
 
         {/* --- ⚡ AGENT NAVIGATION CHANNELS (RESTORED & FIXED) --- */}
         {role === "AGENT" && (
           <>
-            <Link to="/agent" className={`sidebar-link ${isActive("/agent") ? "active" : ""}`}>📊 Dashboard</Link>
-            <Link to="/agent/customers" className={`sidebar-link ${isActive("/agent/customers") ? "active" : ""}`}>👥 Customers</Link>
-            <Link to="/agent/issue-policy" className={`sidebar-link ${isActive("/agent/issue-policy") ? "active" : ""}`}>✍️ Issue Policy</Link>
-            <Link to="/agent/policies" className={`sidebar-link ${isActive("/agent/policies") ? "active" : ""}`}>📄 Policies</Link>
-            <Link to="/agent/review-claims" className={`sidebar-link ${isActive("/agent/review-claims") ? "active" : ""}`}>🚑 Claims Queue</Link>
-            <Link to="/agent/payments" className={`sidebar-link ${isActive("/agent/payments") ? "active" : ""}`}>💳 Payments</Link>
+            <Link
+              to="/agent"
+              className={`sidebar-link ${isActive("/agent") ? "active" : ""}`}
+            >
+              📊 Dashboard
+            </Link>
+            <Link
+              to="/agent/customers"
+              className={`sidebar-link ${isActive("/agent/customers") ? "active" : ""}`}
+            >
+              👥 Customers
+            </Link>
+            <Link
+              to="/agent/issue-policy"
+              className={`sidebar-link ${isActive("/agent/issue-policy") ? "active" : ""}`}
+            >
+              ✍️ Issue Policy
+            </Link>
+            <Link
+              to="/agent/policies"
+              className={`sidebar-link ${isActive("/agent/policies") ? "active" : ""}`}
+            >
+              📄 Policies
+            </Link>
+            <Link
+              to="/agent/review-claims"
+              className={`sidebar-link ${isActive("/agent/review-claims") ? "active" : ""}`}
+            >
+              🚑 Claims Queue
+            </Link>
+            <Link
+              to="/agent/payments"
+              className={`sidebar-link ${isActive("/agent/payments") ? "active" : ""}`}
+            >
+              💳 Payments
+            </Link>
           </>
         )}
 
         {/* --- 👤 CUSTOMER NAVIGATION CHANNELS --- */}
         {role === "CUSTOMER" && (
           <>
-            <Link to="/customer" className={`sidebar-link ${isActive("/customer") ? "active" : ""}`}>📊 Dashboard</Link>
-            <Link to="/customer/profile" className={`sidebar-link ${isActive("/customer/profile") ? "active" : ""}`}>👤 My Profile</Link>
-            <Link to="/customer/products" className={`sidebar-link ${isActive("/customer/products") ? "active" : ""}`}>🔍 Browse Products</Link>
-            <Link to="/customer/policies" className={`sidebar-link ${isActive("/customer/policies") ? "active" : ""}`}>📄 My Policies</Link>
-            <Link to="/customer/claims" className={`sidebar-link ${isActive("/customer/claims") ? "active" : ""}`}>🩹 My Claims</Link>
-            <Link to="/customer/premium-payments" className={`sidebar-link ${isActive("/customer/premium-payments") ? "active" : ""}`}>💳 Payments</Link>
-            <Link to="/customer/raise-claim" className={`sidebar-link ${isActive("/customer/raise-claim") ? "active" : ""}`}>🚑 Raise Claim</Link>
+            <Link
+              to="/customer"
+              className={`sidebar-link ${isActive("/customer") ? "active" : ""}`}
+            >
+              📊 Dashboard
+            </Link>
+            <Link
+              to="/customer/profile"
+              className={`sidebar-link ${isActive("/customer/profile") ? "active" : ""}`}
+            >
+              👤 My Profile
+            </Link>
+            <Link
+              to="/customer/products"
+              className={`sidebar-link ${isActive("/customer/products") ? "active" : ""}`}
+            >
+              🔍 Browse Products
+            </Link>
+            <Link
+              to="/customer/policies"
+              className={`sidebar-link ${isActive("/customer/policies") ? "active" : ""}`}
+            >
+              📄 My Policies
+            </Link>
+            <Link
+              to="/customer/claims"
+              className={`sidebar-link ${isActive("/customer/claims") ? "active" : ""}`}
+            >
+              🩹 My Claims
+            </Link>
+            <Link
+              to="/customer/premium-payments"
+              className={`sidebar-link ${isActive("/customer/premium-payments") ? "active" : ""}`}
+            >
+              💳 Payments
+            </Link>
+            <Link
+              to="/customer/raise-claim"
+              className={`sidebar-link ${isActive("/customer/raise-claim") ? "active" : ""}`}
+            >
+              🚑 Raise Claim
+            </Link>
           </>
         )}
       </div>

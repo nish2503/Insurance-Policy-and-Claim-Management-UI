@@ -3,7 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import DashboardCard from "../../components/common/DashboardCard";
 import Loader from "../../components/common/Loader";
-import { getMyProfile, getMyClaims, getMyPolicies, getMyPremiumPayments } from "../../api/customerApi";
+import {
+  getMyProfile,
+  getMyClaims,
+  getMyPolicies,
+  getMyPremiumPayments,
+} from "../../api/customerApi";
 
 function CustomerDashboard() {
   const [profile, setProfile] = useState(null);
@@ -48,13 +53,12 @@ function CustomerDashboard() {
   }
 
   const pendingPremiumTotal = payments
-    .filter(p => p.paymentStatus === "PENDING")
+    .filter((p) => p.paymentStatus === "PENDING")
     .reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <DashboardLayout>
       <div className="dashboard-container">
-        
         <style>{`
           .dashboard-container {
             padding: 10px 0 !important;
@@ -192,21 +196,40 @@ function CustomerDashboard() {
 
         <div className="dashboard-header">
           <h2>Welcome, {profile?.fullName || "Valued Customer"} 👋</h2>
-          <p>Real-time analytics and overview of your active insurance protection asset portfolio.</p>
+          <p>
+            Real-time analytics and overview of your active insurance protection
+            asset portfolio.
+          </p>
         </div>
 
         <div className="row g-4 mt-2">
           <div className="col-12 col-sm-6 col-md-3">
-            <DashboardCard title="Profile Status" count="Active Account" variant="success" />
+            <DashboardCard
+              title="Profile Status"
+              count="Active Account"
+              variant="success"
+            />
           </div>
           <div className="col-12 col-sm-6 col-md-3">
-            <DashboardCard title="My Policies" count={policies.length} variant="primary" />
+            <DashboardCard
+              title="My Policies"
+              count={policies.length}
+              variant="primary"
+            />
           </div>
           <div className="col-12 col-sm-6 col-md-3">
-            <DashboardCard title="Claims Filed" count={claims.length} variant="info" />
+            <DashboardCard
+              title="Claims Filed"
+              count={claims.length}
+              variant="info"
+            />
           </div>
           <div className="col-12 col-sm-6 col-md-3">
-            <DashboardCard title="Premium Due" count={`$${pendingPremiumTotal.toLocaleString()}`} variant="warning" />
+            <DashboardCard
+              title="Premium Due"
+              count={`$${pendingPremiumTotal.toLocaleString()}`}
+              variant="warning"
+            />
           </div>
         </div>
 
@@ -216,25 +239,37 @@ function CustomerDashboard() {
             <Link to="/customer/products" className="action-card">
               <div className="action-icon-wrapper">🛡️</div>
               <h5>Browse Plans</h5>
-              <p>Explore comprehensive risk coverage layouts and instant active solutions.</p>
+              <p>
+                Explore comprehensive risk coverage layouts and instant active
+                solutions.
+              </p>
             </Link>
 
             <Link to="/customer/policies" className="action-card">
               <div className="action-icon-wrapper">📄</div>
               <h5>My Policies</h5>
-              <p>Inspect active policies guidelines, declarations, and coverage tables.</p>
+              <p>
+                Inspect active policies guidelines, declarations, and coverage
+                tables.
+              </p>
             </Link>
 
             <Link to="/customer/premium-payments" className="action-card">
               <div className="action-icon-wrapper">💳</div>
               <h5>Pay Premium</h5>
-              <p>Execute balance settlements secure via instant transactional pathways.</p>
+              <p>
+                Execute balance settlements secure via instant transactional
+                pathways.
+              </p>
             </Link>
 
             <Link to="/customer/raise-claim" className="action-card">
               <div className="action-icon-wrapper">🚑</div>
               <h5>Raise Claim</h5>
-              <p>Submit claim assessments directly to the automated verification queue.</p>
+              <p>
+                Submit claim assessments directly to the automated verification
+                queue.
+              </p>
             </Link>
           </div>
         </div>
@@ -256,7 +291,6 @@ function CustomerDashboard() {
             </div>
           </div>
         </div>
-
       </div>
     </DashboardLayout>
   );

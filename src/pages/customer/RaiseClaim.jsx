@@ -1,132 +1,78 @@
-import {useEffect,useState} from "react";
+import { useEffect, useState } from "react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 import BackButton from "../../components/common/BackButton";
 import {
- getMyPolicies,
- raiseClaim,
- uploadClaimDocument
+  getMyPolicies,
+  raiseClaim,
+  uploadClaimDocument,
 } from "../../api/customerApi";
 
+function RaiseClaim() {
+  const [policies, setPolicies] = useState([]);
 
-function RaiseClaim(){
+  const [policyId, setPolicyId] = useState("");
 
+  const [claimAmount, setClaimAmount] = useState("");
 
-const [policies,setPolicies]=useState([]);
+  const [claimReason, setClaimReason] = useState("");
 
-const [policyId,setPolicyId]=useState("");
+  const [incidentDate, setIncidentDate] = useState("");
 
-const [claimAmount,setClaimAmount]=useState("");
+  const [file, setFile] = useState(null);
 
-const [claimReason,setClaimReason]=useState("");
+  const [document, setDocument] = useState(null);
 
-const [incidentDate,setIncidentDate]=useState("");
+  useEffect(() => {
+    loadPolicies();
+  }, []);
 
-const [file,setFile]=useState(null);
+  async function loadPolicies() {
+    try {
+      const res = await getMyPolicies();
 
-const [document,setDocument]=useState(null);
+      setPolicies(res.data.records || []);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
+  async function handleSubmit(e) {
+    e.preventDefault();
 
+    try {
+      let uploadedDocument = [];
 
-useEffect(()=>{
+      if (file) {
+        const uploadResponse = await uploadClaimDocument(file);
 
-loadPolicies();
+        uploadedDocument = [
+          {
+            documentName: file.name,
 
-},[]);
+            documentType: file.type,
 
+            documentReference: uploadResponse.data.fileUrl,
+          },
+        ];
+      }
 
+      await raiseClaim({
+        policyId,
 
-async function loadPolicies(){
+        claimAmount,
 
-try{
+        claimReason,
 
-const res=await getMyPolicies();
+        incidentDate,
 
-setPolicies(
-res.data.records || []
-);
+        supportingDocuments: uploadedDocument,
+      });
 
-
-}
-catch(error){
-
-console.log(error);
-
-}
-
-}
-
-async function handleSubmit(e){
-
-e.preventDefault();
-
-
-try{
-
-
-let uploadedDocument=[];
-
-
-
-if(file){
-
-
-const uploadResponse =
-await uploadClaimDocument(file);
-
-
-
-uploadedDocument=[
-
-{
-
-documentName:file.name,
-
-documentType:file.type,
-
-documentReference:
-uploadResponse.data.fileUrl
-
-}
-
-];
-
-
-}
-
-
-
-await raiseClaim({
-
-
-policyId,
-
-claimAmount,
-
-claimReason,
-
-incidentDate,
-
-
-supportingDocuments:
-uploadedDocument
-
-
-});
-
-
-
-alert(
-"Claim Raised Successfully"
-);
-
-
-}
-
-catch(error){
-
-console.log(error);
+      alert("Claim Raised Successfully");
+    } catch (error) {
+      console.log(error);
 
 
 alert(
@@ -161,173 +107,59 @@ Select Policy
 </label>
 
 
-<select
+          <select
+            className="form-control"
+            value={policyId}
+            onChange={(e) => setPolicyId(e.target.value)}
+          >
+            <option value="">Select Policy</option>
 
-className="form-control"
+            {policies.map((p) => (
+              <option key={p.policyId} value={p.policyId}>
+                {p.policyNumber}-{p.planName}
+              </option>
+            ))}
+          </select>
 
-value={policyId}
+          <label className="mt-3">Claim Amount</label>
 
-onChange={
-e=>setPolicyId(e.target.value)
+          <input
+            type="number"
+            className="form-control"
+            value={claimAmount}
+            onChange={(e) => setClaimAmount(e.target.value)}
+          />
+
+          <label className="mt-3">Reason</label>
+
+          <textarea
+            className="form-control"
+            value={claimReason}
+            onChange={(e) => setClaimReason(e.target.value)}
+          />
+
+          <label className="mt-3">Incident Date</label>
+
+          <input
+            type="date"
+            className="form-control"
+            value={incidentDate}
+            onChange={(e) => setIncidentDate(e.target.value)}
+          />
+
+          <label className="mt-3">Supporting Document</label>
+
+          <input
+            type="file"
+            className="form-control"
+            onChange={(e) => setFile(e.target.files[0])}
+          />
+
+          <button className="btn btn-danger mt-3">Submit Claim</button>
+        </form>
+      </Card>
+    </DashboardLayout>
+  );
 }
-
->
-
-
-<option value="">
-Select Policy
-</option>
-
-
-{
-
-policies.map(p=>(
-
-
-<option
-
-key={p.policyId}
-
-value={p.policyId}
-
->
-
-
-{p.policyNumber}
-
--
-{p.planName}
-
-
-</option>
-
-
-))
-
-
-}
-
-
-</select>
-
-
-
-
-<label className="mt-3">
-
-Claim Amount
-
-</label>
-
-
-<input
-
-type="number"
-
-className="form-control"
-
-value={claimAmount}
-
-onChange={
-e=>setClaimAmount(e.target.value)
-}
-
-/>
-
-
-
-
-
-<label className="mt-3">
-
-Reason
-
-</label>
-
-
-<textarea
-
-className="form-control"
-
-value={claimReason}
-
-onChange={
-e=>setClaimReason(e.target.value)
-}
-
-/>
-
-
-
-
-
-<label className="mt-3">
-
-Incident Date
-
-</label>
-
-
-<input
-
-type="date"
-
-className="form-control"
-
-value={incidentDate}
-
-onChange={
-e=>setIncidentDate(e.target.value)
-}
-
-/>
-
-<label className="mt-3">
-
-Supporting Document
-
-</label>
-
-
-<input
-
-type="file"
-
-className="form-control"
-
-onChange={
-e=>setFile(e.target.files[0])
-}
-
-/>
-
-
-
-<button
-
-className="btn btn-danger mt-3"
-
->
-
-Submit Claim
-
-</button>
-
-
-
-</form>
-
-
-</Card>
-
-
-</DashboardLayout>
-
-
-)
-
-
-}
-
 
 export default RaiseClaim;

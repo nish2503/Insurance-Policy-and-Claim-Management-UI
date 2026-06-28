@@ -1,0 +1,63 @@
+body{
+    background:var(--bg-main);
+    color:var(--text-main);
+}
+
+.card{
+    background:var(--panel-bg);
+    color:var(--text-main);
+    border:1px solid var(--border-color);
+    box-shadow:var(--card-shadow);
+}
+
+.table {
+    color: var(--text-main) !important;
+    background-color: var(--table-bg) !important;
+}
+
+.table tbody tr,
+.table tbody td {
+    background-color: var(--table-bg) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+.table thead th {
+    background-color: var(--table-header) !important;
+    color: white !important;
+    border-color: var(--border-color) !important;
+}
+
+.form-control,
+.form-select {
+
+    background-color: var(--input-bg) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+
+}
+
+.form-control:focus,
+.form-select:focus {
+
+    background-color: var(--input-bg) !important;
+    color: var(--text-main) !important;
+    border-color: var(--primary) !important;
+    box-shadow: none !important;
+
+}
+
+.modal-content{
+
+    background:var(--modal-bg);
+    color:var(--text-main);
+
+}
+
+option{
+
+    background:var(--panel-bg);
+
+    color:var(--text-main);
+
+}

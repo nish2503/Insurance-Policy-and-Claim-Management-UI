@@ -1,4 +1,3 @@
 import api from "./axios";
 
-export const getPlans = () =>
-  api.get("/plans");
+export const getPlans = () => api.get("/plans");

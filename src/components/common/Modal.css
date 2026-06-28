@@ -1,0 +1,109 @@
+.custom-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.custom-modal {
+  background-color: var(--modal-bg) !important;
+
+  color: var(--text-main) !important;
+
+  border-radius: 12px;
+
+  width: 650px;
+
+  max-height: 90vh;
+
+  overflow: auto;
+
+  box-shadow: var(--card-shadow);
+}
+
+.custom-modal-header {
+  background-color: var(--modal-bg) !important;
+
+  color: var(--text-main) !important;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: 18px 24px;
+
+  border-bottom: 1px solid var(--border-color);
+}
+
+.custom-modal-body {
+  background-color: var(--modal-bg) !important;
+
+  color: var(--text-main) !important;
+
+  padding: 24px;
+}
+
+.custom-modal,
+.custom-modal *{
+
+    color:var(--text-main);
+
+}
+
+.custom-modal{
+
+    background-color:var(--modal-bg)!important;
+
+}
+
+.custom-modal-body{
+
+    background-color:var(--modal-bg)!important;
+
+}
+
+.custom-modal table{
+
+    background:transparent!important;
+
+}
+
+.custom-modal table td,
+.custom-modal table th{
+
+    background:transparent!important;
+
+}
+
+/* Customer Details Modal */
+
+.customer-details-table,
+.customer-details-table tbody,
+.customer-details-table tr,
+.customer-details-table td,
+.customer-details-table th {
+
+    background: transparent !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+
+}
+
+.customer-details-table th{
+
+    width: 180px;
+    font-weight: 600;
+    color: var(--text-main) !important;
+
+}
+
+.customer-details-table td{
+
+    color: var(--text-main) !important;
+
+}

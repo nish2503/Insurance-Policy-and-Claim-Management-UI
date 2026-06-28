@@ -26,14 +26,21 @@ function Login() {
           token: data.jwtToken,
           role: data.userRole,
           user: data,
-        })
+        }),
       );
 
       switch (data.userRole) {
-        case "ADMIN": navigate("/admin"); break;
-        case "AGENT": navigate("/agent"); break;
-        case "CUSTOMER": navigate("/customer"); break;
-        default: alert("Invalid system role assigned.");
+        case "ADMIN":
+          navigate("/admin");
+          break;
+        case "AGENT":
+          navigate("/agent");
+          break;
+        case "CUSTOMER":
+          navigate("/customer");
+          break;
+        default:
+          alert("Invalid system role assigned.");
       }
     } catch (error) {
       alert(error.response?.data?.message || "Login Failed");
@@ -201,7 +208,11 @@ function Login() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? <i className="bi bi-eye-slash-fill"></i> : <i className="bi bi-eye-fill"></i>}
+              {showPassword ? (
+                <i className="bi bi-eye-slash-fill"></i>
+              ) : (
+                <i className="bi bi-eye-fill"></i>
+              )}
             </button>
           </div>
 
@@ -212,7 +223,9 @@ function Login() {
 
         {/* 🚨 Integrated navigation links directly routing recovery paths */}
         <div className="auth-footer-nav">
-          <span onClick={() => navigate("/forgot-password")}>Forgot Password?</span>
+          <span onClick={() => navigate("/forgot-password")}>
+            Forgot Password?
+          </span>
           <span onClick={() => navigate("/register")}>Create Profile</span>
         </div>
       </div>

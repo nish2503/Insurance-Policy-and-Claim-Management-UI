@@ -1,4 +1,4 @@
-import Sidebar from "../layout/Sidebar"; 
+import Sidebar from "../layout/Sidebar";
 
 function DashboardLayout({ children }) {
   return (
@@ -40,9 +40,7 @@ function DashboardLayout({ children }) {
 
       <Sidebar />
 
-      <main className="main-content-area">
-        {children}
-      </main>
+      <main className="main-content-area">{children}</main>
     </div>
   );
 }

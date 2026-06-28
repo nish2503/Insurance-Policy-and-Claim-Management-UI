@@ -9,6 +9,19 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import Modal from "../../components/common/Modal";
 import BackButton from "../../components/common/BackButton";
+import DashboardLayout from "../../components/layout/DashboardLayout";
+
+import DataTable from "../../components/common/DataTable";
+
+import Button from "../../components/common/Button";
+
+import StatusBadge from "../../components/common/StatusBadge";
+
+import Loader from "../../components/common/Loader";
+
+import EmptyState from "../../components/common/EmptyState";
+
+import Card from "../../components/common/Card";
 
 import {
   getAgentClaims,
@@ -21,7 +34,7 @@ import {
 function ReviewClaims() {
   const [claims, setClaims] = useState([]);
 
-  const [loading, setLoading] = useState(true);
+    const [loading,setLoading] = useState(true);
 
   const [selectedClaim, setSelectedClaim] = useState(null);
 

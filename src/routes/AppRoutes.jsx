@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import Customers from "../pages/admin/Customers";
 
 import Home from "../pages/public/Home";
 import Login from "../pages/public/Login";
@@ -45,6 +46,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRole="ADMIN">
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/customers"
+        element={
+          <ProtectedRoute allowedRole="ADMIN">
+            <Customers />
           </ProtectedRoute>
         }
       />
@@ -149,34 +158,31 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/customer/premium-payments"
+        element={
+          <ProtectedRoute allowedRole="CUSTOMER">
+            <PayPremium />
+          </ProtectedRoute>
+        }
+      />
 
-path="/customer/premium-payments"
+      <Route
+        path="/customer/raise-claim"
+        element={
+          <ProtectedRoute allowedRole="CUSTOMER">
+            <RaiseClaim />
+          </ProtectedRoute>
+        }
+      />
 
-element={<ProtectedRoute allowedRole="CUSTOMER"><PayPremium/></ProtectedRoute>}
-
-/>
-
-<Route
-
-path="/customer/raise-claim"
-
-element={<ProtectedRoute allowedRole="CUSTOMER">
-  <RaiseClaim/>
-</ProtectedRoute>
-}
-
-/>
-
-
-<Route
-
-path="/customer/claims"
-
-element={<ProtectedRoute allowedRole="CUSTOMER">
-  <MyClaims/>
-</ProtectedRoute>}
-
-/>
+      <Route
+        path="/customer/claims"
+        element={
+          <ProtectedRoute allowedRole="CUSTOMER">
+            <MyClaims />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
