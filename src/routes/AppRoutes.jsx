@@ -26,6 +26,7 @@ import MyPolicies from "../pages/customer/MyPolicies";
 import PayPremium from "../pages/customer/PayPremium";
 import RaiseClaim from "../pages/customer/RaiseClaim";
 import MyClaims from "../pages/customer/MyClaims";
+import Profile from "../pages/customer/MyProfile";
 
 import ProtectedRoute from "../components/protected/ProtectedRoute";
 
@@ -125,6 +126,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+ path="/customer/profile"
+ element={
+  <ProtectedRoute allowedRole="CUSTOMER">
+    <Profile />
+  </ProtectedRoute>
+ }
+/>
       <Route
         path="/customer/products"
         element={

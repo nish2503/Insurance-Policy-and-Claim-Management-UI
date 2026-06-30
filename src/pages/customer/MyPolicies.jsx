@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 import DataTable from "../../components/common/DataTable";
 import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import BackButton from "../../components/common/BackButton";
-
+import StatusBadge from "../../components/common/StatusBadge";
 import { getMyPolicies } from "../../api/customerApi";
 
 function MyPolicies() {
@@ -20,7 +19,7 @@ function MyPolicies() {
   async function loadPolicies() {
     try {
       const res = await getMyPolicies();
-      setPolicies(res.data.records || []);
+      setPolicies(res.data.records || res.data.content || res.data || []);
     } catch (error) {
       console.log(error);
     } finally {
@@ -61,7 +60,7 @@ function MyPolicies() {
                 label: "Premium",
               },
               {
-                key: "policyStatus",
+                key: "policyStatusCustom",
                 label: "Status",
               },
               {
@@ -72,13 +71,14 @@ function MyPolicies() {
             data={policies.map((p) => ({
               ...p,
               coverageAmount: `₹${p.coverageAmount}`,
-              premiumAmount: `₹${p.premiumAmount} (${p.premiumType})`,
+              premiumAmount: `₹${p.premiumAmount} (${p.premiumType || "Annual"})`,
+              policyStatusCustom: <StatusBadge status={p.policyStatus} />
             }))}
             searchKeys={[
               "policyNumber",
               "planName",
               "productType",
-              "policyStatus",
+              "policyStatus", // Embedded policy status text lookup mapping filter
             ]}
           />
         ) : (

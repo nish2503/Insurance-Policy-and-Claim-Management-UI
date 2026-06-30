@@ -1,67 +1,3 @@
-// function StatusBadge({ status }) {
-//   // Define precise color pairs (background capsule and text color) for each status state
-//   const getBadgeColors = () => {
-//     switch (status) {
-//       case "ACTIVE":
-//       case "APPROVED":
-//       case "COMPLETED":
-//         return {
-//           bg: "rgba(16, 185, 129, 0.12)", // Soft translucent emerald
-//           text: "#10b981", // High-visibility vibrant mint
-//           border: "rgba(16, 185, 129, 0.2)",
-//         };
-//       case "PENDING":
-//         return {
-//           bg: "rgba(245, 158, 11, 0.12)", // Soft translucent amber
-//           text: "#f59e0b", // Rich high-contrast gold
-//           border: "rgba(245, 158, 11, 0.2)",
-//         };
-//       case "REJECTED":
-//       case "FAILED":
-//         return {
-//           bg: "rgba(239, 68, 68, 0.12)", // Soft translucent crimson
-//           text: "#ef4444", // Sharp vibrant ruby
-//           border: "rgba(239, 68, 68, 0.2)",
-//         };
-//       default:
-//         return {
-//           bg: "rgba(148, 163, 184, 0.15)", // Soft slate gray
-//           text: "var(--text-muted, #94a3b8)",
-//           border: "rgba(148, 163, 184, 0.2)",
-//         };
-//     }
-//   };
-
-//   const { bg, text, border } = getBadgeColors();
-
-//   return (
-//     <span className="insurtech-status-badge">
-//       <style>{`
-//         .insurtech-status-badge {
-//           display: inline-flex !important;
-//           align-items: center !important;
-//           justify-content: center !important;
-//           padding: 6px 12px !important;
-//           font-size: 0.75rem !important;
-//           font-weight: 600 !important;
-//           text-transform: uppercase !important;
-//           letter-spacing: 0.05em !important;
-//           border-radius: 8px !important;
-//           font-family: 'Inter', system-ui, sans-serif !important;
-//           background-color: ${bg} !important;
-//           color: ${text} !important;
-//           border: 1px solid ${border} !important;
-//           transition: all 0.2s ease !important;
-//           white-space: nowrap !important;
-//         }
-//       `}</style>
-//       {status}
-//     </span>
-//   );
-// }
-
-// export default StatusBadge;
-
 function StatusBadge({ status }) {
   const normalizedStatus =
     typeof status === "boolean"
@@ -70,31 +6,70 @@ function StatusBadge({ status }) {
         : "INACTIVE"
       : String(status).toUpperCase();
 
+  // --- Suggestion: Convert raw enum codes into clean, spaced human text labels ---
+  const getDisplayLabel = () => {
+    switch (normalizedStatus) {
+      case "UNDER_REVIEW":
+        return "Under Review";
+      case "RECOMMENDED_APPROVAL":
+        return "Recommended Approval";
+      case "RECOMMENDED_REJECTION":
+        return "Recommended Rejection";
+      case "SUBMITTED":
+        return "Submitted";
+      case "PENDING_PAYMENT":
+        return "Pending Payment";
+      default:
+        // Capitalises first letter for basic formatting fallback
+        return normalizedStatus.charAt(0) + normalizedStatus.slice(1).toLowerCase();
+    }
+  };
+
   const getBadgeColors = () => {
     switch (normalizedStatus) {
       case "ACTIVE":
       case "APPROVED":
       case "COMPLETED":
+      case "SUCCESS":
+      case "PAID":
         return {
           bg: "rgba(16, 185, 129, 0.12)",
-          text:"var(--success)",
+          text: "var(--success, #10b981)",
           border: "rgba(16, 185, 129, 0.2)",
         };
 
+      case "RECOMMENDED_APPROVAL":
+        return {
+          bg: "rgba(6, 182, 212, 0.12)", // Vibrant Cyan / Info palette
+          text: "var(--info, #06b6d4)",
+          border: "rgba(6, 182, 212, 0.2)",
+        };
+
       case "PENDING":
+      case "SUBMITTED":
+      case "PENDING_PAYMENT":
         return {
           bg: "rgba(245, 158, 11, 0.12)",
-          text: "var(--warning)",
+          text: "var(--warning, #f59e0b)",
           border: "rgba(245, 158, 11, 0.2)",
         };
 
+      case "UNDER_REVIEW":
+        return {
+          bg: "rgba(59, 130, 246, 0.12)", // Clean Accent Indigo / Blue palette
+          text: "var(--primary, #3b82f6)",
+          border: "rgba(59, 130, 246, 0.2)",
+        };
+
       case "REJECTED":
+      case "RECOMMENDED_REJECTION":
       case "FAILED":
       case "INACTIVE":
       case "DEACTIVATED":
+      case "CANCELLED":
         return {
           bg: "rgba(239, 68, 68, 0.12)",
-          text: "var(--danger)",
+          text: "var(--danger, #ef4444)",
           border: "rgba(239, 68, 68, 0.2)",
         };
 
@@ -118,8 +93,7 @@ function StatusBadge({ status }) {
         padding: "6px 12px",
         fontSize: "0.75rem",
         fontWeight: 600,
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
+        letterSpacing: "0.03em",
         borderRadius: "8px",
         fontFamily: "'Inter', system-ui, sans-serif",
         backgroundColor: bg,
@@ -128,7 +102,7 @@ function StatusBadge({ status }) {
         whiteSpace: "nowrap",
       }}
     >
-      {normalizedStatus}
+      {getDisplayLabel()}
     </span>
   );
 }

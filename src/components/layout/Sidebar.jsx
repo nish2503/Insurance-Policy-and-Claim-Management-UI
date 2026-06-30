@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { logout } from "../../features/auth/authSlice"; // Adjust if authSlice path differs
 import ThemeButton from "../common/ThemeButton";
 
+
 function Sidebar() {
   const role = localStorage.getItem("role");
   const location = useLocation();

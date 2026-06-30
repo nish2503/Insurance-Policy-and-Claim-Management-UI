@@ -200,3 +200,18 @@ export const uploadClaimDocument = (file) => {
 
   return api.post("/files/upload", formData);
 };
+
+// export const updateCustomerProfile = (customerId,data)=>{
+//     return api.put(`/customers/${customerId}`,data);
+// };
+export const updateCustomerProfile = (data)=>{
+    return api.put("/customers/profile",data);
+}
+
+export const sendEmailOtp = (email) => {
+  return api.post("/otp/email/send", { email });
+};
+
+export const verifyEmailOtp = (email, otp) => {
+  return api.post("/otp/email/verify", { email, otp });
+};

@@ -36,7 +36,7 @@ function CustomerDashboard() {
       setPayments(paymentRes.data || []);
     } catch (error) {
       if (error.response?.status === 404) {
-        navigate("/customer/create-profile");
+         setProfile(null);
       }
       console.log(error);
     } finally {
