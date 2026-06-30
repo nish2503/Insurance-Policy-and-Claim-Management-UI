@@ -6,6 +6,7 @@ import DataTable from "../../components/common/DataTable";
 import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import BackButton from "../../components/common/BackButton";
+import Button from "../../components/common/Button";
 import CustomerDetailsModal from "../../components/common/CustomerDetailsModal";
 import StatusBadge from "../../components/common/StatusBadge";
 import StatusFilter from "../../components/common/StatusFilter";
@@ -125,25 +126,24 @@ function Customers() {
 
               render: (customer) => (
                 <div className="d-flex gap-2">
-                  <button
-                    className="btn btn-sm btn-primary"
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={() => {
                       setSelectedCustomer(customer);
-
                       setShowModal(true);
                     }}
                   >
                     View
-                  </button>
+                  </Button>
 
-                  <button
-                    className={`btn btn-sm ${
-                      customer.activeStatus ? "btn-danger" : "btn-success"
-                    }`}
+                  <Button
+                    variant={customer.activeStatus ? "danger" : "success"}
+                    size="sm"
                     onClick={() => handleStatus(customer)}
                   >
                     {customer.activeStatus ? "Deactivate" : "Activate"}
-                  </button>
+                  </Button>
                 </div>
               ),
             },

@@ -67,10 +67,18 @@ function StatusBadge({ status }) {
       case "INACTIVE":
       case "DEACTIVATED":
       case "CANCELLED":
+      case "CANCELLED":
         return {
           bg: "rgba(239, 68, 68, 0.12)",
           text: "var(--danger, #ef4444)",
           border: "rgba(239, 68, 68, 0.2)",
+        };
+
+      case "EXPIRED":
+        return {
+          bg: "rgba(107, 114, 128, 0.12)",
+          text: "#6b7280",
+          border: "rgba(107, 114, 128, 0.2)",
         };
 
       default:

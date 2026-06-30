@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import Customers from "../pages/admin/Customers";
 
 import Home from "../pages/public/Home";
 import Login from "../pages/public/Login";
@@ -9,6 +8,11 @@ import VerifyOtp from "../pages/public/VerifyOtp";
 import ForgotPassword from "../pages/public/ForgotPassword";
 
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import Products from "../pages/admin/Products";
+import Customers from "../pages/admin/Customers";
+import AdminPlans from "../pages/admin/AdminPlans";
+import AdminPolicies from "../pages/admin/AdminPolicies";
+
 import AgentDashboard from "../pages/agent/AgentDashboard";
 import CustomerDashboard from "../pages/customer/CustomerDashboard";
 
@@ -20,7 +24,7 @@ import AgentPayments from "../pages/agent/Payments";
 
 import CreateProfile from "../pages/customer/CreateProfile";
 import BrowseProducts from "../pages/customer/BrowseProducts";
-import Plans from "../pages/customer/Plans";
+import CustomerPlans from "../pages/customer/CustomerPlans";
 import PurchasePolicy from "../pages/customer/PurchasePolicy";
 import MyPolicies from "../pages/customer/MyPolicies";
 import PayPremium from "../pages/customer/PayPremium";
@@ -51,10 +55,34 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/admin/products"
+        element={
+          <ProtectedRoute allowedRole="ADMIN">
+            <Products />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/customers"
         element={
           <ProtectedRoute allowedRole="ADMIN">
             <Customers />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/plans"
+        element={
+          <ProtectedRoute allowedRole="ADMIN">
+            <AdminPlans />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/policies"
+        element={
+          <ProtectedRoute allowedRole="ADMIN">
+            <AdminPolicies />
           </ProtectedRoute>
         }
       />
@@ -146,7 +174,7 @@ function AppRoutes() {
         path="/customer/plans/:productId"
         element={
           <ProtectedRoute allowedRole="CUSTOMER">
-            <Plans />
+            <CustomerPlans />
           </ProtectedRoute>
         }
       />

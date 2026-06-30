@@ -146,23 +146,54 @@ function Sidebar() {
             >
               📊 Dashboard
             </Link>
+
             <Link
               to="/admin/customers"
               className={`sidebar-link ${isActive("/admin/customers") ? "active" : ""}`}
             >
               👥 Customers
             </Link>
+
             <Link
               to="/admin/products"
               className={`sidebar-link ${isActive("/admin/products") ? "active" : ""}`}
             >
               📦 Products
             </Link>
+
             <Link
               to="/admin/plans"
               className={`sidebar-link ${isActive("/admin/plans") ? "active" : ""}`}
             >
               📋 Plans
+            </Link>
+
+            <Link
+              to="/admin/policies"
+              className={`sidebar-link ${isActive("/admin/policies") ? "active" : ""}`}
+            >
+              📄 Policies
+            </Link>
+
+            <Link
+              to="/admin/claims"
+              className={`sidebar-link ${isActive("/admin/claims") ? "active" : ""}`}
+            >
+              🚑 Claims
+            </Link>
+
+            <Link
+              to="/admin/payments"
+              className={`sidebar-link ${isActive("/admin/payments") ? "active" : ""}`}
+            >
+              💳 Payments
+            </Link>
+
+            <Link
+              to="/admin/agents"
+              className={`sidebar-link ${isActive("/admin/agents") ? "active" : ""}`}
+            >
+              🧑‍💼 Agents
             </Link>
           </>
         )}
