@@ -4,18 +4,46 @@ import { useDispatch } from "react-redux";
 import { login } from "../../api/authApi";
 import { loginSuccess } from "../../features/auth/authSlice";
 import ThemeButton from "../../components/common/ThemeButton";
+import { useToast } from "../../context/ToastContext";
+import { required, validateEmail, validateForm } from "../../utils/validators";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const toast = useToast();
+
+  const clearFieldError = (field) => {
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    const { errors: validationErrors, isValid } = validateForm(
+      { email, password },
+      {
+        email: (v) => validateEmail(v, "Email"),
+        password: (v) => required(v, "Password"),
+      },
+    );
+
+    if (!isValid) {
+      setErrors(validationErrors);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await login({ email, password });
@@ -29,6 +57,8 @@ function Login() {
         }),
       );
 
+      toast.success("Logged in successfully.");
+
       switch (data.userRole) {
         case "ADMIN":
           navigate("/admin");
@@ -40,10 +70,10 @@ function Login() {
           navigate("/customer");
           break;
         default:
-          alert("Invalid system role assigned.");
+          toast.error("Invalid system role assigned.");
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Login Failed");
+      toast.error(error.response?.data?.message || "Login Failed");
     } finally {
       setLoading(false);
     }
@@ -174,6 +204,18 @@ function Login() {
           color: #2563eb !important;
           text-decoration: underline !important;
         }
+
+        .modern-form-input.field-invalid {
+          border-color: #dc2626 !important;
+          box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+        }
+
+        .field-error-text {
+          color: #dc2626 !important;
+          font-size: 0.8rem !important;
+          margin-top: 6px !important;
+          display: block !important;
+        }
       `}</style>
 
       <div className="floating-theme-dock">
@@ -182,39 +224,49 @@ function Login() {
 
       <div className="auth-core-card">
         <h3>Insurance Secure Login</h3>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleLogin} noValidate>
           <div className="mb-3">
             <input
               type="email"
-              className="modern-form-input"
+              className={`modern-form-input${errors.email ? " field-invalid" : ""}`}
               placeholder="Email Identifier"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError("email");
+              }}
             />
+            {errors.email && <span className="field-error-text">{errors.email}</span>}
           </div>
 
-          <div className="input-pill-wrapper mb-4">
-            <input
-              className="modern-form-input"
-              type={showPassword ? "text" : "password"}
-              placeholder="Password Key"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <button
-              className="btn-input-reveal"
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <i className="bi bi-eye-slash-fill"></i>
-              ) : (
-                <i className="bi bi-eye-fill"></i>
-              )}
-            </button>
+          <div className="mb-1">
+            <div className="input-pill-wrapper">
+              <input
+                className={`modern-form-input${errors.password ? " field-invalid" : ""}`}
+                type={showPassword ? "text" : "password"}
+                placeholder="Password Key"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  clearFieldError("password");
+                }}
+              />
+              <button
+                className="btn-input-reveal"
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <i className="bi bi-eye-slash-fill"></i>
+                ) : (
+                  <i className="bi bi-eye-fill"></i>
+                )}
+              </button>
+            </div>
+            {errors.password && <span className="field-error-text">{errors.password}</span>}
           </div>
+
+          <div className="mb-3"></div>
 
           <button className="btn-submit-action" disabled={loading}>
             {loading ? "Authorizing Identity Link..." : "Sign In"}

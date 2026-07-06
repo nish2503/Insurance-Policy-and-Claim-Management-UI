@@ -3,35 +3,88 @@ import { useNavigate } from "react-router-dom";
 import { verifyRegister, resendOtp } from "../../api/authApi";
 import useOtpTimer from "../../hooks/useOtpTimer";
 import ThemeButton from "../../components/common/ThemeButton";
+import { useToast } from "../../context/ToastContext";
+import { getApiErrorMessage } from "../../utils/apiError";
+import { validateEmail, validateMobile, validateOtp, validateForm, toE164India } from "../../utils/validators";
 
 function VerifyOtp() {
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [emailOtp, setEmailOtp] = useState("");
   const [phoneOtp, setPhoneOtp] = useState("");
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
+  const toast = useToast();
   const { timeLeft, canResend, resetTimer } = useOtpTimer(60);
+
+  const clearFieldError = (field) => {
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const handleVerify = async (e) => {
     e.preventDefault();
+
+    const { errors: validationErrors, isValid } = validateForm(
+      { email, mobileNumber, emailOtp, phoneOtp },
+      {
+        email: (v) => validateEmail(v, "Email"),
+        mobileNumber: (v) => validateMobile(v, "Mobile number"),
+        emailOtp: (v) => validateOtp(v, "Email OTP"),
+        phoneOtp: (v) => validateOtp(v, "Phone OTP"),
+      },
+    );
+
+    if (!isValid) {
+      setErrors(validationErrors);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     try {
-      await verifyRegister({ email, mobileNumber, emailOtp, phoneOtp });
-      alert("Email and Mobile verified successfully");
+      setSubmitting(true);
+      await verifyRegister({
+        email,
+        mobileNumber: toE164India(mobileNumber),
+        emailOtp,
+        phoneOtp,
+      });
+      toast.success("Email and Mobile verified successfully");
       navigate("/login");
     } catch (error) {
-      console.log(error);
-      alert(error.response?.data?.message || "OTP verification failed");
+      toast.error(getApiErrorMessage(error, "OTP verification failed"));
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleResend = async () => {
+    const { errors: validationErrors, isValid } = validateForm(
+      { email, mobileNumber },
+      {
+        email: (v) => validateEmail(v, "Email"),
+        mobileNumber: (v) => validateMobile(v, "Mobile number"),
+      },
+    );
+
+    if (!isValid) {
+      setErrors((prev) => ({ ...prev, ...validationErrors }));
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     try {
-      await resendOtp({ email });
+      await resendOtp({ email, mobileNumber: toE164India(mobileNumber) });
       resetTimer();
-      alert("OTP sent again");
+      toast.success("OTP sent again");
     } catch (error) {
-      console.log(error);
+      toast.error(getApiErrorMessage(error, "Failed to resend OTP"));
     }
   };
 
@@ -145,6 +198,51 @@ function VerifyOtp() {
           border-top: 1px solid var(--border-color) !important;
           margin: 24px 0 !important;
         }
+
+        .modern-form-input.field-invalid {
+          border-color: #dc2626 !important;
+          box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+        }
+
+        .field-error-text {
+          color: #dc2626 !important;
+          font-size: 0.8rem !important;
+          margin-top: 6px !important;
+          display: block !important;
+        }
+
+        .mobile-input-wrapper {
+          display: flex !important;
+          align-items: center !important;
+          width: 100% !important;
+          border: 1px solid var(--border-color) !important;
+          border-radius: 10px !important;
+          background: var(--bg-main) !important;
+          transition: all 0.2s ease !important;
+        }
+
+        .mobile-input-wrapper.field-invalid {
+          border-color: #dc2626 !important;
+          box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+        }
+
+        .mobile-input-wrapper:focus-within {
+          border-color: #3b82f6 !important;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+        }
+
+        .mobile-input-prefix {
+          padding: 12px 10px 12px 16px !important;
+          color: var(--text-muted) !important;
+          font-size: 0.95rem !important;
+          border-right: 1px solid var(--border-color) !important;
+          user-select: none !important;
+        }
+
+        .mobile-input-wrapper .modern-form-input {
+          border: none !important;
+          box-shadow: none !important;
+        }
       `}</style>
 
       <div className="floating-theme-dock">
@@ -153,50 +251,74 @@ function VerifyOtp() {
 
       <div className="auth-core-card">
         <h3>Verify Security Account 🛡️</h3>
-        <form onSubmit={handleVerify}>
+        <form onSubmit={handleVerify} noValidate>
           <div className="mb-3">
             <input
-              className="modern-form-input"
+              className={`modern-form-input${errors.email ? " field-invalid" : ""}`}
               placeholder="Email Address"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError("email");
+              }}
             />
+            {errors.email && <span className="field-error-text">{errors.email}</span>}
+          </div>
+
+          <div className="mb-3">
+            <div className={`mobile-input-wrapper${errors.mobileNumber ? " field-invalid" : ""}`}>
+              <span className="mobile-input-prefix">+91</span>
+              <input
+                className="modern-form-input"
+                type="tel"
+                inputMode="numeric"
+                placeholder="10 digit mobile number"
+                value={mobileNumber}
+                maxLength="10"
+                onChange={(e) => {
+                  setMobileNumber(e.target.value.replace(/\D/g, "").slice(0, 10));
+                  clearFieldError("mobileNumber");
+                }}
+              />
+            </div>
+            {errors.mobileNumber && (
+              <span className="field-error-text">{errors.mobileNumber}</span>
+            )}
           </div>
 
           <div className="mb-3">
             <input
-              className="modern-form-input"
-              placeholder="Mobile Number"
-              value={mobileNumber}
-              onChange={(e) => setMobileNumber(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <input
-              className="modern-form-input"
+              className={`modern-form-input${errors.emailOtp ? " field-invalid" : ""}`}
               placeholder="Email Verification OTP"
               value={emailOtp}
               maxLength="6"
-              onChange={(e) => setEmailOtp(e.target.value)}
-              required
+              onChange={(e) => {
+                setEmailOtp(e.target.value);
+                clearFieldError("emailOtp");
+              }}
             />
+            {errors.emailOtp && <span className="field-error-text">{errors.emailOtp}</span>}
           </div>
 
-          <div className="mb-4">
+          <div className="mb-1">
             <input
-              className="modern-form-input"
+              className={`modern-form-input${errors.phoneOtp ? " field-invalid" : ""}`}
               placeholder="Phone Verification OTP"
               value={phoneOtp}
               maxLength="6"
-              onChange={(e) => setPhoneOtp(e.target.value)}
-              required
+              onChange={(e) => {
+                setPhoneOtp(e.target.value);
+                clearFieldError("phoneOtp");
+              }}
             />
+            {errors.phoneOtp && <span className="field-error-text">{errors.phoneOtp}</span>}
           </div>
 
-          <button className="btn-submit-action">Verify & Activate Vault</button>
+          <div className="mb-3"></div>
+
+          <button className="btn-submit-action" disabled={submitting}>
+            {submitting ? "Verifying..." : "Verify & Activate Vault"}
+          </button>
         </form>
 
         <hr className="divider-line" />

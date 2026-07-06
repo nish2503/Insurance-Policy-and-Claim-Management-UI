@@ -2,6 +2,13 @@ import { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { forgotPassword, resetPassword } from "../../api/authApi";
 import ThemeButton from "../../components/common/ThemeButton";
+import { useToast } from "../../context/ToastContext";
+import {
+  validateEmail,
+  validatePassword,
+  validateConfirmPassword,
+  validateForm,
+} from "../../utils/validators";
 
 function ForgotPassword() {
   const { token: routeToken } = useParams();
@@ -13,22 +20,45 @@ function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState({});
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const toast = useToast();
   const hasToken = Boolean(token);
+
+  const clearFieldError = (field) => {
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   async function sendLink(e) {
     e.preventDefault();
+
+    const { errors: validationErrors, isValid } = validateForm(
+      { email },
+      { email: (v) => validateEmail(v, "Email") },
+    );
+
+    if (!isValid) {
+      setErrors(validationErrors);
+      toast.error("Please fix the highlighted fields.");
+      return;
+    }
+
     try {
       setLoading(true);
       await forgotPassword({ email });
-      alert("Verification recovery transmission sent to mail queue.");
+      toast.success("Verification recovery transmission sent to mail queue.");
     } catch (error) {
-      alert(error.response?.data?.message || "Transmission Action Failed");
+      toast.error(error.response?.data?.message || "Transmission Action Failed");
     } finally {
       setLoading(false);
     }
@@ -36,22 +66,29 @@ function ForgotPassword() {
 
   async function reset(e) {
     e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      alert("Password validation mismatch.");
-      return;
-    }
-    if (newPassword.length < 8) {
-      alert("Security key length requires at least 8 characters.");
+
+    const { errors: validationErrors, isValid } = validateForm(
+      { newPassword, confirmPassword },
+      {
+        newPassword: (v) => validatePassword(v, "New password"),
+        confirmPassword: (v, values) =>
+          validateConfirmPassword(v, values.newPassword, "Confirm password"),
+      },
+    );
+
+    if (!isValid) {
+      setErrors(validationErrors);
+      toast.error("Please fix the highlighted fields.");
       return;
     }
 
     try {
       setLoading(true);
       await resetPassword({ token, newPassword });
-      alert("Password verification database update successful.");
+      toast.success("Password verification database update successful.");
       navigate("/login");
     } catch (error) {
-      alert(
+      toast.error(
         error.response?.data?.message ||
           "Invalid or broken validation link token.",
       );
@@ -187,6 +224,18 @@ function ForgotPassword() {
           cursor: pointer !important;
           font-weight: 500 !important;
         }
+
+        .modern-form-input.field-invalid {
+          border-color: #dc2626 !important;
+          box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+        }
+
+        .field-error-text {
+          color: #dc2626 !important;
+          font-size: 0.8rem !important;
+          margin-top: 6px !important;
+          display: block !important;
+        }
       `}</style>
 
       <div className="floating-theme-dock">
@@ -202,16 +251,19 @@ function ForgotPassword() {
               Provide your registered email signature token path to generate an
               offsite access reset sequence link.
             </p>
-            <form onSubmit={sendLink}>
+            <form onSubmit={sendLink} noValidate>
               <div className="mb-3">
                 <input
-                  className="modern-form-input"
+                  className={`modern-form-input${errors.email ? " field-invalid" : ""}`}
                   type="email"
                   placeholder="Account Email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    clearFieldError("email");
+                  }}
                 />
+                {errors.email && <span className="field-error-text">{errors.email}</span>}
               </div>
               <button className="btn-submit-action" disabled={loading}>
                 {loading
@@ -226,50 +278,66 @@ function ForgotPassword() {
               Link verified. Establish a fresh high-entropy cryptographic
               password entry inside database matrix cells.
             </p>
-            <form onSubmit={reset}>
-              <div className="input-pill-wrapper mb-3">
-                <input
-                  className="modern-form-input"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="New Access Key"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                />
-                <button
-                  className="btn-input-reveal"
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <i className="bi bi-eye-slash-fill"></i>
-                  ) : (
-                    <i className="bi bi-eye-fill"></i>
-                  )}
-                </button>
+            <form onSubmit={reset} noValidate>
+              <div className="mb-3">
+                <div className="input-pill-wrapper">
+                  <input
+                    className={`modern-form-input${errors.newPassword ? " field-invalid" : ""}`}
+                    type={showPassword ? "text" : "password"}
+                    placeholder="New Access Key"
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      clearFieldError("newPassword");
+                    }}
+                  />
+                  <button
+                    className="btn-input-reveal"
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <i className="bi bi-eye-slash-fill"></i>
+                    ) : (
+                      <i className="bi bi-eye-fill"></i>
+                    )}
+                  </button>
+                </div>
+                {errors.newPassword && (
+                  <span className="field-error-text">{errors.newPassword}</span>
+                )}
               </div>
 
-              <div className="input-pill-wrapper mb-4">
-                <input
-                  className="modern-form-input"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm Access Key"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-                <button
-                  className="btn-input-reveal"
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? (
-                    <i className="bi bi-eye-slash-fill"></i>
-                  ) : (
-                    <i className="bi bi-eye-fill"></i>
-                  )}
-                </button>
+              <div className="mb-1">
+                <div className="input-pill-wrapper">
+                  <input
+                    className={`modern-form-input${errors.confirmPassword ? " field-invalid" : ""}`}
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm Access Key"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      clearFieldError("confirmPassword");
+                    }}
+                  />
+                  <button
+                    className="btn-input-reveal"
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <i className="bi bi-eye-slash-fill"></i>
+                    ) : (
+                      <i className="bi bi-eye-fill"></i>
+                    )}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <span className="field-error-text">{errors.confirmPassword}</span>
+                )}
               </div>
+
+              <div className="mb-3"></div>
 
               <button className="btn-submit-action" disabled={loading}>
                 {loading

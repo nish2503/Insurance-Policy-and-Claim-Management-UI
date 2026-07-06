@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getMyProfile, updateCustomerProfile } from "../../api/customerApi";
 import BackButton from "../../components/common/BackButton";
 import api from "../../api/axios";
+import { validateAge } from "../../utils/validators";
 
 function MyProfile() {
   const [profile, setProfile] = useState(null);
@@ -95,6 +96,12 @@ function MyProfile() {
 
     if(!form.dateOfBirth)
       localErrors.dateOfBirth="DOB required";
+
+    else{
+      const ageError = validateAge(form.dateOfBirth, "Date of birth");
+      if(ageError)
+        localErrors.dateOfBirth=ageError;
+    }
 
 
     if(!form.address.trim())
@@ -392,6 +399,8 @@ Object.keys(form).map(field=>(
 
 <input
 
+type={field === "dateOfBirth" ? "date" : "text"}
+
 className={`form-control ${
 errors.validationErrors?.[field]
 ?
@@ -407,6 +416,12 @@ value={form[field]}
 onChange={handleChange}
 
 />
+
+{errors.validationErrors?.[field] &&
+<div className="invalid-feedback">
+{errors.validationErrors[field]}
+</div>
+}
 
 
 </div>
