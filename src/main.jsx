@@ -13,6 +13,9 @@ import store from "./app/store";
 import ThemeProvider 
 from "./context/ThemeContext";
 
+import ToastProvider
+from "./context/ToastContext";
+
 ReactDOM.createRoot(
 document.getElementById("root")
 )
@@ -27,7 +30,13 @@ document.getElementById("root")
 <ThemeProvider>
 
 
+<ToastProvider>
+
+
 <App/>
+
+
+</ToastProvider>
 
 
 </ThemeProvider>
