@@ -27,7 +27,7 @@ function VerifyOtp() {
 
   const handleResend = async () => {
     try {
-      await resendOtp({ email });
+      await resendOtp({ email, mobileNumber });
       resetTimer();
       alert("OTP sent again");
     } catch (error) {

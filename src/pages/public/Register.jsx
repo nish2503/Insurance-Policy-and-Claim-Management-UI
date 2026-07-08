@@ -26,7 +26,7 @@ function Register() {
     try {
       await register(form);
       alert("Registration successful. Verify OTP");
-      navigate("/verify-otp");
+      navigate("/verify-register");
     } catch (error) {
       console.log(error.response?.data);
       alert(error.response?.data?.message || "Registration failed");
