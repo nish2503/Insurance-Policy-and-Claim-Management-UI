@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 import { verifyRegister, resendOtp } from "../../api/authApi";
 import useOtpTimer from "../../hooks/useOtpTimer";
 import ThemeButton from "../../components/common/ThemeButton";
@@ -7,9 +7,14 @@ import { useToast } from "../../context/ToastContext";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { validateEmail, validateMobile, validateOtp, validateForm, toE164India } from "../../utils/validators";
 
+
 function VerifyOtp() {
-  const [email, setEmail] = useState("");
-  const [mobileNumber, setMobileNumber] = useState("");
+  const location = useLocation();
+  const fromRegister = !!location.state;
+const [email, setEmail] = useState(location.state?.email || "");
+const [mobileNumber, setMobileNumber] = useState(
+  location.state?.mobileNumber || ""
+);
   const [emailOtp, setEmailOtp] = useState("");
   const [phoneOtp, setPhoneOtp] = useState("");
   const [errors, setErrors] = useState({});
@@ -257,6 +262,11 @@ function VerifyOtp() {
               className={`modern-form-input${errors.email ? " field-invalid" : ""}`}
               placeholder="Email Address"
               value={email}
+              readOnly={fromRegister}
+               style={{
+    backgroundColor: fromRegister ? "#f5f5f5" : "",
+    cursor: fromRegister ? "not-allowed" : "text",
+  }}
               onChange={(e) => {
                 setEmail(e.target.value);
                 clearFieldError("email");
@@ -274,6 +284,11 @@ function VerifyOtp() {
                 inputMode="numeric"
                 placeholder="10 digit mobile number"
                 value={mobileNumber}
+                readOnly={fromRegister}
+                style={{
+    backgroundColor: fromRegister ? "#f5f5f5" : "",
+    cursor: fromRegister ? "not-allowed" : "text",
+  }}
                 maxLength="10"
                 onChange={(e) => {
                   setMobileNumber(e.target.value.replace(/\D/g, "").slice(0, 10));

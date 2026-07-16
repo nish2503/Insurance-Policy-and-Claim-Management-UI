@@ -1,10 +1,21 @@
 import { useState } from "react";
-import { createCustomerProfile } from "../../api/customerApi";
 import { useNavigate } from "react-router-dom";
-import { validateAge } from "../../utils/validators";
+import { createCustomerProfile } from "../../api/customerApi";
+import { useToast } from "../../context/ToastContext";
+import {
+  validateAge,
+  validateAddress,
+  validateCity,
+  validateState,
+  validatePinCode,
+  validateName,
+  validateRelation,
+  validateForm,
+} from "../../utils/validators";
 
 function CreateProfile() {
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [form, setForm] = useState({
     dateOfBirth: "",
@@ -19,11 +30,10 @@ function CreateProfile() {
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-
+    setForm((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
 
     setErrors((prev) => {
       if (!prev[e.target.name]) return prev;
@@ -36,22 +46,34 @@ function CreateProfile() {
   const submit = async (e) => {
     e.preventDefault();
 
-    const dobError = validateAge(form.dateOfBirth, "Date of birth");
-    if (dobError) {
-      setErrors({ dateOfBirth: dobError });
+    const { errors: validationErrors, isValid } = validateForm(form, {
+      dateOfBirth: (v) => validateAge(v, "Date of birth"),
+      address: (v) => validateAddress(v),
+      city: (v) => validateCity(v),
+      state: (v) => validateState(v),
+      pinCode: (v) => validatePinCode(v),
+      nomineeName: (v) => validateName(v, "Nominee Name"),
+      nomineeRelation: (v) => validateRelation(v),
+    });
+
+    if (!isValid) {
+      setErrors(validationErrors);
+      toast.error("Please correct the highlighted fields.");
       return;
     }
 
     try {
       await createCustomerProfile(form);
 
-      alert("Profile created");
+      toast.success("Profile created successfully.");
 
-      navigate("/customer");
+      navigate("/customer", { replace: true });
     } catch (error) {
-      console.log(error);
+      console.error(error);
 
-      alert(error.response?.data?.message || "Profile creation failed");
+      toast.error(
+        error.response?.data?.message || "Profile creation failed."
+      );
     }
   };
 
@@ -61,33 +83,148 @@ function CreateProfile() {
 
       <form onSubmit={submit}>
         <div className="mb-3">
-          <label className="form-label text-capitalize">Date of Birth</label>
+          <label className="form-label">Date of Birth</label>
+
           <input
             type="date"
-            className={`form-control ${errors.dateOfBirth ? "is-invalid" : ""}`}
+            className={`form-control ${
+              errors.dateOfBirth ? "is-invalid" : ""
+            }`}
             name="dateOfBirth"
             value={form.dateOfBirth}
             onChange={handleChange}
           />
+
           {errors.dateOfBirth && (
-            <div className="invalid-feedback">{errors.dateOfBirth}</div>
+            <div className="invalid-feedback">
+              {errors.dateOfBirth}
+            </div>
           )}
         </div>
 
-        {Object.keys(form)
-          .filter((key) => key !== "dateOfBirth")
-          .map((key) => (
-            <input
-              key={key}
-              className="form-control mb-3"
-              name={key}
-              placeholder={key}
-              value={form[key]}
-              onChange={handleChange}
-            />
-          ))}
+        <div className="mb-3">
+          <label className="form-label">Address</label>
 
-        <button className="btn btn-primary">Create Profile</button>
+          <input
+            className={`form-control ${
+              errors.address ? "is-invalid" : ""
+            }`}
+            name="address"
+            value={form.address}
+            onChange={handleChange}
+          />
+
+          {errors.address && (
+            <div className="invalid-feedback">{errors.address}</div>
+          )}
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">City</label>
+
+          <input
+            className={`form-control ${
+              errors.city ? "is-invalid" : ""
+            }`}
+            name="city"
+            value={form.city}
+            onChange={handleChange}
+          />
+
+          {errors.city && (
+            <div className="invalid-feedback">{errors.city}</div>
+          )}
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">State</label>
+
+          <input
+            className={`form-control ${
+              errors.state ? "is-invalid" : ""
+            }`}
+            name="state"
+            value={form.state}
+            onChange={handleChange}
+          />
+
+          {errors.state && (
+            <div className="invalid-feedback">{errors.state}</div>
+          )}
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">PIN Code</label>
+
+          <input
+            className={`form-control ${
+              errors.pinCode ? "is-invalid" : ""
+            }`}
+            name="pinCode"
+            maxLength={6}
+            inputMode="numeric"
+            value={form.pinCode}
+            onChange={(e) => {
+              setForm((prev) => ({
+                ...prev,
+                pinCode: e.target.value.replace(/\D/g, "").slice(0, 6),
+              }));
+
+              setErrors((prev) => {
+                if (!prev.pinCode) return prev;
+                const next = { ...prev };
+                delete next.pinCode;
+                return next;
+              });
+            }}
+          />
+
+          {errors.pinCode && (
+            <div className="invalid-feedback">{errors.pinCode}</div>
+          )}
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Nominee Name</label>
+
+          <input
+            className={`form-control ${
+              errors.nomineeName ? "is-invalid" : ""
+            }`}
+            name="nomineeName"
+            value={form.nomineeName}
+            onChange={handleChange}
+          />
+
+          {errors.nomineeName && (
+            <div className="invalid-feedback">
+              {errors.nomineeName}
+            </div>
+          )}
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Nominee Relation</label>
+
+          <input
+            className={`form-control ${
+              errors.nomineeRelation ? "is-invalid" : ""
+            }`}
+            name="nomineeRelation"
+            value={form.nomineeRelation}
+            onChange={handleChange}
+          />
+
+          {errors.nomineeRelation && (
+            <div className="invalid-feedback">
+              {errors.nomineeRelation}
+            </div>
+          )}
+        </div>
+
+        <button className="btn btn-primary">
+          Create Profile
+        </button>
       </form>
     </div>
   );

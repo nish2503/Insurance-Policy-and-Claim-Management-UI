@@ -139,3 +139,51 @@ export function validateForm(values, validatorMap) {
 
   return { errors, isValid };
 }
+
+export const validateAddress = (value, label = "Address") => {
+  if (!value.trim()) return `${label} is required`;
+  if (value.trim().length < 10)
+    return `${label} must be at least 10 characters`;
+  return "";
+};
+
+export const validateCity = (value, label = "City") => {
+  if (!value.trim()) return `${label} is required`;
+  if (!/^[A-Za-z ]+$/.test(value))
+    return `${label} can contain only alphabets`;
+  if (value.trim().length < 2)
+    return `${label} must be at least 2 characters`;
+  return "";
+};
+
+export const validateState = (value, label = "State") => {
+  if (!value.trim()) return `${label} is required`;
+  if (!/^[A-Za-z ]+$/.test(value))
+    return `${label} can contain only alphabets`;
+  if (value.trim().length < 2)
+    return `${label} must be at least 2 characters`;
+  return "";
+};
+
+export const validatePinCode = (value, label = "PIN Code") => {
+  if (!value.trim()) return `${label} is required`;
+  if (!/^\d{6}$/.test(value))
+    return `${label} must contain exactly 6 digits`;
+  return "";
+};
+
+export const validateName = (value, label = "Name") => {
+  if (!value.trim()) return `${label} is required`;
+  if (!/^[A-Za-z ]+$/.test(value))
+    return `${label} can contain only alphabets`;
+  if (value.trim().length < 3)
+    return `${label} must be at least 3 characters`;
+  return "";
+};
+
+export const validateRelation = (value) => {
+  if (!value.trim()) return "Nominee relation is required";
+  if (!/^[A-Za-z ]+$/.test(value))
+    return "Relation can contain only alphabets";
+  return "";
+};

@@ -7,11 +7,13 @@ import Card from "../../components/common/Card";
 
 import { purchasePolicy } from "../../api/customerApi";
 import BackButton from "../../components/common/BackButton";
+import { useToast } from "../../context/ToastContext";
 
 function PurchasePolicy() {
   const { planId } = useParams();
 
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [startDate, setStartDate] = useState("");
 
@@ -25,13 +27,13 @@ function PurchasePolicy() {
         startDate,
       });
 
-      alert("Policy Purchased Successfully");
+      toast.success("Policy Purchased Successfully");
 
       navigate("/customer/policies");
     } catch (error) {
       console.log(error);
 
-      alert(error.response?.data?.message || "Purchase Failed");
+      toast.error(error.response?.data?.message || "Purchase Failed");
     }
   }
 

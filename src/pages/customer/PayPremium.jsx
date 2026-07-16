@@ -8,10 +8,11 @@ import {
   getMyPremiumPayments,
 } from "../../api/customerApi";
 import BackButton from "../../components/common/BackButton";
+import { useToast } from "../../context/ToastContext";
 
 function PayPremium() {
   const navigate = useNavigate();
-
+  const toast = useToast();
   const [policies, setPolicies] = useState([]);
   const [paymentHistory, setPaymentHistory] = useState([]);
 
@@ -20,10 +21,6 @@ function PayPremium() {
   const [paymentMode, setPaymentMode] = useState("");
 
   const [fieldErrors, setFieldErrors] = useState({});
-
-  const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [infoMsg, setInfoMsg] = useState("");
 
   const [isLocked, setIsLocked] = useState(false);
 
@@ -65,12 +62,6 @@ function PayPremium() {
 
     setSelectedPolicy(policyId);
 
-    setSuccessMsg("");
-
-    setErrorMsg("");
-
-    setInfoMsg("");
-
     setIsLocked(false);
 
     setReceiptData(null);
@@ -96,7 +87,7 @@ function PayPremium() {
         if (today < dueDate) {
           setIsLocked(true);
 
-          setInfoMsg(
+          toast.info(
             `Premium already paid. Next payment due on ${dueDate.toLocaleDateString()}`,
           );
         }
@@ -117,7 +108,7 @@ function PayPremium() {
 
     setReceiptData(null);
 
-    setInfoMsg("Payment cancelled");
+    toast.info("Payment cancelled");
 
     navigate("/customer");
   }
@@ -137,14 +128,14 @@ function PayPremium() {
 
     const errors = validateForm();
 
-    if (Object.keys(errors).length) {
-      setFieldErrors(errors);
-
-      return;
-    }
+   if (Object.keys(errors).length) {
+  setFieldErrors(errors);
+  toast.error("Please fill in the required fields.");
+  return;
+}
 
     if (isLocked) {
-      setErrorMsg("Premium already paid for this cycle");
+      toast.error("Premium already paid for this cycle");
 
       return;
     }
@@ -168,7 +159,7 @@ function PayPremium() {
         paymentStatus: "SUCCESS",
       });
 
-      setSuccessMsg("Premium paid successfully!");
+      toast.success("Premium paid successfully!");
 
       setReceiptData({
         policyNumber: matchedPolicy?.policyNumber || selectedPolicy,
@@ -192,7 +183,7 @@ function PayPremium() {
 
       loadInitialData();
     } catch (error) {
-      setErrorMsg(error.response?.data?.message || "Payment failed");
+      toast.error(error.response?.data?.message || "Payment failed");
     }
   }
 
@@ -242,13 +233,7 @@ SUCCESS
       <Card title="Pay Premium">
         <BackButton />
 
-        {successMsg && (
-          <div className="alert alert-success mt-3">{successMsg}</div>
-        )}
-
-        {errorMsg && <div className="alert alert-danger mt-3">{errorMsg}</div>}
-
-        {infoMsg && <div className="alert alert-warning mt-3">{infoMsg}</div>}
+        
 
         <form onSubmit={handlePayment}>
           <div className="mb-3">

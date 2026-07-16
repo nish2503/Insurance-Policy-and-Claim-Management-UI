@@ -9,6 +9,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import Modal from "../../components/common/Modal";
 import BackButton from "../../components/common/BackButton";
+import { useToast } from "../../context/ToastContext";
 
 import {
   getAgentClaims,
@@ -19,6 +20,8 @@ import {
 } from "../../api/agentApi";
 
 function ReviewClaims() {
+  const toast = useToast();
+
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -98,7 +101,7 @@ function ReviewClaims() {
 
       window.open(response.request.responseURL, "_blank");
     } catch (error) {
-      alert("Unable to open document");
+      toast.error("Unable to open document");
     }
   }
 
@@ -140,7 +143,7 @@ function ReviewClaims() {
         },
       );
 
-      alert("Claim recommendation submitted successfully");
+      toast.success("Claim recommendation submitted successfully");
 
       setShowModal(false);
 

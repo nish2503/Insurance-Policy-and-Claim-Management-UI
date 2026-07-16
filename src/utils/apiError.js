@@ -42,10 +42,10 @@ export function extractValidationErrors(error) {
     const msg = data.message.toLowerCase();
     
     // Auto-map registration collisions onto their respective field identifiers
-    if (msg.includes("email already registered") || msg.includes("email already exists")) {
+    if (msg.includes("email already exists") || msg.includes("email already registered")) {
       return { email: "This email address is already registered to an active profile." };
     }
-    if (msg.includes("mobile number already registered") || msg.includes("mobile number already exists")) {
+    if (msg.includes("phone number already exists") || msg.includes("mobile number already exists")) {
       return { mobileNumber: "This mobile number is already registered to an active profile." };
     }
     

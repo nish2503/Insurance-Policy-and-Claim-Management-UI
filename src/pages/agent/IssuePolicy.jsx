@@ -5,14 +5,15 @@ import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 
 import { issuePolicy, getAgentCustomers, getPlans } from "../../api/agentApi";
-
+import { useToast } from "../../context/ToastContext";
 import BackButton from "../../components/common/BackButton";
 
 function IssuePolicy() {
   const [customers, setCustomers] = useState([]);
   const [plans, setPlans] = useState([]);
-  const [message,setMessage] = useState("");
-  const [error,setError] = useState("");
+
+
+  const toast = useToast();
 
   const [form, setForm] = useState({
     customerId: "",
@@ -58,17 +59,17 @@ function IssuePolicy() {
     e.preventDefault();
 
     if (!form.customerId) {
-      setError("Please select customer");
+      toast.error("Please select customer");
       return;
     }
 
     if (!form.planId) {
-      setError("Please select plan");
+      toast.error("Please select plan");
       return;
     }
 
     if (!form.startDate) {
-      setError("Please select start date");
+      toast.error("Please select start date");
       return;
     }
 
@@ -85,8 +86,8 @@ function IssuePolicy() {
 
       const response = await issuePolicy(payload);
 
-      setMessage("Policy issued successfully");
-setError("");
+      toast.success("Policy issued successfully");
+
 
       setForm({
   customerId:"",
@@ -96,7 +97,7 @@ setError("");
     } catch (error) {
       console.log(error);
 
-      setError(error.response?.data?.message || "Failed to issue policy");
+      toast.error(error.response?.data?.message || "Failed to issue policy");
     }
   }
 
@@ -105,17 +106,7 @@ setError("");
       <BackButton />
 
       <Card title="Issue Policy">
-        {message && (
-  <div className="alert alert-success">
-    {message}
-  </div>
-)}
-
-{error && (
-  <div className="alert alert-danger">
-    {error}
-  </div>
-)}
+        
         <form onSubmit={submit}>
           <select
             className="form-control mb-3"

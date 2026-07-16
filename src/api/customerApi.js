@@ -215,3 +215,6 @@ export const sendEmailOtp = (email) => {
 export const verifyEmailOtp = (email, otp) => {
   return api.post("/otp/email/verify", { email, otp });
 };
+export const profileExists = () => {
+    return api.get("/customers/profile/exists");
+};

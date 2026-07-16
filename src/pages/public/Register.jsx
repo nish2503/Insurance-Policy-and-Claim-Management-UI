@@ -70,7 +70,12 @@ function Register() {
       setSubmitting(true);
       await register({ ...form, mobileNumber: toE164India(form.mobileNumber) });
       toast.success("Registration successful. Verify OTP");
-      navigate("/verify-register");
+      navigate("/verify-register", {
+  state: {
+    email: values.email,
+    mobileNumber: values.mobileNumber,
+  },
+});
     } catch (error) {
 
        const serverFieldErrors = extractValidationErrors(error);

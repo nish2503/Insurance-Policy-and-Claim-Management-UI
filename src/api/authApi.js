@@ -13,7 +13,7 @@ export const verifyRegister = (data) => {
 };
 
 export const resendOtp = (data) => {
-  return api.post("/auth/resend-otp", data);
+  return api.post("/auth/register/resend-otp", data);
 };
 
 export const forgotPassword = (data) => {

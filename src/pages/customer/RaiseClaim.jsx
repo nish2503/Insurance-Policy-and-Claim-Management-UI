@@ -8,10 +8,11 @@ import {
   raiseClaim,
   uploadClaimDocument,
 } from "../../api/customerApi";
+import { useToast } from "../../context/ToastContext";
 
 function RaiseClaim() {
   const navigate = useNavigate();
-
+  const toast = useToast();
   const [policies, setPolicies] = useState([]);
   const [policyId, setPolicyId] = useState("");
   const [claimAmount, setClaimAmount] = useState("");
@@ -22,8 +23,7 @@ function RaiseClaim() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [maxCoverage, setMaxCoverage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  
 
   useEffect(() => {
     loadPolicies();
@@ -44,8 +44,6 @@ function RaiseClaim() {
 
     setPolicyId(selectedId);
     setClaimAmount("");
-    setSuccessMsg("");
-    setErrorMsg("");
 
     if (fieldErrors.policyId) {
       setFieldErrors((prev) => ({
@@ -73,7 +71,22 @@ function RaiseClaim() {
   function handleFileChange(e) {
     const selectedFile = e.target.files[0];
 
-    setErrorMsg("");
+    const allowedTypes = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+];
+
+if (!allowedTypes.includes(selectedFile.type)) {
+  setFieldErrors((prev) => ({
+    ...prev,
+    file: "Only PDF, PNG and JPG files are allowed.",
+  }));
+
+  e.target.value = "";
+  setFile(null);
+  return;
+}
 
      if (fieldErrors.file) {
     setFieldErrors((prev) => ({
@@ -130,6 +143,11 @@ function RaiseClaim() {
     if (!policyId)
       errors.policyId = "Please select an active policy from the list";
 
+    if (!file) {
+  errors.file =
+    "Please upload a supporting document for your claim";
+}
+
     if (!claimAmount) errors.claimAmount = "Claim amount field is required";
     else if (Number(claimAmount) <= 0)
       errors.claimAmount =
@@ -155,14 +173,13 @@ function RaiseClaim() {
   async function handleSubmit(e) {
     e.preventDefault();
 
-    setSuccessMsg("");
-    setErrorMsg("");
     setFieldErrors({});
 
     const clientErrors = validateForm();
 
     if (Object.keys(clientErrors).length > 0) {
       setFieldErrors(clientErrors);
+      toast.error("Please correct the highlighted fields.");
       return;
     }
 
@@ -198,7 +215,7 @@ function RaiseClaim() {
         supportingDocuments: uploadedDocument,
       });
 
-      setSuccessMsg("Claim request submitted successfully!");
+      toast.success("Claim request submitted successfully!");
 
       setPolicyId("");
 
@@ -216,7 +233,7 @@ function RaiseClaim() {
     } catch (error) {
       console.error(error);
 
-      setErrorMsg(
+      toast.error(
         error.response?.data?.message ||
           "Failed to submit claim request. Please verify and retry.",
       );
@@ -230,19 +247,6 @@ function RaiseClaim() {
       <BackButton />
 
       <Card title="Raise Insurance Settlement Claim">
-        {successMsg && (
-          <div className="alert alert-success mt-3 shadow-sm">
-            <strong>Success!</strong>
-            {successMsg}
-          </div>
-        )}
-
-        {errorMsg && (
-          <div className="alert alert-danger mt-3 shadow-sm">
-            <strong>Error!</strong>
-            {errorMsg}
-          </div>
-        )}
 
         <form
           onSubmit={handleSubmit}

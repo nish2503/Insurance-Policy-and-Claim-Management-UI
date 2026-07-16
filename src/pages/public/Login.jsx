@@ -5,7 +5,9 @@ import { login } from "../../api/authApi";
 import { loginSuccess } from "../../features/auth/authSlice";
 import ThemeButton from "../../components/common/ThemeButton";
 import { useToast } from "../../context/ToastContext";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { required, validateEmail, validateForm } from "../../utils/validators";
+import { profileExists } from "../../api/customerApi";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -61,19 +63,26 @@ function Login() {
 
       switch (data.userRole) {
         case "ADMIN":
-          navigate("/admin");
+          navigate("/admin", { replace: true });
           break;
         case "AGENT":
-          navigate("/agent");
+          navigate("/agent", { replace: true });
           break;
-        case "CUSTOMER":
-          navigate("/customer");
-          break;
+        case "CUSTOMER": {
+  const response = await profileExists();
+
+  if (response.data) {
+    navigate("/customer", { replace: true });
+  } else {
+    navigate("/customer/create-profile", { replace: true });
+  }
+  break;
+}
         default:
           toast.error("Invalid system role assigned.");
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Login Failed");
+      toast.error(getApiErrorMessage(error, "Login Failed"));
     } finally {
       setLoading(false);
     }
@@ -188,7 +197,9 @@ function Login() {
 
         .auth-footer-nav {
           display: flex !important;
+          flex-wrap: wrap !important;
           justify-content: space-between !important;
+          gap: 8px 16px !important;
           margin-top: 24px !important;
           font-size: 0.85rem !important;
         }
@@ -278,7 +289,12 @@ function Login() {
           <span onClick={() => navigate("/forgot-password")}>
             Forgot Password?
           </span>
-          <span onClick={() => navigate("/register")}>Create Profile</span>
+          <span onClick={() => navigate("/register")}>
+  Register New Account
+</span>
+          <span onClick={() => navigate("/verify-register")}>
+            Verify Pending Registration
+          </span>
         </div>
       </div>
     </div>
