@@ -5,8 +5,9 @@ import DataTable from "../../components/common/DataTable";
 import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import StatusBadge from "../../components/common/StatusBadge";
-import { getAgentPayments } from "../../api/agentApi";
+import { getInternalStaffPayments } from "../../api/internalStaffApi";
 import BackButton from "../../components/common/BackButton";
+import ExportPdfButton from "../../components/common/ExportPdfButton";
 
 function Payments() {
   const [payments, setPayments] = useState([]);
@@ -18,7 +19,7 @@ function Payments() {
 
   async function loadPayments() {
     try {
-      const res = await getAgentPayments();
+      const res = await getInternalStaffPayments();
       setPayments(res.data.records || res.data.content || res.data || []);
     } catch (error) {
       console.log(error);
@@ -85,6 +86,21 @@ function Payments() {
               "paymentMode",
               "paymentStatus",
             ]}
+            headerActions={
+              <ExportPdfButton
+                title="Premium Payments"
+                rows={payments}
+                columns={[
+                  { label: "ID", key: "paymentId" },
+                  { label: "Policy Number", key: "policyNumber" },
+                  { label: "Customer Name", value: (row) => row.customerName || "N/A" },
+                  { label: "Transaction Ref", key: "transactionReference" },
+                  { label: "Amount", value: (row) => `₹${row.amount}` },
+                  { label: "Mode", key: "paymentMode" },
+                  { label: "Status", key: "paymentStatus" },
+                ]}
+              />
+            }
           />
         ) : (
           <EmptyState message="No Payments Found" />

@@ -1,57 +1,91 @@
 import { useNavigate, useParams } from "react-router-dom";
-
 import { useState } from "react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
+import Button from "../../components/common/Button";
+import BackButton from "../../components/common/BackButton";
 
 import { purchasePolicy } from "../../api/customerApi";
-import BackButton from "../../components/common/BackButton";
+import { required } from "../../utils/validators";
+import { getApiErrorMessage } from "../../utils/apiError";
+import { useToast } from "../../context/ToastContext";
 
 function PurchasePolicy() {
   const { planId } = useParams();
-
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [startDate, setStartDate] = useState("");
+  const [touched, setTouched] = useState(false);
+  const [fieldError, setFieldError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  function validate(value) {
+    const message = required(value, "Start date");
+    setFieldError(message);
+    return message;
+  }
+
+  function handleChange(e) {
+    setStartDate(e.target.value);
+    if (touched) validate(e.target.value);
+  }
+
+  function handleBlur() {
+    setTouched(true);
+    validate(startDate);
+  }
 
   async function handlePurchase(e) {
     e.preventDefault();
+    setTouched(true);
+    if (validate(startDate)) return;
 
+    setSubmitting(true);
     try {
       await purchasePolicy({
         planId: Number(planId),
-
         startDate,
       });
 
-      alert("Policy Purchased Successfully");
-
+      toast.success("Policy purchased successfully");
       navigate("/customer/policies");
     } catch (error) {
-      console.log(error);
-
-      alert(error.response?.data?.message || "Purchase Failed");
+      toast.error(getApiErrorMessage(error, "Unable to purchase policy"));
+    } finally {
+      setSubmitting(false);
     }
   }
 
   return (
     <DashboardLayout>
-      <BackButton/>
+      <BackButton />
 
       <Card title="Purchase Policy">
-        <form onSubmit={handlePurchase}>
-          <label>Start Date</label>
+        <form onSubmit={handlePurchase} noValidate>
+          <div className="mb-3">
+            <label className="form-label">
+              Start Date <span className="text-danger">*</span>
+            </label>
+            <input
+              type="date"
+              className={`form-control ${
+                touched && fieldError ? "is-invalid" : ""
+              }`}
+              value={startDate}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              aria-invalid={touched && !!fieldError}
+            />
+            {touched && fieldError && (
+              <div className="invalid-feedback d-block">{fieldError}</div>
+            )}
+          </div>
 
-          <input
-            type="date"
-            required
-            className="form-control"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-
-          <button className="btn btn-success mt-3">Confirm Purchase</button>
+          <Button type="submit" variant="success" disabled={submitting}>
+            {submitting ? "Processing..." : "Confirm Purchase"}
+          </Button>
         </form>
       </Card>
     </DashboardLayout>

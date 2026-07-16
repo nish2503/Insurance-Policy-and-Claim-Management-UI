@@ -63,8 +63,8 @@ function Login() {
         case "ADMIN":
           navigate("/admin");
           break;
-        case "AGENT":
-          navigate("/agent");
+        case "INTERNAL_STAFF":
+          navigate("/internal-staff");
           break;
         case "CUSTOMER":
           navigate("/customer");

@@ -7,6 +7,7 @@ import EmptyState from "../../components/common/EmptyState";
 import StatusBadge from "../../components/common/StatusBadge";
 import { getMyClaims } from "../../api/customerApi";
 import BackButton from "../../components/common/BackButton";
+import ExportPdfButton from "../../components/common/ExportPdfButton";
 
 function MyClaims() {
   const [claims, setClaims] = useState([]);
@@ -75,6 +76,19 @@ function MyClaims() {
               "claimReason",
               "claimStatus" // Embedded Status search filter capability
             ]}
+            headerActions={
+              <ExportPdfButton
+                title="My Claims"
+                rows={claims}
+                columns={[
+                  { label: "Claim Number", key: "claimNumber" },
+                  { label: "Policy", key: "policyNumber" },
+                  { label: "Amount", value: (row) => `₹${row.claimAmount}` },
+                  { label: "Reason", key: "claimReason" },
+                  { label: "Status", key: "claimStatus" },
+                ]}
+              />
+            }
           />
         ) : (
           <EmptyState message="No Claims Found" />

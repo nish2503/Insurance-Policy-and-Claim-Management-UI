@@ -7,7 +7,8 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import BackButton from "../../components/common/BackButton";
 
-import { getAgentPolicies } from "../../api/agentApi";
+import { getInternalStaffPolicies } from "../../api/internalStaffApi";
+import ExportPdfButton from "../../components/common/ExportPdfButton";
 
 function Policies() {
   const [policies, setPolicies] = useState([]);
@@ -19,7 +20,7 @@ function Policies() {
 
   async function loadPolicies() {
     try {
-      const res = await getAgentPolicies();
+      const res = await getInternalStaffPolicies();
       setPolicies(res.data.records || []);
     } catch (error) {
       console.log(error);
@@ -68,6 +69,18 @@ function Policies() {
               "planName",
               "policyStatus",
             ]}
+            headerActions={
+              <ExportPdfButton
+                title="Policies"
+                rows={policies}
+                columns={[
+                  { label: "Policy Number", key: "policyNumber" },
+                  { label: "Customer", key: "customerName" },
+                  { label: "Plan", key: "planName" },
+                  { label: "Status", key: "policyStatus" },
+                ]}
+              />
+            }
           />
         ) : (
           <EmptyState message="No Policies Found" />

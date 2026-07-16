@@ -6,9 +6,9 @@ import StatusBadge from "../../components/common/StatusBadge";
 import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import Card from "../../components/common/Card";
-import { getAgentClaims, reviewClaim } from "../../api/agentApi";
+import { getInternalStaffClaims, reviewClaim } from "../../api/internalStaffApi";
 
-function AgentDashboard() {
+function InternalStaffDashboard() {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,7 +19,7 @@ function AgentDashboard() {
   async function loadClaims() {
     try {
       setLoading(true);
-      const res = await getAgentClaims();
+      const res = await getInternalStaffClaims();
       setClaims(res.data.records || []);
     } catch (error) {
       console.log(error);
@@ -54,16 +54,16 @@ function AgentDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="agent-dashboard-container">
+      <div className="internal-staff-dashboard-container">
         <style>{`
-          .agent-dashboard-container {
+          .internal-staff-dashboard-container {
             font-family: 'Inter', system-ui, sans-serif !important;
             background-color: var(--bg-main) !important;
             transition: background-color 0.25s ease !important;
           }
 
-          /* --- High-End Reactive Agent Welcome Banner --- */
-          .agent-header-panel {
+          /* --- High-End Reactive Internal Staff Welcome Banner --- */
+          .internal-staff-header-panel {
             background: var(--theme-header-gradient) !important;
             border: 1px solid var(--border-color) !important;
             border-radius: 20px !important;
@@ -73,7 +73,7 @@ function AgentDashboard() {
             transition: all 0.25s ease !important;
           }
 
-          .agent-header-panel h2 {
+          .internal-staff-header-panel h2 {
             color: var(--theme-header-text) !important;
             font-weight: 700 !important;
             font-size: 1.6rem !important;
@@ -82,15 +82,15 @@ function AgentDashboard() {
             transition: color 0.25s ease !important;
           }
 
-          .agent-header-panel p {
+          .internal-staff-header-panel p {
             color: var(--theme-header-muted) !important;
             font-size: 0.95rem !important;
             margin: 0 !important;
             transition: color 0.25s ease !important;
           }
 
-          .agent-dashboard-container .card, 
-          .agent-dashboard-container div[class*="card"] {
+          .internal-staff-dashboard-container .card, 
+          .internal-staff-dashboard-container div[class*="card"] {
             background: var(--panel-bg) !important;
             border: 1px solid var(--border-color) !important;
             border-radius: 16px !important;
@@ -101,8 +101,8 @@ function AgentDashboard() {
           }
         `}</style>
 
-        <div className="agent-header-panel">
-          <h2>Agent Processing Center ⚡</h2>
+        <div className="internal-staff-header-panel">
+          <h2>Internal Staff Processing Center ⚡</h2>
           <p>
             Reviewing and auditing incoming policy claims pending manual
             security clearance confirmation.
@@ -142,4 +142,4 @@ function AgentDashboard() {
   );
 }
 
-export default AgentDashboard;
+export default InternalStaffDashboard;

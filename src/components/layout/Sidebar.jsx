@@ -183,57 +183,50 @@ function Sidebar() {
             </Link>
 
             <Link
-              to="/admin/payments"
-              className={`sidebar-link ${isActive("/admin/payments") ? "active" : ""}`}
+              to="/admin/internal-staff"
+              className={`sidebar-link ${isActive("/admin/internal-staff") ? "active" : ""}`}
             >
-              💳 Payments
-            </Link>
-
-            <Link
-              to="/admin/agents"
-              className={`sidebar-link ${isActive("/admin/agents") ? "active" : ""}`}
-            >
-              🧑‍💼 Agents
+              🧑‍💼 Internal Staff
             </Link>
           </>
         )}
 
-        {/* --- ⚡ AGENT NAVIGATION CHANNELS (RESTORED & FIXED) --- */}
-        {role === "AGENT" && (
+        {/* --- ⚡ INTERNAL STAFF NAVIGATION CHANNELS --- */}
+        {role === "INTERNAL_STAFF" && (
           <>
             <Link
-              to="/agent"
-              className={`sidebar-link ${isActive("/agent") ? "active" : ""}`}
+              to="/internal-staff"
+              className={`sidebar-link ${isActive("/internal-staff") ? "active" : ""}`}
             >
               📊 Dashboard
             </Link>
             <Link
-              to="/agent/customers"
-              className={`sidebar-link ${isActive("/agent/customers") ? "active" : ""}`}
+              to="/internal-staff/customers"
+              className={`sidebar-link ${isActive("/internal-staff/customers") ? "active" : ""}`}
             >
               👥 Customers
             </Link>
             <Link
-              to="/agent/issue-policy"
-              className={`sidebar-link ${isActive("/agent/issue-policy") ? "active" : ""}`}
+              to="/internal-staff/issue-policy"
+              className={`sidebar-link ${isActive("/internal-staff/issue-policy") ? "active" : ""}`}
             >
               ✍️ Issue Policy
             </Link>
             <Link
-              to="/agent/policies"
-              className={`sidebar-link ${isActive("/agent/policies") ? "active" : ""}`}
+              to="/internal-staff/policies"
+              className={`sidebar-link ${isActive("/internal-staff/policies") ? "active" : ""}`}
             >
               📄 Policies
             </Link>
             <Link
-              to="/agent/review-claims"
-              className={`sidebar-link ${isActive("/agent/review-claims") ? "active" : ""}`}
+              to="/internal-staff/review-claims"
+              className={`sidebar-link ${isActive("/internal-staff/review-claims") ? "active" : ""}`}
             >
               🚑 Claims Queue
             </Link>
             <Link
-              to="/agent/payments"
-              className={`sidebar-link ${isActive("/agent/payments") ? "active" : ""}`}
+              to="/internal-staff/payments"
+              className={`sidebar-link ${isActive("/internal-staff/payments") ? "active" : ""}`}
             >
               💳 Payments
             </Link>

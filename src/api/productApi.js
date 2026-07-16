@@ -12,6 +12,10 @@ export const getProductsByStatus = (activeStatus, params) => {
   return api.get(`/products/status/${activeStatus}`, { params });
 };
 
+export const getActiveProducts = (params) => {
+  return getProductsByStatus(true, { size: 100, ...params });
+};
+
 export const createProduct = (data) => {
   return api.post("/products", data);
 };

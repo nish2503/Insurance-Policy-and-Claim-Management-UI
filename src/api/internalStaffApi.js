@@ -1,28 +1,28 @@
 import api from "./axios";
-// Agent dashboard claims
-export const getAgentClaims = (params) => {
-  return api.get("/claims/agent", { params });
+// Internal staff dashboard claims
+export const getInternalStaffClaims = (params) => {
+  return api.get("/claims/internal-staff", { params });
 };
 // Review claim
 export const reviewClaim = (claimId, data) => {
   return api.put(`/claims/${claimId}/review`, data);
 };
-// Agent customers
-export const getAgentCustomers = (params) => {
+// Internal staff customers
+export const getInternalStaffCustomers = (params) => {
   return api.get("/customers", { params });
 };
 // Issue policy
 export const issuePolicy = (data) => {
   return api.post("/policies/issue", data);
 };
-// Agent policies
-export const getAgentPolicies = (params) => {
-  return api.get("/policies/agent", { params });
+// Internal staff policies
+export const getInternalStaffPolicies = (params) => {
+  return api.get("/policies/internal-staff", { params });
 };
-// Agent payments
+// Internal staff payments
 
-export const getAgentPayments = (params) => {
-  return api.get("/premium-payments/agent", { params });
+export const getInternalStaffPayments = (params) => {
+  return api.get("/premium-payments/internal-staff", { params });
 };
 // Get plans for issue policy dropdown
 export const getPlans = () => {

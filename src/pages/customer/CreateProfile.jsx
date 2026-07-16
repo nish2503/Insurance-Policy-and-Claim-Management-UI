@@ -1,10 +1,34 @@
 import { useState } from "react";
-import { createCustomerProfile } from "../../api/customerApi";
 import { useNavigate } from "react-router-dom";
-import { validateAge } from "../../utils/validators";
+
+import DashboardLayout from "../../components/layout/DashboardLayout";
+import Card from "../../components/common/Card";
+import Button from "../../components/common/Button";
+import BackButton from "../../components/common/BackButton";
+
+import { createCustomerProfile } from "../../api/customerApi";
+import {
+  required,
+  validateAge,
+  validatePinCode,
+  validateForm,
+} from "../../utils/validators";
+import { getApiErrorMessage } from "../../utils/apiError";
+import { useToast } from "../../context/ToastContext";
+
+const FIELD_LABELS = {
+  dateOfBirth: "Date of birth",
+  address: "Address",
+  city: "City",
+  state: "State",
+  pinCode: "PIN code",
+  nomineeName: "Nominee name",
+  nomineeRelation: "Nominee relation",
+};
 
 function CreateProfile() {
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [form, setForm] = useState({
     dateOfBirth: "",
@@ -16,80 +40,96 @@ function CreateProfile() {
     nomineeRelation: "",
   });
 
-  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-
-      [e.target.name]: e.target.value,
-    });
-
-    setErrors((prev) => {
-      if (!prev[e.target.name]) return prev;
-      const next = { ...prev };
-      delete next[e.target.name];
-      return next;
-    });
+  const validatorMap = {
+    dateOfBirth: (value) => validateAge(value, FIELD_LABELS.dateOfBirth),
+    address: (value) => required(value, FIELD_LABELS.address),
+    city: (value) => required(value, FIELD_LABELS.city),
+    state: (value) => required(value, FIELD_LABELS.state),
+    pinCode: (value) => validatePinCode(value, FIELD_LABELS.pinCode),
+    nomineeName: (value) => required(value, FIELD_LABELS.nomineeName),
+    nomineeRelation: (value) => required(value, FIELD_LABELS.nomineeRelation),
   };
 
-  const submit = async (e) => {
+  function runFieldValidation(field, value) {
+    const message = validatorMap[field](value);
+    setFieldErrors((prev) => ({ ...prev, [field]: message }));
+  }
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (touched[name]) runFieldValidation(name, value);
+  }
+
+  function handleBlur(e) {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    runFieldValidation(name, value);
+  }
+
+  async function submit(e) {
     e.preventDefault();
 
-    const dobError = validateAge(form.dateOfBirth, "Date of birth");
-    if (dobError) {
-      setErrors({ dateOfBirth: dobError });
-      return;
-    }
+    const { errors, isValid } = validateForm(form, validatorMap);
+    setFieldErrors(errors);
+    setTouched(
+      Object.keys(form).reduce((acc, key) => ({ ...acc, [key]: true }), {}),
+    );
 
+    if (!isValid) return;
+
+    setSubmitting(true);
     try {
       await createCustomerProfile(form);
-
-      alert("Profile created");
-
+      toast.success("Profile created successfully");
       navigate("/customer");
     } catch (error) {
-      console.log(error);
-
-      alert(error.response?.data?.message || "Profile creation failed");
+      toast.error(getApiErrorMessage(error, "Unable to create profile"));
+    } finally {
+      setSubmitting(false);
     }
-  };
+  }
 
   return (
-    <div className="container mt-5">
-      <h3>Create Customer Profile</h3>
+    <DashboardLayout>
+      <BackButton />
 
-      <form onSubmit={submit}>
-        <div className="mb-3">
-          <label className="form-label text-capitalize">Date of Birth</label>
-          <input
-            type="date"
-            className={`form-control ${errors.dateOfBirth ? "is-invalid" : ""}`}
-            name="dateOfBirth"
-            value={form.dateOfBirth}
-            onChange={handleChange}
-          />
-          {errors.dateOfBirth && (
-            <div className="invalid-feedback">{errors.dateOfBirth}</div>
-          )}
-        </div>
-
-        {Object.keys(form)
-          .filter((key) => key !== "dateOfBirth")
-          .map((key) => (
-            <input
-              key={key}
-              className="form-control mb-3"
-              name={key}
-              placeholder={key}
-              value={form[key]}
-              onChange={handleChange}
-            />
+      <Card title="Create Customer Profile">
+        <form onSubmit={submit} noValidate>
+          {Object.keys(form).map((key) => (
+            <div className="mb-3" key={key}>
+              <label className="form-label">
+                {FIELD_LABELS[key]} <span className="text-danger">*</span>
+              </label>
+              <input
+                type={key === "dateOfBirth" ? "date" : "text"}
+                className={`form-control ${
+                  touched[key] && fieldErrors[key] ? "is-invalid" : ""
+                }`}
+                name={key}
+                value={form[key]}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                aria-invalid={touched[key] && !!fieldErrors[key]}
+              />
+              {touched[key] && fieldErrors[key] && (
+                <div className="invalid-feedback d-block">
+                  {fieldErrors[key]}
+                </div>
+              )}
+            </div>
           ))}
 
-        <button className="btn btn-primary">Create Profile</button>
-      </form>
-    </div>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Creating..." : "Create Profile"}
+          </Button>
+        </form>
+      </Card>
+    </DashboardLayout>
   );
 }
 
