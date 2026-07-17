@@ -7,6 +7,7 @@ import EmptyState from "../../components/common/EmptyState";
 import BackButton from "../../components/common/BackButton";
 import StatusBadge from "../../components/common/StatusBadge";
 import { getMyPolicies } from "../../api/customerApi";
+import ExportPdfButton from "../../components/common/ExportPdfButton";
 
 function MyPolicies() {
   const [policies, setPolicies] = useState([]);
@@ -80,9 +81,37 @@ function MyPolicies() {
               "productType",
               "policyStatus", // Embedded policy status text lookup mapping filter
             ]}
+            headerActions={
+              <ExportPdfButton
+                title="My Policies"
+                rows={policies}
+                columns={[
+                  { label: "Policy Number", key: "policyNumber" },
+                  { label: "Plan", key: "planName" },
+                  { label: "Product", key: "productType" },
+                  {
+                    label: "Premium",
+                    value: (row) => `₹${row.premiumAmount} (${row.premiumType || "Annual"})`,
+                  },
+                  { label: "Status", key: "policyStatus" },
+                  { label: "Coverage", value: (row) => `₹${row.coverageAmount}` },
+                ]}
+              />
+            }
           />
         ) : (
-          <EmptyState message="No Policies Found" />
+         
+<EmptyState 
+  message={
+    <div className="text-center p-4">
+      <p className="text-muted mb-3">You don't have any active insurance policies protecting your assets yet.</p>
+      <Link to="/customer/products" className="btn btn-primary font-weight-bold shadow-sm px-4">
+        🛡️ Explore Available Insurance Plans
+      </Link>
+    </div>
+  } 
+/>
+
         )}
       </Card>
     </DashboardLayout>

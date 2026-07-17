@@ -243,20 +243,19 @@ function ForgotPassword() {
       </div>
 
       <div className="auth-core-card">
-        <h3>Recover Vault 🔑</h3>
+        <h3>Forgot Password</h3>
 
         {!hasToken ? (
           <>
             <p className="recovery-subheading-text">
-              Provide your registered email signature token path to generate an
-              offsite access reset sequence link.
+              Provide your registered Email Address.
             </p>
             <form onSubmit={sendLink} noValidate>
               <div className="mb-3">
                 <input
                   className={`modern-form-input${errors.email ? " field-invalid" : ""}`}
                   type="email"
-                  placeholder="Account Email"
+                  placeholder="Email Address"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -267,16 +266,15 @@ function ForgotPassword() {
               </div>
               <button className="btn-submit-action" disabled={loading}>
                 {loading
-                  ? "Dispatching Route Link..."
-                  : "Issue Recovery Sequence"}
+                  ? "Sending link..."
+                  : "Send Reset Link"}
               </button>
             </form>
           </>
         ) : (
           <>
             <p className="recovery-subheading-text">
-              Link verified. Establish a fresh high-entropy cryptographic
-              password entry inside database matrix cells.
+              Link verified. Enter your new password below to reset access.
             </p>
             <form onSubmit={reset} noValidate>
               <div className="mb-3">
@@ -341,8 +339,8 @@ function ForgotPassword() {
 
               <button className="btn-submit-action" disabled={loading}>
                 {loading
-                  ? "Re-structuring Crypt Key..."
-                  : "Finalize Key Override"}
+                  ? "Updating Password"
+                  : "Update Password"}
               </button>
             </form>
           </>

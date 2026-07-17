@@ -17,11 +17,15 @@ import BackButton from "../../components/common/BackButton";
 import StatusBadge from "../../components/common/StatusBadge";
 import StatusFilter from "../../components/common/StatusFilter";
 import Button from "../../components/common/Button";
+import ExportPdfButton from "../../components/common/ExportPdfButton";
+import { useToast } from "../../context/ToastContext";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 import PlanDetailsModal from "../../components/common/PlanDetailsModal";
 import PlanFormModal from "../../components/common/PlanFormModal";
 
 function Plans() {
+  const toast = useToast();
   const [plans, setPlans] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -68,9 +72,12 @@ function Plans() {
         await deactivatePlan(plan.planId);
       }
 
+      toast.success(`Plan "${plan.planName}" ${activate ? "activated" : "deactivated"} successfully`);
       loadPlans();
     } catch (err) {
       console.log(err);
+
+      toast.error(getApiErrorMessage(err, `Failed to ${activate ? "activate" : "deactivate"} plan.`));
     }
   }
 
@@ -78,8 +85,10 @@ function Plans() {
     try {
       if (editingPlan) {
         await updatePlan(editingPlan.planId, form);
+        toast.success(`Plan "${form.planName}" updated successfully`);
       } else {
         await createPlan(form);
+        toast.success(`Plan "${form.planName}" created successfully`);
       }
 
       setShowForm(false);
@@ -89,6 +98,8 @@ function Plans() {
       loadPlans();
     } catch (err) {
       console.log(err);
+
+      toast.error(getApiErrorMessage(err, "Unable to save plan."));
     }
   }
 
@@ -212,6 +223,23 @@ function Plans() {
               >
                 + Add Plan
               </Button>
+
+              <ExportPdfButton
+                title="Policy Plans"
+                rows={plans}
+                meta={{ "Status filter": status === "ALL" ? "All" : status ? "Active" : "Inactive" }}
+                columns={[
+                  { label: "ID", key: "planId" },
+                  { label: "Plan", key: "planName" },
+                  { label: "Premium", value: (row) => `₹${row.premiumAmount}` },
+                  { label: "Coverage", value: (row) => `₹${row.coverageAmount ?? "-"}` },
+                  { label: "Duration", value: (row) => `${row.duration} Years` },
+                  {
+                    label: "Status",
+                    value: (row) => (row.activeStatus ? "Active" : "Inactive"),
+                  },
+                ]}
+              />
             </div>
           }
         />

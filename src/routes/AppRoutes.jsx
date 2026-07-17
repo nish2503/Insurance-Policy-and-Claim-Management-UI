@@ -12,15 +12,17 @@ import Products from "../pages/admin/Products";
 import Customers from "../pages/admin/Customers";
 import AdminPlans from "../pages/admin/AdminPlans";
 import AdminPolicies from "../pages/admin/AdminPolicies";
+import AdminClaims from "../pages/admin/AdminClaims";
+import AdminInternalStaff from "../pages/admin/AdminInternalStaff";
 
-import AgentDashboard from "../pages/agent/AgentDashboard";
+import InternalStaffDashboard from "../pages/internal-staff/InternalStaffDashboard";
 import CustomerDashboard from "../pages/customer/CustomerDashboard";
 
-import AgentCustomers from "../pages/agent/Customers";
-import ReviewClaims from "../pages/agent/ReviewClaims";
-import IssuePolicy from "../pages/agent/IssuePolicy";
-import Policies from "../pages/agent/Policies";
-import AgentPayments from "../pages/agent/Payments";
+import InternalStaffCustomers from "../pages/internal-staff/Customers";
+import ReviewClaims from "../pages/internal-staff/ReviewClaims";
+import IssuePolicy from "../pages/internal-staff/IssuePolicy";
+import Policies from "../pages/internal-staff/Policies";
+import InternalStaffPayments from "../pages/internal-staff/Payments";
 
 import CreateProfile from "../pages/customer/CreateProfile";
 import BrowseProducts from "../pages/customer/BrowseProducts";
@@ -87,52 +89,70 @@ function AppRoutes() {
         }
       />
 
-      {/* Agent */}
       <Route
-        path="/agent"
+        path="/admin/claims"
         element={
-          <ProtectedRoute allowedRole="AGENT">
-            <AgentDashboard />
+          <ProtectedRoute allowedRole="ADMIN">
+            <AdminClaims />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/internal-staff"
+        element={
+          <ProtectedRoute allowedRole="ADMIN">
+            <AdminInternalStaff />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Internal Staff */}
+      <Route
+        path="/internal-staff"
+        element={
+          <ProtectedRoute allowedRole="INTERNAL_STAFF">
+            <InternalStaffDashboard />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/agent/customers"
+        path="/internal-staff/customers"
         element={
-          <ProtectedRoute allowedRole="AGENT">
-            <AgentCustomers />
+          <ProtectedRoute allowedRole="INTERNAL_STAFF">
+            <InternalStaffCustomers />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/agent/review-claims"
+        path="/internal-staff/review-claims"
         element={
-          <ProtectedRoute allowedRole="AGENT">
+          <ProtectedRoute allowedRole="INTERNAL_STAFF">
             <ReviewClaims />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/agent/issue-policy"
+        path="/internal-staff/issue-policy"
         element={
-          <ProtectedRoute allowedRole="AGENT">
+          <ProtectedRoute allowedRole="INTERNAL_STAFF">
             <IssuePolicy />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/agent/policies"
+        path="/internal-staff/policies"
         element={
-          <ProtectedRoute allowedRole="AGENT">
+          <ProtectedRoute allowedRole="INTERNAL_STAFF">
             <Policies />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/agent/payments"
+        path="/internal-staff/payments"
         element={
-          <ProtectedRoute allowedRole="AGENT">
-            <AgentPayments />
+          <ProtectedRoute allowedRole="INTERNAL_STAFF">
+            <InternalStaffPayments />
           </ProtectedRoute>
         }
       />
@@ -155,13 +175,13 @@ function AppRoutes() {
         }
       />
       <Route
- path="/customer/profile"
- element={
-  <ProtectedRoute allowedRole="CUSTOMER">
-    <Profile />
-  </ProtectedRoute>
- }
-/>
+        path="/customer/profile"
+        element={
+          <ProtectedRoute allowedRole="CUSTOMER">
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/customer/products"
         element={

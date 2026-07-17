@@ -19,8 +19,12 @@ import ProductDetailsModal from "../../components/common/ProductDetailsModal";
 import StatusBadge from "../../components/common/StatusBadge";
 import StatusFilter from "../../components/common/StatusFilter";
 import Button from "../../components/common/Button";
+import ExportPdfButton from "../../components/common/ExportPdfButton";
+import { useToast } from "../../context/ToastContext";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 function Products() {
+  const toast = useToast();
   const [products, setProducts] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -77,11 +81,12 @@ function Products() {
         await deactivateProduct(product.productId);
       }
 
+      toast.success(`Product "${product.productName}" ${action}d successfully`);
       loadProducts();
     } catch (err) {
       console.log(err);
 
-      alert(`Failed to ${action} product.`);
+      toast.error(getApiErrorMessage(err, `Failed to ${action} product.`));
     }
   }
 
@@ -93,8 +98,10 @@ function Products() {
 
           form,
         );
+        toast.success(`Product "${form.productName}" updated successfully`);
       } else {
         await createProduct(form);
+        toast.success(`Product "${form.productName}" created successfully`);
       }
 
       setShowForm(false);
@@ -104,6 +111,8 @@ function Products() {
       loadProducts();
     } catch (err) {
       console.log(err);
+
+      toast.error(getApiErrorMessage(err, "Unable to save product."));
     }
   }
 
@@ -230,6 +239,24 @@ function Products() {
               >
                 + Add Product
               </Button>
+
+              <ExportPdfButton
+                title="Insurance Products"
+                rows={products}
+                meta={{
+                  "Status filter":
+                    status === "ALL" ? "All" : status ? "Active" : "Inactive",
+                }}
+                columns={[
+                  { label: "ID", key: "productId" },
+                  { label: "Product", key: "productName" },
+                  { label: "Description", key: "description" },
+                  {
+                    label: "Status",
+                    value: (row) => (row.activeStatus ? "Active" : "Inactive"),
+                  },
+                ]}
+              />
             </div>
           }
         />

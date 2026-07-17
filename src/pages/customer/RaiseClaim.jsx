@@ -23,7 +23,6 @@ function RaiseClaim() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [maxCoverage, setMaxCoverage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  
 
   useEffect(() => {
     loadPolicies();
@@ -71,29 +70,25 @@ function RaiseClaim() {
   function handleFileChange(e) {
     const selectedFile = e.target.files[0];
 
-    const allowedTypes = [
-  "application/pdf",
-  "image/png",
-  "image/jpeg",
-];
+    const allowedTypes = ["application/pdf", "image/png", "image/jpeg"];
 
-if (!allowedTypes.includes(selectedFile.type)) {
-  setFieldErrors((prev) => ({
-    ...prev,
-    file: "Only PDF, PNG and JPG files are allowed.",
-  }));
+    if (!allowedTypes.includes(selectedFile.type)) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        file: "Only PDF, PNG and JPG files are allowed.",
+      }));
 
-  e.target.value = "";
-  setFile(null);
-  return;
-}
+      e.target.value = "";
+      setFile(null);
+      return;
+    }
 
-     if (fieldErrors.file) {
-    setFieldErrors((prev) => ({
-      ...prev,
-      file: "",
-    }));
-  }
+    if (fieldErrors.file) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        file: "",
+      }));
+    }
 
     if (!selectedFile) {
       setFile(null);
@@ -130,10 +125,8 @@ if (!allowedTypes.includes(selectedFile.type)) {
   }
 
   function handleCancel() {
-    
-      navigate("/customer/claims");
-    }
-  
+    navigate("/customer/claims");
+  }
 
   function validateForm() {
     const errors = {};
@@ -141,29 +134,27 @@ if (!allowedTypes.includes(selectedFile.type)) {
     const today = new Date().toISOString().split("T")[0];
 
     if (!policyId)
-      errors.policyId = "Please select an active policy from the list";
+      errors.policyId ="Please select an active policy";
 
     if (!file) {
-  errors.file =
-    "Please upload a supporting document for your claim";
-}
+      errors.file = "Please upload a supporting document for your claim";
+    }
 
-    if (!claimAmount) errors.claimAmount = "Claim amount field is required";
+    if (!claimAmount) errors.claimAmount = "Claim amount is required";
     else if (Number(claimAmount) <= 0)
       errors.claimAmount =
         "Claim amount must be a positive value greater than zero";
     else if (maxCoverage && Number(claimAmount) > Number(maxCoverage))
       errors.claimAmount = `Claim amount cannot exceed your policy total coverage limit of ₹${maxCoverage}`;
 
-    if (!claimReason.trim())
-      errors.claimReason =
-        "Reason for claim is required to process assessment context";
-    else if (claimReason.trim().length < 10)
-      errors.claimReason =
-        "Please provide a descriptive reason (minimum 10 characters)";
+    if (!claimReason.trim()) {
+      errors.claimReason = "Please provide a reason for your claim";
+    } else if (claimReason.trim().length < 10) {
+      errors.claimReason = "Please provide a descriptive reason (minimum 10 characters)";
+    }
 
     if (!incidentDate)
-      errors.incidentDate = "Incident occurrence date field is required";
+      errors.incidentDate = "Date of incident is required";
     else if (incidentDate > today)
       errors.incidentDate = "Incident date cannot be set in the future";
 
@@ -246,8 +237,7 @@ if (!allowedTypes.includes(selectedFile.type)) {
     <DashboardLayout>
       <BackButton />
 
-      <Card title="Raise Insurance Settlement Claim">
-
+      <Card title="Raise Claim">
         <form
           onSubmit={handleSubmit}
           id="claimForm"
@@ -256,7 +246,7 @@ if (!allowedTypes.includes(selectedFile.type)) {
         >
           <div className="mb-3">
             <label className="form-label font-weight-bold">
-              Select Covered Policy
+              Select Policy <span className="text-danger">*</span>
             </label>
 
             <select
@@ -267,7 +257,7 @@ if (!allowedTypes.includes(selectedFile.type)) {
               onChange={handlePolicyChange}
               disabled={submitting}
             >
-              <option value="">Choose Policy</option>
+              <option value="">Select a Policy</option>
 
               {policies.map((p) => (
                 <option key={p.policyId || p.id} value={p.policyId || p.id}>
@@ -276,10 +266,10 @@ if (!allowedTypes.includes(selectedFile.type)) {
               ))}
             </select>
             {fieldErrors.policyId && (
-  <div className="invalid-feedback d-block">
-    {fieldErrors.policyId}
-  </div>
-)}
+              <div className="invalid-feedback d-block">
+                {fieldErrors.policyId}
+              </div>
+            )}
           </div>
 
           {maxCoverage && (
@@ -290,41 +280,41 @@ if (!allowedTypes.includes(selectedFile.type)) {
 
           <div className="mb-3">
             <label className="form-label">
-              Requested Claim Settlement Amount
+              Claim Amount <span className="text-danger">*</span>
             </label>
 
             <input
               type="number"
               className={`form-control ${
-    fieldErrors.claimAmount ? "is-invalid" : ""
-  }`}
+                fieldErrors.claimAmount ? "is-invalid" : ""
+              }`}
               value={claimAmount}
               onChange={handleInputChange(setClaimAmount, "claimAmount")}
               disabled={submitting || !policyId}
             />
             {fieldErrors.claimAmount && (
-  <div className="invalid-feedback d-block">
-    {fieldErrors.claimAmount}
-  </div>
-)}
+              <div className="invalid-feedback d-block">
+                {fieldErrors.claimAmount}
+              </div>
+            )}
           </div>
 
           <div className="mb-3">
-            <label className="form-label">Reason for Claim</label>
+            <label className="form-label">Reason for Claim <span className="text-danger">*</span></label>
 
             <textarea
-               className={`form-control ${
-    fieldErrors.claimReason ? "is-invalid" : ""
-  }`}
+              className={`form-control ${
+                fieldErrors.claimReason ? "is-invalid" : ""
+              }`}
               rows="4"
               value={claimReason}
               onChange={handleInputChange(setClaimReason, "claimReason")}
             />
             {fieldErrors.claimReason && (
-  <div className="invalid-feedback d-block">
-    {fieldErrors.claimReason}
-  </div>
-)}
+              <div className="invalid-feedback d-block">
+                {fieldErrors.claimReason}
+              </div>
+            )}
           </div>
 
           <div className="mb-3">
@@ -333,16 +323,16 @@ if (!allowedTypes.includes(selectedFile.type)) {
             <input
               type="date"
               className={`form-control ${
-    fieldErrors.incidentDate ? "is-invalid" : ""
-  }`}
+                fieldErrors.incidentDate ? "is-invalid" : ""
+              }`}
               value={incidentDate}
               onChange={handleInputChange(setIncidentDate, "incidentDate")}
             />
             {fieldErrors.incidentDate && (
-  <div className="invalid-feedback d-block">
-    {fieldErrors.incidentDate}
-  </div>
-)}
+              <div className="invalid-feedback d-block">
+                {fieldErrors.incidentDate}
+              </div>
+            )}
           </div>
 
           <div className="mb-4">
@@ -350,22 +340,18 @@ if (!allowedTypes.includes(selectedFile.type)) {
 
             <input
               type="file"
-              className={`form-control ${
-    fieldErrors.file ? "is-invalid" : ""
-  }`}
+              className={`form-control ${fieldErrors.file ? "is-invalid" : ""}`}
               accept=".pdf,.png,.jpeg,.jpg"
               onChange={handleFileChange}
               disabled={submitting}
             />
             {fieldErrors.file ? (
-  <div className="invalid-feedback d-block">
-    {fieldErrors.file}
-  </div>
-) : (
-  <small className="text-muted">
-    Accepted formats: PDF, PNG, JPG (Maximum 5 MB)
-  </small>
-)}
+              <div className="invalid-feedback d-block">{fieldErrors.file}</div>
+            ) : (
+              <small className="text-muted">
+                Accepted formats: PDF, PNG, JPG (Maximum 5 MB)
+              </small>
+            )}
           </div>
 
           {/* CONTROL PANEL BUTTONS */}
@@ -378,7 +364,7 @@ if (!allowedTypes.includes(selectedFile.type)) {
             >
               {submitting
                 ? "Uploading & Processing..."
-                : "Submit Claim Request"}
+                : "Submit"}
             </button>
 
             <button

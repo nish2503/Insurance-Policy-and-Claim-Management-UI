@@ -10,12 +10,16 @@ import Button from "../../components/common/Button";
 import CustomerDetailsModal from "../../components/common/CustomerDetailsModal";
 import StatusBadge from "../../components/common/StatusBadge";
 import StatusFilter from "../../components/common/StatusFilter";
+import ExportPdfButton from "../../components/common/ExportPdfButton";
+import { useToast } from "../../context/ToastContext";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 import { getCustomers, getCustomersByStatus } from "../../api/customerApi";
 
 import { updateUserStatus } from "../../api/userApi";
 
 function Customers() {
+  const toast = useToast();
   const [customers, setCustomers] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -58,9 +62,14 @@ function Customers() {
         !customer.activeStatus,
       );
 
+      toast.success(
+        `Customer ${customer.fullName || ""} ${customer.activeStatus ? "deactivated" : "activated"} successfully`,
+      );
       loadCustomers();
     } catch (err) {
       console.log(err);
+
+      toast.error(getApiErrorMessage(err, "Unable to update customer status."));
     }
   }
 
@@ -162,24 +171,43 @@ function Customers() {
           ]}
           searchPlaceholder="Search customers..."
           headerActions={
-            <StatusFilter
-              value={status}
-              onChange={setStatus}
-              options={[
-                {
-                  value: "ALL",
-                  label: "All Status",
-                },
-                {
-                  value: "true",
-                  label: "Active",
-                },
-                {
-                  value: "false",
-                  label: "Inactive",
-                },
-              ]}
-            />
+            <div className="d-flex gap-2">
+              <StatusFilter
+                value={status}
+                onChange={setStatus}
+                options={[
+                  {
+                    value: "ALL",
+                    label: "All Status",
+                  },
+                  {
+                    value: "true",
+                    label: "Active",
+                  },
+                  {
+                    value: "false",
+                    label: "Inactive",
+                  },
+                ]}
+              />
+
+              <ExportPdfButton
+                title="Customers"
+                rows={customers}
+                meta={{ "Status filter": status === "ALL" ? "All" : status }}
+                columns={[
+                  { label: "ID", key: "customerId" },
+                  { label: "Name", key: "fullName" },
+                  { label: "Email", key: "email" },
+                  { label: "Mobile", key: "mobileNumber" },
+                  { label: "City", key: "city" },
+                  {
+                    label: "Status",
+                    value: (row) => (row.activeStatus ? "Active" : "Inactive"),
+                  },
+                ]}
+              />
+            </div>
           }
         />
       </Card>

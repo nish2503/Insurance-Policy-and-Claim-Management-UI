@@ -39,7 +39,7 @@ function Loader() {
       `}</style>
 
       <div className="fintech-spinner-circle"></div>
-      <p>Syncing Ledger...</p>
+      <p>Loading...</p>
     </div>
   );
 }

@@ -141,7 +141,7 @@ function Home() {
           max-width: 1200px !important;
           width: 100% !important;
           display: grid !important;
-          grid-template-columns: repeat(4, 1fr) !important; /* Forces 4 cards into 1 horizontal line */
+          grid-template-columns: repeat(4, 1fr) !important;
           gap: 20px !important;
           z-index: 10 !important;
           box-sizing: border-box !important;
@@ -149,13 +149,13 @@ function Home() {
 
         @media (max-width: 991px) {
           .features-horizontal-row {
-            grid-template-columns: repeat(2, 1fr) !important; /* 2x2 grid stack response for tablet viewports */
+            grid-template-columns: repeat(2, 1fr) !important;
           }
         }
 
         @media (max-width: 575px) {
           .features-horizontal-row {
-            grid-template-columns: 1fr !important; /* Single column stack response for narrow mobiles */
+            grid-template-columns: 1fr !important;
           }
         }
 
@@ -215,62 +215,49 @@ function Home() {
       {/* TOP PORTION: Centered Account Gateway Panel */}
       <div className="gateway-auth-card">
         <div className="gateway-logo-icon">🛡️</div>
-        <h1>InsurTech System</h1>
-        <p>Secure system access gateway point. Authenticate your network credentials or register an active account node.</p>
+        {/* 🛠️ SIMPLE, HUMANISTIC CONVERSATIONAL TYPOGRAPHY */}
+        <h1>Welcome to InsurTech</h1>
+        <p>Please sign in to access your dashboard or create a new account to get started.</p>
         
         <div className="auth-buttons-stack">
           <button className="btn-portal-primary" onClick={() => navigate("/login")}>
-            <i className="bi bi-box-arrow-in-right"></i> Sign In to System
+            <i className="bi bi-box-arrow-in-right"></i> Sign In
           </button>
           <button className="btn-portal-secondary" onClick={() => navigate("/register")}>
-            <i className="bi bi-person-plus-fill"></i> Create Profile
+            <i className="bi bi-user-plus"></i> Create an Account
           </button>
         </div>
-
+        
         <button className="portal-meta-link" onClick={() => navigate("/forgot-password")}>
-          Forgot password token keys? Recover access
+          Forgot your password?
         </button>
       </div>
 
-      {/* BOTTOM PORTION: Single Horizontal Line Grid Layer */}
+      {/* BOTTOM PORTION: Horizontal Features Bento Row */}
       <div className="features-horizontal-row">
-        
-        {/* Card 1: Products */}
         <div className="feature-bento-card">
-          <div className="feature-icon-box">
-            <i className="bi bi-shield-shaded"></i>
-          </div>
-          <h3>Products</h3>
-          <p>Review comprehensive coverage parameters, explore standard tiers, and track corporate insurance profiles.</p>
+          <div className="feature-icon-box"><i className="bi bi-file-earmark-text"></i></div>
+          <h3>Easy Management</h3>
+          <p>View and manage all your active insurance policies in one clear place.</p>
         </div>
 
-        {/* Card 2: Plans */}
         <div className="feature-bento-card">
-          <div className="feature-icon-box">
-            <i className="bi bi-card-checklist"></i>
-          </div>
-          <h3>Plans</h3>
-          <p>Compare algorithmic micro-payment structures, premium variables, and dynamic protective allocations.</p>
+          <div className="feature-icon-box"><i className="bi bi-credit-card"></i></div>
+          <h3>Quick Payments</h3>
+          <p>Pay premiums online safely using secure payment options.</p>
         </div>
 
-        {/* Card 3: Claims */}
         <div className="feature-bento-card">
-          <div className="feature-icon-box">
-            <i className="bi bi-activity"></i>
-          </div>
-          <h3>Claims Engine</h3>
-          <p>Submit incident claim files directly to verification queues for automated auditing processes.</p>
+          <div className="feature-icon-box"><i className="bi bi-activity"></i></div>
+          <h3>Fast Claims</h3>
+          <p>File a new claim easily and upload documents in seconds.</p>
         </div>
 
-        {/* Card 4: Policies */}
         <div className="feature-bento-card">
-          <div className="feature-icon-box">
-            <i className="bi bi-file-earmark-text"></i>
-          </div>
-          <h3>Policies</h3>
-          <p>Inspect policy indices, declarations, payment status matrices, and active coverage periods.</p>
+          <div className="feature-icon-box"><i className="bi bi-clock-history"></i></div>
+          <h3>Real-time Updates</h3>
+          <p>Track your claim status history transparently as it gets processed.</p>
         </div>
-
       </div>
     </div>
   );

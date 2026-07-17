@@ -72,8 +72,8 @@ function Register() {
       toast.success("Registration successful. Verify OTP");
       navigate("/verify-register", {
   state: {
-    email: values.email,
-    mobileNumber: values.mobileNumber,
+    email: form.email,
+    mobileNumber: form.mobileNumber,
   },
 });
     } catch (error) {
@@ -81,7 +81,7 @@ function Register() {
        const serverFieldErrors = extractValidationErrors(error);
     setErrors(serverFieldErrors);
 
-      toast.error(getApiErrorMessage(error, "Registration failed"));
+      toast.error(getApiErrorMessage(error, "Registration failed. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -256,7 +256,7 @@ function Register() {
       </div>
 
       <div className="auth-core-card">
-        <h3>Create Profile 📝</h3>
+        <h3>Create Your Account 📝</h3>
         <form onSubmit={handleRegister} noValidate>
           <div className="mb-3">
             <input

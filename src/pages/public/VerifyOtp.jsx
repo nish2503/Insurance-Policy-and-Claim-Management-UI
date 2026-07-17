@@ -332,7 +332,7 @@ const [mobileNumber, setMobileNumber] = useState(
           <div className="mb-3"></div>
 
           <button className="btn-submit-action" disabled={submitting}>
-            {submitting ? "Verifying..." : "Verify & Activate Vault"}
+            {submitting ? "Verifying..." : "Verify OTPs"}
           </button>
         </form>
 

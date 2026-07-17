@@ -32,8 +32,12 @@ export const updateUserStatus = (userId, activeStatus) => {
   });
 };
 
-export const createAgent = (data) => {
-  return api.post("/users/agents", data);
+export const createInternalStaff = (data) => {
+  return api.post("/users/internal-staff", data);
+};
+
+export const assignProductToUser = (userId, productId) => {
+  return api.put(`/users/${userId}/assign-product`, { productId });
 };
 
 export const updateUser = (userId, data) => {

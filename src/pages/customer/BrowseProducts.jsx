@@ -19,10 +19,10 @@ function BrowseProducts() {
   async function loadProducts() {
     try {
       const response = await getProducts();
-
-      setProducts(response.data.records || []);
+      // Unpack response objects flexibly matching backend paginated collection array patterns
+      setProducts(response.data.records || response.data.content || response.data || []);
     } catch (error) {
-      console.log(error);
+      console.error("Failed to load products registry logs: ", error);
     } finally {
       setLoading(false);
     }
@@ -31,27 +31,42 @@ function BrowseProducts() {
   if (loading) {
     return (
       <DashboardLayout>
+        <BackButton />
         <Loader />
-        <BackButton/>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout>
-      <h2>Insurance Products</h2>
+      <div className="d-flex align-items-center gap-3 mb-4">
+        <BackButton />
+        <h2 className="mb-0 font-weight-bold text-main" style={{ letterSpacing: "-0.01em" }}>
+          Explore Insurance Plans
+        </h2>
+      </div>
 
-      <div className="row">
+      <div className="row g-4">
         {products.map((product) => (
-          <div className="col-md-4 mb-3" key={product.productId}>
+          <div className="col-md-6 col-lg-4" key={product.productId || product.id}>
             <Card title={product.productName}>
-              <p>{product.description}</p>
+              <p className="text-muted small mb-3" style={{ minHeight: "44px", lineHeight: "1.4" }}>
+                {product.description || "Comprehensive risk coverage parameters configured for personal asset protection."}
+              </p>
+
+              {/* 📊 DYNAMIC PAYMENT INTERVAL METADATA INFOBAR
+              <div className="alert alert-light py-2 px-3 border rounded mb-3 small d-flex align-items-center gap-2">
+                <i className="bi bi-calendar-check text-primary"></i>
+                <span>
+                  <strong>Payment Options Available:</strong> Annual, Quarterly, Monthly, or One-time.
+                </span>
+              </div> */}
 
               <Link
-                className="btn btn-primary"
-                to={`/customer/plans/${product.productId}`}
+                className="btn btn-primary w-100 font-weight-bold shadow-sm py-2"
+                to={`/customer/plans/${product.productId || product.id}`}
               >
-                View Plans
+                View Available Plans ➔
               </Link>
             </Card>
           </div>

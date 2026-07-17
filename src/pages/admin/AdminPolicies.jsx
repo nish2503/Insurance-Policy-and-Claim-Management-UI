@@ -15,10 +15,14 @@ import BackButton from "../../components/common/BackButton";
 import StatusBadge from "../../components/common/StatusBadge";
 import StatusFilter from "../../components/common/StatusFilter";
 import Button from "../../components/common/Button";
+import ExportPdfButton from "../../components/common/ExportPdfButton";
+import { useToast } from "../../context/ToastContext";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 import PolicyDetailsModal from "../../components/common/PolicyDetailsModal";
 
 function AdminPolicies() {
+  const toast = useToast();
   const [policies, setPolicies] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -70,11 +74,12 @@ function AdminPolicies() {
     try {
       await cancelPolicy(policy.policyId);
 
+      toast.success(`Policy ${policy.policyNumber} cancelled successfully`);
       loadPolicies();
     } catch (err) {
       console.log(err);
 
-      alert("Unable to cancel policy.");
+      toast.error(getApiErrorMessage(err, "Unable to cancel policy."));
     }
   }
 
@@ -166,41 +171,57 @@ function AdminPolicies() {
           searchKeys={["policyNumber", "customerName", "planName"]}
           searchPlaceholder="Search policies..."
           headerActions={
-            <StatusFilter
-              value={status}
-              onChange={setStatus}
-              options={[
-                {
-                  value: "ALL",
+            <div className="d-flex gap-2">
+              <StatusFilter
+                value={status}
+                onChange={setStatus}
+                options={[
+                  {
+                    value: "ALL",
 
-                  label: "All Status",
-                },
+                    label: "All Status",
+                  },
 
-                {
-                  value: "PENDING_PAYMENT",
+                  {
+                    value: "PENDING_PAYMENT",
 
-                  label: "Pending Payment",
-                },
+                    label: "Pending Payment",
+                  },
 
-                {
-                  value: "ACTIVE",
+                  {
+                    value: "ACTIVE",
 
-                  label: "Active",
-                },
+                    label: "Active",
+                  },
 
-                {
-                  value: "EXPIRED",
+                  {
+                    value: "EXPIRED",
 
-                  label: "Expired",
-                },
+                    label: "Expired",
+                  },
 
-                {
-                  value: "CANCELLED",
+                  {
+                    value: "CANCELLED",
 
-                  label: "Cancelled",
-                },
-              ]}
-            />
+                    label: "Cancelled",
+                  },
+                ]}
+              />
+
+              <ExportPdfButton
+                title="Policies"
+                rows={policies}
+                meta={{ "Status filter": status === "ALL" ? "All" : status }}
+                columns={[
+                  { label: "Policy No.", key: "policyNumber" },
+                  { label: "Customer", key: "customerName" },
+                  { label: "Plan", key: "planName" },
+                  { label: "Product", key: "productType" },
+                  { label: "Premium", value: (row) => `₹${row.premiumAmount}` },
+                  { label: "Status", key: "policyStatus" },
+                ]}
+              />
+            </div>
           }
         />
 

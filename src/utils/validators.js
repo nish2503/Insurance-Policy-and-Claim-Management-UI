@@ -121,6 +121,102 @@ export function validateOtp(value, label = "OTP") {
   return "";
 }
 
+// CUS-BR / validation §17.2: Indian 6-digit PIN code.
+export function validatePinCode(value, label = "PIN code") {
+  const req = required(value, label);
+  if (req) return req;
+
+  if (!/^\d{6}$/.test(String(value).trim())) {
+    return `${label} must be a valid 6 digit PIN code`;
+  }
+  return "";
+}
+
+// Generic "must be greater than zero" numeric check, shared by claim amount
+// (CLM-BR-003), payment amount (PAYBR-002), coverage amount (PLN-BR-002), and
+// premium amount (PLN-BR-003) instead of re-deriving it per form.
+export function validatePositiveAmount(value, label = "Amount") {
+  const req = required(value, label);
+  if (req) return req;
+
+  const num = Number(value);
+  if (Number.isNaN(num)) {
+    return `${label} must be a valid number`;
+  }
+  if (num <= 0) {
+    return `${label} must be greater than zero`;
+  }
+  return "";
+}
+
+// Generic "cannot be a future date" check. Used for claim incident date
+// (CLM-BR-005) and any other date field that must not be set ahead of today.
+export function validateNotFutureDate(value, label = "Date") {
+  const req = required(value, label);
+  if (req) return req;
+
+  const inputDate = new Date(value);
+  if (Number.isNaN(inputDate.getTime())) {
+    return `${label} must be a valid date`;
+  }
+
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+
+  if (inputDate > today) {
+    return `${label} cannot be a future date`;
+  }
+  return "";
+}
+
+// PAYBR-003: payment transaction reference. Kept permissive (alphanumeric +
+// hyphen/underscore, 6-40 chars) since the exact gateway format is simulated.
+export function validateTransactionReference(value, label = "Transaction reference") {
+  const req = required(value, label);
+  if (req) return req;
+
+  if (!/^[A-Za-z0-9_-]{6,40}$/.test(value.trim())) {
+    return `${label} must be 6-40 characters (letters, numbers, - or _ only)`;
+  }
+  return "";
+}
+
+// PLN-BR-004: coverage amount must be higher than premium amount. Designed to
+// be used as a cross-field validator inside validateForm's validatorMap, e.g.
+//   coverageAmount: (value, values) => validateCoverageAmount(value, values.premiumAmount)
+export function validateCoverageAmount(value, premiumAmount, label = "Coverage amount") {
+  const base = validatePositiveAmount(value, label);
+  if (base) return base;
+
+  if (premiumAmount && Number(value) <= Number(premiumAmount)) {
+    return `${label} must be greater than the premium amount`;
+  }
+  return "";
+}
+
+export function validatePremiumAmount(value, coverageAmount, label = "Premium amount") {
+  const base = validatePositiveAmount(value, label);
+  if (base) return base;
+
+  if (coverageAmount && Number(value) >= Number(coverageAmount)) {
+    return `${label} must be less than the coverage amount`;
+  }
+  return "";
+}
+
+// Used for any "remarks" / justification free-text field (claim review
+// recommendations, claim final decisions, etc.) so every such form shares one
+// rule instead of re-deriving a minimum length locally.
+export function validateRemarks(value, label = "Remarks", minLength = 15) {
+  const req = required(value, label);
+  if (req) return req;
+
+  if (value.trim().length < minLength) {
+    return `${label} must be at least ${minLength} characters`;
+  }
+  return "";
+}
+
 // Runs a map of { fieldName: validatorFn } against a form's values object.
 // validatorMap[fieldName] is a function(value, formValues) -> errorString
 // Returns { errors, isValid }
@@ -165,12 +261,12 @@ export const validateState = (value, label = "State") => {
   return "";
 };
 
-export const validatePinCode = (value, label = "PIN Code") => {
-  if (!value.trim()) return `${label} is required`;
-  if (!/^\d{6}$/.test(value))
-    return `${label} must contain exactly 6 digits`;
-  return "";
-};
+// export const validatePinCode = (value, label = "PIN Code") => {
+//   if (!value.trim()) return `${label} is required`;
+//   if (!/^\d{6}$/.test(value))
+//     return `${label} must contain exactly 6 digits`;
+//   return "";
+// };
 
 export const validateName = (value, label = "Name") => {
   if (!value.trim()) return `${label} is required`;

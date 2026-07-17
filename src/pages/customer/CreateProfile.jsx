@@ -1,17 +1,30 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import DashboardLayout from "../../components/layout/DashboardLayout";
+import Card from "../../components/common/Card";
+import Button from "../../components/common/Button";
+import BackButton from "../../components/common/BackButton";
+
 import { createCustomerProfile } from "../../api/customerApi";
-import { useToast } from "../../context/ToastContext";
 import {
+  required,
   validateAge,
-  validateAddress,
-  validateCity,
-  validateState,
   validatePinCode,
-  validateName,
-  validateRelation,
   validateForm,
 } from "../../utils/validators";
+import { getApiErrorMessage } from "../../utils/apiError";
+import { useToast } from "../../context/ToastContext";
+
+const FIELD_LABELS = {
+  dateOfBirth: "Date of birth",
+  address: "Address",
+  city: "City",
+  state: "State",
+  pinCode: "PIN code",
+  nomineeName: "Nominee name",
+  nomineeRelation: "Nominee relation",
+};
 
 function CreateProfile() {
   const navigate = useNavigate();
@@ -27,206 +40,96 @@ function CreateProfile() {
     nomineeRelation: "",
   });
 
-  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = (e) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-
-    setErrors((prev) => {
-      if (!prev[e.target.name]) return prev;
-      const next = { ...prev };
-      delete next[e.target.name];
-      return next;
-    });
+  const validatorMap = {
+    dateOfBirth: (value) => validateAge(value, FIELD_LABELS.dateOfBirth),
+    address: (value) => required(value, FIELD_LABELS.address),
+    city: (value) => required(value, FIELD_LABELS.city),
+    state: (value) => required(value, FIELD_LABELS.state),
+    pinCode: (value) => validatePinCode(value, FIELD_LABELS.pinCode),
+    nomineeName: (value) => required(value, FIELD_LABELS.nomineeName),
+    nomineeRelation: (value) => required(value, FIELD_LABELS.nomineeRelation),
   };
 
-  const submit = async (e) => {
+  function runFieldValidation(field, value) {
+    const message = validatorMap[field](value);
+    setFieldErrors((prev) => ({ ...prev, [field]: message }));
+  }
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (touched[name]) runFieldValidation(name, value);
+  }
+
+  function handleBlur(e) {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    runFieldValidation(name, value);
+  }
+
+  async function submit(e) {
     e.preventDefault();
 
-    const { errors: validationErrors, isValid } = validateForm(form, {
-      dateOfBirth: (v) => validateAge(v, "Date of birth"),
-      address: (v) => validateAddress(v),
-      city: (v) => validateCity(v),
-      state: (v) => validateState(v),
-      pinCode: (v) => validatePinCode(v),
-      nomineeName: (v) => validateName(v, "Nominee Name"),
-      nomineeRelation: (v) => validateRelation(v),
-    });
+    const { errors, isValid } = validateForm(form, validatorMap);
+    setFieldErrors(errors);
+    setTouched(
+      Object.keys(form).reduce((acc, key) => ({ ...acc, [key]: true }), {}),
+    );
 
-    if (!isValid) {
-      setErrors(validationErrors);
-      toast.error("Please correct the highlighted fields.");
-      return;
-    }
+    if (!isValid) return;
 
+    setSubmitting(true);
     try {
       await createCustomerProfile(form);
-
-      toast.success("Profile created successfully.");
-
-      navigate("/customer", { replace: true });
+      toast.success("Profile created successfully");
+      navigate("/customer");
     } catch (error) {
-      console.error(error);
-
-      toast.error(
-        error.response?.data?.message || "Profile creation failed."
-      );
+      toast.error(getApiErrorMessage(error, "Unable to create profile"));
+    } finally {
+      setSubmitting(false);
     }
-  };
+  }
 
   return (
-    <div className="container mt-5">
-      <h3>Create Customer Profile</h3>
+    <DashboardLayout>
+      <BackButton />
 
-      <form onSubmit={submit}>
-        <div className="mb-3">
-          <label className="form-label">Date of Birth</label>
-
-          <input
-            type="date"
-            className={`form-control ${
-              errors.dateOfBirth ? "is-invalid" : ""
-            }`}
-            name="dateOfBirth"
-            value={form.dateOfBirth}
-            onChange={handleChange}
-          />
-
-          {errors.dateOfBirth && (
-            <div className="invalid-feedback">
-              {errors.dateOfBirth}
+      <Card title="Create Customer Profile">
+        <form onSubmit={submit} noValidate>
+          {Object.keys(form).map((key) => (
+            <div className="mb-3" key={key}>
+              <label className="form-label">
+                {FIELD_LABELS[key]} <span className="text-danger">*</span>
+              </label>
+              <input
+                type={key === "dateOfBirth" ? "date" : "text"}
+                className={`form-control ${
+                  touched[key] && fieldErrors[key] ? "is-invalid" : ""
+                }`}
+                name={key}
+                value={form[key]}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                aria-invalid={touched[key] && !!fieldErrors[key]}
+              />
+              {touched[key] && fieldErrors[key] && (
+                <div className="invalid-feedback d-block">
+                  {fieldErrors[key]}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          ))}
 
-        <div className="mb-3">
-          <label className="form-label">Address</label>
-
-          <input
-            className={`form-control ${
-              errors.address ? "is-invalid" : ""
-            }`}
-            name="address"
-            value={form.address}
-            onChange={handleChange}
-          />
-
-          {errors.address && (
-            <div className="invalid-feedback">{errors.address}</div>
-          )}
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">City</label>
-
-          <input
-            className={`form-control ${
-              errors.city ? "is-invalid" : ""
-            }`}
-            name="city"
-            value={form.city}
-            onChange={handleChange}
-          />
-
-          {errors.city && (
-            <div className="invalid-feedback">{errors.city}</div>
-          )}
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">State</label>
-
-          <input
-            className={`form-control ${
-              errors.state ? "is-invalid" : ""
-            }`}
-            name="state"
-            value={form.state}
-            onChange={handleChange}
-          />
-
-          {errors.state && (
-            <div className="invalid-feedback">{errors.state}</div>
-          )}
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">PIN Code</label>
-
-          <input
-            className={`form-control ${
-              errors.pinCode ? "is-invalid" : ""
-            }`}
-            name="pinCode"
-            maxLength={6}
-            inputMode="numeric"
-            value={form.pinCode}
-            onChange={(e) => {
-              setForm((prev) => ({
-                ...prev,
-                pinCode: e.target.value.replace(/\D/g, "").slice(0, 6),
-              }));
-
-              setErrors((prev) => {
-                if (!prev.pinCode) return prev;
-                const next = { ...prev };
-                delete next.pinCode;
-                return next;
-              });
-            }}
-          />
-
-          {errors.pinCode && (
-            <div className="invalid-feedback">{errors.pinCode}</div>
-          )}
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Nominee Name</label>
-
-          <input
-            className={`form-control ${
-              errors.nomineeName ? "is-invalid" : ""
-            }`}
-            name="nomineeName"
-            value={form.nomineeName}
-            onChange={handleChange}
-          />
-
-          {errors.nomineeName && (
-            <div className="invalid-feedback">
-              {errors.nomineeName}
-            </div>
-          )}
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Nominee Relation</label>
-
-          <input
-            className={`form-control ${
-              errors.nomineeRelation ? "is-invalid" : ""
-            }`}
-            name="nomineeRelation"
-            value={form.nomineeRelation}
-            onChange={handleChange}
-          />
-
-          {errors.nomineeRelation && (
-            <div className="invalid-feedback">
-              {errors.nomineeRelation}
-            </div>
-          )}
-        </div>
-
-        <button className="btn btn-primary">
-          Create Profile
-        </button>
-      </form>
-    </div>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Creating..." : "Create Profile"}
+          </Button>
+        </form>
+      </Card>
+    </DashboardLayout>
   );
 }
 
