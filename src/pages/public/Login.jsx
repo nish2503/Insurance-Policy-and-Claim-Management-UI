@@ -597,6 +597,8 @@ function Login() {
         <div className="auth-footer-nav">
           <span onClick={() => navigate("/register")}>Create an account</span>
           <span onClick={() => navigate("/forgot-password")}>Forgot password?</span>
+            <span onClick={() => navigate("/verify-register")} >Registration pending? Verify here
+  </span>
         </div>
       </div>
     </div>

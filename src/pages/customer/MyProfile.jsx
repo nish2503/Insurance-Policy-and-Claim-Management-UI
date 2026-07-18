@@ -3,17 +3,17 @@ import { getMyProfile, updateCustomerProfile } from "../../api/customerApi";
 import BackButton from "../../components/common/BackButton";
 import api from "../../api/axios";
 import { validateAge } from "../../utils/validators";
+import { useToast } from "../../context/ToastContext";
 
 function MyProfile() {
   const [profile, setProfile] = useState(null);
   const [edit, setEdit] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [errors, setErrors] = useState({});
 
   const [showOtpModal, setShowModal] = useState(false);
   const [otpValue, setOtpValue] = useState("");
   const [otpError, setOtpError] = useState("");
   const [sendingOtp, setSendingOtp] = useState(false);
+  const toast = useToast();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -33,29 +33,34 @@ function MyProfile() {
   }, []);
 
   async function loadProfile() {
-    try {
-      const res = await getMyProfile();
+  try {
+    const res = await getMyProfile();
 
-      setProfile(res.data);
+    setProfile(res.data);
 
-      setForm({
-        fullName: res.data.fullName || "",
-        email: res.data.email || "",
-        mobileNumber: res.data.mobileNumber || "",
-        dateOfBirth: res.data.dateOfBirth || "",
-        address: res.data.address || "",
-        city: res.data.city || "",
-        state: res.data.state || "",
-        pinCode: res.data.pinCode || "",
-        nomineeName: res.data.nomineeName || "",
-        nomineeRelation: res.data.nomineeRelation || "",
-      });
-    } catch (error) {
-      setErrors({
-        general: "Unable to load profile",
-      });
+    // Clear previous errors after successful load
+    setErrors({});
+
+    setForm({
+      fullName: res.data.fullName || "",
+      email: res.data.email || "",
+      mobileNumber: res.data.mobileNumber || "",
+      dateOfBirth: res.data.dateOfBirth || "",
+      address: res.data.address || "",
+      city: res.data.city || "",
+      state: res.data.state || "",
+      pinCode: res.data.pinCode || "",
+      nomineeName: res.data.nomineeName || "",
+      nomineeRelation: res.data.nomineeRelation || "",
+    });
+  } catch (error) {
+    console.error(error);
+
+    if (error.response?.status !== 404) {
+      toast.error("Unable to load profile");
     }
   }
+}
 
   function validateForm() {
     const localErrors = {};
@@ -110,35 +115,32 @@ function MyProfile() {
   }
 
   async function executeProfileUpdate() {
-    try {
-      await updateCustomerProfile({
-        ...form,
-
-        email: form.email.trim().toLowerCase(),
-
-        mobileNumber: form.mobileNumber.replace(/\D/g, "").slice(-10),
-      });
-
-      setSuccess("Profile updated successfully");
-
-      setEdit(false);
-
-      setShowModal(false);
-
-      loadProfile();
-    } catch (error) {
-      setErrors({
-        general: error.response?.data?.message || "Profile update failed",
-      });
-    }
-  }
-
-  async function save() {
-    setSuccess("");
+  try {
+    await updateCustomerProfile({
+      ...form,
+      email: form.email.trim().toLowerCase(),
+      mobileNumber: form.mobileNumber.replace(/\D/g, "").slice(-10),
+    });
 
     setErrors({});
 
-    setOtpError("");
+    toast.success("Profile updated successfully!");
+
+    setEdit(false);
+
+    setShowModal(false);
+
+    loadProfile();
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message || "Profile update failed"
+    );
+  }
+}
+
+  async function save() {
+    setErrors({});
+setOtpError("");
 
     const validation = validateForm();
 
@@ -146,7 +148,7 @@ function MyProfile() {
       setErrors({
         validationErrors: validation,
       });
-
+      toast.error("Please fix the highlighted fields.");
       return;
     }
 
@@ -163,9 +165,9 @@ function MyProfile() {
 
         setShowModal(true);
       } catch (error) {
-        setErrors({
-          general: error.response?.data?.message || "Failed to send OTP",
-        });
+        toast.error(
+  error.response?.data?.message || "Failed to send OTP"
+);
       } finally {
         setSendingOtp(false);
       }
@@ -204,11 +206,6 @@ function MyProfile() {
 
       <h3>My Profile</h3>
 
-      {success && <div className="alert alert-success">{success}</div>}
-
-      {errors.general && (
-        <div className="alert alert-danger">{errors.general}</div>
-      )}
 
       {profile && (
         <div className="card p-4 shadow-sm">
@@ -313,10 +310,22 @@ function MyProfile() {
 
                 <button
                   className="btn btn-secondary"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+    setShowModal(false);
+    setOtpValue("");
+    setOtpError("");
+}}
                 >
                   Cancel
                 </button>
+
+                <button
+    className="btn btn-success"
+    onClick={save}
+    disabled={sendingOtp}
+>
+    {sendingOtp ? "Sending OTP..." : "Save Changes"}
+</button>
               </div>
             </div>
           </div>

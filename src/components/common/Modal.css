@@ -107,3 +107,49 @@
     color: var(--text-main) !important;
 
 }
+
+.custom-modal table,
+.custom-modal .table {
+    width: 100%;
+    background: transparent !important;
+    color: var(--text-main) !important;
+}
+
+.custom-modal table thead,
+.custom-modal table tbody,
+.custom-modal table tr,
+.custom-modal table th,
+.custom-modal table td,
+.custom-modal .table thead,
+.custom-modal .table tbody,
+.custom-modal .table tr,
+.custom-modal .table th,
+.custom-modal .table td {
+    background: transparent !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+.custom-modal .table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: rgba(255,255,255,.03) !important;
+}
+
+.custom-modal .table-hover tbody tr:hover {
+    background-color: rgba(255,255,255,.06) !important;
+}
+
+.custom-modal .bg-light,
+.custom-modal .bg-white {
+    background: var(--modal-bg) !important;
+}
+
+.custom-modal .text-dark,
+.custom-modal .text-black {
+    color: var(--text-main) !important;
+}
+
+.custom-modal .list-group-item {
+    background: var(--modal-bg) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
