@@ -50,10 +50,7 @@ function EmptyState({ message = "No Data Found" }) {
         <i className="bi bi-folder-x"></i>
       </div>
       <h4>{message}</h4>
-      <p>
-        The requested directory matrix node currently holds zero verified
-        datasets inside this tracking branch queue.
-      </p>
+      
     </div>
   );
 }

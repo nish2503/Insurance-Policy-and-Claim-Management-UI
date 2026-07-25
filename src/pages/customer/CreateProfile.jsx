@@ -18,18 +18,19 @@ import { useToast } from "../../context/ToastContext";
 
 const FIELD_LABELS = {
   dateOfBirth: "Date of birth",
-  address: "Address",
+  address: "Street Address",
   city: "City",
   state: "State",
   pinCode: "PIN code",
-  nomineeName: "Nominee name",
-  nomineeRelation: "Nominee relation",
+  nomineeName: "Nominee full name",
+  nomineeRelation: "Relationship to Nominee",
 };
 
 function CreateProfile() {
   const navigate = useNavigate();
   const toast = useToast();
 
+  // 📦 Core demographic state setup only - completely free from email/phone redundancy
   const [form, setForm] = useState({
     dateOfBirth: "",
     address: "",
@@ -44,6 +45,7 @@ function CreateProfile() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  // 🛠️ Aligned validation rules map matching only the exact fields on screen
   const validatorMap = {
     dateOfBirth: (value) => validateAge(value, FIELD_LABELS.dateOfBirth),
     address: (value) => required(value, FIELD_LABELS.address),
@@ -74,21 +76,28 @@ function CreateProfile() {
   async function submit(e) {
     e.preventDefault();
 
+    // Validates only the exact properties managed inside local component state fields
     const { errors, isValid } = validateForm(form, validatorMap);
     setFieldErrors(errors);
+    
     setTouched(
-      Object.keys(form).reduce((acc, key) => ({ ...acc, [key]: true }), {}),
+      Object.keys(form).reduce((acc, key) => ({ ...acc, [key]: true }), {})
     );
 
-    if (!isValid) return;
+    if (!isValid) {
+      toast.error("Please clean up the highlighted fields before saving.");
+      return;
+    }
 
     setSubmitting(true);
     try {
+      // 🚀 Hits your standard POST /api/customers/profile route mapping securely
       await createCustomerProfile(form);
-      toast.success("Profile created successfully");
+      
+      toast.success("Profile created successfully! Welcome to your dashboard.");
       navigate("/customer");
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Unable to create profile"));
+      toast.error(getApiErrorMessage(error, "Unable to finalize customer profile creation setup."));
     } finally {
       setSubmitting(false);
     }
@@ -98,35 +107,39 @@ function CreateProfile() {
     <DashboardLayout>
       <BackButton />
 
-      <Card title="Create Customer Profile">
-        <form onSubmit={submit} noValidate>
-          {Object.keys(form).map((key) => (
-            <div className="mb-3" key={key}>
-              <label className="form-label">
-                {FIELD_LABELS[key]} <span className="text-danger">*</span>
-              </label>
-              <input
-                type={key === "dateOfBirth" ? "date" : "text"}
-                className={`form-control ${
-                  touched[key] && fieldErrors[key] ? "is-invalid" : ""
-                }`}
-                name={key}
-                value={form[key]}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                aria-invalid={touched[key] && !!fieldErrors[key]}
-              />
-              {touched[key] && fieldErrors[key] && (
-                <div className="invalid-feedback d-block">
-                  {fieldErrors[key]}
-                </div>
-              )}
-            </div>
-          ))}
+      <Card title="Complete Your Personal Profile">
+        <p className="text-muted small mb-4">
+          Please provide your contact information and nominee details below to unlock full account features.
+        </p>
 
-          <Button type="submit" disabled={submitting}>
-            {submitting ? "Creating..." : "Create Profile"}
-          </Button>
+        <form onSubmit={submit} noValidate>
+          <div className="row">
+            {Object.keys(form).map((key) => (
+              <div className={key === "address" ? "col-12 mb-3" : "col-md-6 mb-3"} key={key}>
+                <label className="form-label font-weight-bold text-secondary small">
+                  {FIELD_LABELS[key]} <span className="text-danger">*</span>
+                </label>
+                <input
+                  type={key === "dateOfBirth" ? "date" : "text"}
+                  className={`form-control ${touched[key] && fieldErrors[key] ? "is-invalid" : ""}`}
+                  name={key}
+                  value={form[key]}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  aria-invalid={touched[key] && !!fieldErrors[key]}
+                />
+                {touched[key] && fieldErrors[key] && (
+                  <div className="invalid-feedback d-block">{fieldErrors[key]}</div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-3 border-top mt-4 d-flex justify-content-end">
+            <Button type="submit" variant="success" className="px-4 font-weight-bold shadow-sm py-2" disabled={submitting}>
+              {submitting ? "Processing creation..." : "Complete Profile Setup ➔"}
+            </Button>
+          </div>
         </form>
       </Card>
     </DashboardLayout>
