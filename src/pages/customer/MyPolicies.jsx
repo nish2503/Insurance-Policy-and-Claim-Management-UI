@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom"; // 🛠️ FIX: Added missing link router engine anchor import
+
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 import DataTable from "../../components/common/DataTable";
@@ -22,7 +24,7 @@ function MyPolicies() {
       const res = await getMyPolicies();
       setPolicies(res.data.records || res.data.content || res.data || []);
     } catch (error) {
-      console.log(error);
+      console.error("Failed to re-hydrate customer policies ledger matrix:", error);
     } finally {
       setLoading(false);
     }
@@ -71,15 +73,15 @@ function MyPolicies() {
             ]}
             data={policies.map((p) => ({
               ...p,
-              coverageAmount: `₹${p.coverageAmount}`,
-              premiumAmount: `₹${p.premiumAmount} (${p.premiumType || "Annual"})`,
+              coverageAmount: `₹${Number(p.coverageAmount).toLocaleString()}`,
+              premiumAmount: `₹${Number(p.premiumAmount).toLocaleString()} (${p.premiumType || "Annual"})`,
               policyStatusCustom: <StatusBadge status={p.policyStatus} />
             }))}
             searchKeys={[
               "policyNumber",
               "planName",
               "productType",
-              "policyStatus", // Embedded policy status text lookup mapping filter
+              "policyStatus",
             ]}
             headerActions={
               <ExportPdfButton
@@ -100,18 +102,19 @@ function MyPolicies() {
             }
           />
         ) : (
-         
-<EmptyState 
-  message={
-    <div className="text-center p-4">
-      <p className="text-muted mb-3">You don't have any active insurance policies protecting your assets yet.</p>
-      <Link to="/customer/products" className="btn btn-primary font-weight-bold shadow-sm px-4">
-        🛡️ Explore Available Insurance Plans
-      </Link>
-    </div>
-  } 
-/>
-
+          <EmptyState 
+            message={
+              <div className="text-center p-4 d-flex flex-column align-items-center justify-content-center">
+                <div className="mb-2 text-muted fs-2">📄</div>
+                <p className="text-muted mb-3 font-weight-medium">
+                  You don't have any active insurance policies protecting your assets yet.
+                </p>
+                <Link to="/customer/products" className="btn btn-primary font-weight-bold shadow-sm px-4 py-2">
+                  🛡️ Explore Available Insurance Plans
+                </Link>
+              </div>
+            } 
+          />
         )}
       </Card>
     </DashboardLayout>

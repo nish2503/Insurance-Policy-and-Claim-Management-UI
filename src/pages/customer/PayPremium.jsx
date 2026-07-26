@@ -23,6 +23,9 @@ function PayPremium() {
 
   const [policies, setPolicies] = useState([]);
   const [paymentHistory, setPaymentHistory] = useState([]);
+  
+  const [showUpiGateway, setShowUpiGateway] = useState(false);
+  const [showMockGateway, setShowMockGateway] = useState(false);
 
   const [selectedPolicy, setSelectedPolicy] = useState("");
   const [amount, setAmount] = useState("");
@@ -36,6 +39,21 @@ function PayPremium() {
 
   const [receiptData, setReceiptData] = useState(null);
 
+  const [cardForm, setCardForm] = useState({
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
+    cardName: ""
+  });
+  const [gatewayProcessing, setGatewayProcessing] = useState(false);
+  const [gatewayError, setGatewayError] = useState("");
+
+  // 🛠️ HOISTING COMPLIANCE: Declared at top so change events can read it safely
+  const validatorMap = {
+    selectedPolicy: (value) => required(value, "Policy"),
+    paymentMode: (value) => required(value, "Payment mode"),
+  };
+
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -44,10 +62,7 @@ function PayPremium() {
     try {
       const policyRes = await getMyPolicies();
       setPolicies(
-        policyRes.data.records ||
-          policyRes.data.content ||
-          policyRes.data ||
-          [],
+        policyRes.data.records || policyRes.data.content || policyRes.data || []
       );
       loadPayments();
     } catch (error) {
@@ -64,10 +79,131 @@ function PayPremium() {
     }
   }
 
-  const validatorMap = {
-    selectedPolicy: (value) => required(value, "Policy"),
-    paymentMode: (value) => required(value, "Payment mode"),
-  };
+  function handlePaymentInit(e) {
+    e.preventDefault();
+    
+    const { errors, isValid } = validateForm(
+      { selectedPolicy, paymentMode }, 
+      validatorMap
+    );
+
+    if (!isValid) {
+      setFieldErrors(errors);
+      setTouched({ selectedPolicy: true, paymentMode: true });
+      toast.error("Please fill in the required fields.");
+      return;
+    }
+
+    if (isLocked) {
+      toast.error("Premium already paid for this cycle");
+      return;
+    }
+
+    setGatewayError("");
+
+    if (paymentMode === "CARD") {
+      setCardForm({ cardNumber: "", expiry: "", cvv: "", cardName: "" });
+      setShowMockGateway(true); 
+    } else if (paymentMode === "UPI") {
+      setShowUpiGateway(true);   
+    } else {
+      setSubmitting(true);
+      setTimeout(() => {
+        executeDirectPayment();
+      }, 1500);
+    }
+  }
+
+  async function executeDirectPayment() {
+    const matchedPolicy = policies.find(p => String(p.policyId || p.id) === String(selectedPolicy));
+    const ref = "TXN_DIR_" + Date.now();
+    try {
+      await payPremium({
+        policyId: Number(selectedPolicy),
+        amount: Number(amount),
+        paymentMode: paymentMode,
+        transactionReference: ref,
+        paymentStatus: "SUCCESS",
+      });
+      toast.success("Premium settled successfully!");
+      
+      setReceiptData({
+        policyNumber: matchedPolicy?.policyNumber || selectedPolicy,
+        planName: matchedPolicy?.planName || "Insurance Plan",
+        amountPaid: amount,
+        mode: paymentMode,
+        reference: ref,
+        date: new Date().toLocaleString(),
+      });
+      
+      setSelectedPolicy(""); setAmount(""); setPaymentMode(""); setTouched({}); setFieldErrors({});
+      loadInitialData();
+    } catch (error) {
+      toast.error("Direct payment confirmation failed.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleMockPaymentSubmit(e) {
+    e.preventDefault();
+    setGatewayError("");
+
+    if (cardForm.cardNumber.replace(/\s/g, "").length !== 16) {
+      setGatewayError("Invalid card number. Must be 16 digits.");
+      return;
+    }
+    if (!/^(0[1-9]|1[0-2])\/?([0-9]{2})$/.test(cardForm.expiry)) {
+      setGatewayError("Invalid expiry format. Use MM/YY.");
+      return;
+    }
+    if (cardForm.cvv.length !== 3) {
+      setGatewayError("Security code CVV must be exactly 3 digits.");
+      return;
+    }
+    if (!cardForm.cardName.trim()) {
+      setGatewayError("Cardholder name is required.");
+      return;
+    }
+
+    setGatewayProcessing(true);
+    
+    setTimeout(async () => {
+      const matchedPolicy = policies.find(
+        (p) => String(p.policyId || p.id) === String(selectedPolicy)
+      );
+      const ref = "MOCK_TXN_" + Date.now();
+
+      try {
+        await payPremium({
+          policyId: Number(selectedPolicy),
+          amount: Number(amount),
+          paymentMode: paymentMode,
+          transactionReference: ref,
+          paymentStatus: "SUCCESS",
+        });
+
+        toast.success("Premium paid successfully!");
+
+        setReceiptData({
+          policyNumber: matchedPolicy?.policyNumber || selectedPolicy,
+          planName: matchedPolicy?.planName || "Insurance Plan",
+          amountPaid: amount,
+          mode: paymentMode,
+          reference: ref,
+          date: new Date().toLocaleString(),
+        });
+
+        setSelectedPolicy(""); setAmount(""); setPaymentMode(""); setTouched({}); setFieldErrors({});
+        setShowMockGateway(false);
+        loadInitialData(); 
+      } catch (error) {
+        setGatewayError(getApiErrorMessage(error, "Bank transaction declined by merchant server bounds."));
+      } finally {
+        setGatewayProcessing(false);
+      }
+    }, 2000);
+  }
 
   function runFieldValidation(field, value) {
     const message = validatorMap[field](value);
@@ -78,7 +214,6 @@ function PayPremium() {
     setTouched((prev) => ({ ...prev, [field]: true }));
     runFieldValidation(field, value);
   }
-
   function handlePolicyChange(e) {
     const policyId = e.target.value;
     setSelectedPolicy(policyId);
@@ -94,7 +229,7 @@ function PayPremium() {
     }
 
     const policy = policies.find(
-      (p) => String(p.policyId || p.id) === String(policyId),
+      (p) => String(p.policyId || p.id) === String(policyId)
     );
 
     if (policy) {
@@ -103,13 +238,9 @@ function PayPremium() {
       if (policy.nextPremiumDueDate) {
         const dueDate = new Date(policy.nextPremiumDueDate);
         const today = new Date();
-
         if (today < dueDate) {
           setIsLocked(true);
-
-          toast.info(
-            `Premium already paid. Next payment due on ${dueDate.toLocaleDateString()}`,
-          );
+          toast.info(`Premium already paid. Next payment due on ${dueDate.toLocaleDateString()}`);
         }
       }
     }
@@ -121,80 +252,13 @@ function PayPremium() {
   }
 
   function handleCancel() {
-    setSelectedPolicy("");
-    setAmount("");
-    setPaymentMode("");
-    setReceiptData(null);
-
+    setSelectedPolicy(""); setAmount(""); setPaymentMode(""); setReceiptData(null);
     toast.info("Payment cancelled");
-
     navigate("/customer");
-  }
-
-  async function handlePayment(e) {
-    e.preventDefault();
-    const { errors, isValid } = validateForm(
-      { selectedPolicy, paymentMode }, 
-      validatorMap
-    );
-
-     if (!isValid) {
-      setFieldErrors(errors);
-      setTouched({ selectedPolicy: true, paymentMode: true }); // Highlight empty fields in red immediately
-      toast.error("Please fill in the required fields.");
-      return;
-    }
-
-    if (isLocked) {
-      toast.error("Premium already paid for this cycle");
-
-      return;
-    }
-
-    const matchedPolicy = policies.find(
-      (p) => String(p.policyId || p.id) === String(selectedPolicy),
-    );
-
-    const ref = "TXN" + Date.now();
-
-    setSubmitting(true);
-    try {
-      await payPremium({
-        policyId: Number(selectedPolicy),
-        amount: Number(amount),
-        paymentMode,
-        transactionReference: ref,
-        paymentStatus: "SUCCESS",
-      });
-
-      toast.success("Premium paid successfully!");
-
-      setReceiptData({
-        policyNumber: matchedPolicy?.policyNumber || selectedPolicy,
-        planName: matchedPolicy?.planName || "Insurance Plan",
-        amountPaid: amount,
-        mode: paymentMode,
-        reference: ref,
-        date: new Date().toLocaleString(),
-      });
-
-      setSelectedPolicy("");
-      setAmount("");
-      setPaymentMode("");
-      setTouched({});
-      setFieldErrors({});
-
-      loadInitialData();
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, "Payment failed. Please try again"));
-    } finally {
-      setSubmitting(false);
-    }
   }
 
   function downloadReceiptFile(data) {
     if (!data) return;
-
     const receiptText = `
 INSURANCE PREMIUM PAYMENT RECEIPT
 
@@ -206,7 +270,6 @@ Amount: INR ${data.amountPaid}
 Mode: ${data.mode}
 Status: SUCCESS
 `;
-
     const blob = new Blob([receiptText], { type: "text/plain" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -216,30 +279,23 @@ Status: SUCCESS
 
   return (
     <DashboardLayout>
-      <Card title="Pay Premium">
+      <Card title="Pay Premium Balance">
         <BackButton />
 
         {infoMsg && <div className="alert alert-warning mt-3">{infoMsg}</div>}
 
-        <form onSubmit={handlePayment} noValidate>
+        <form onSubmit={handlePaymentInit} noValidate>
           <div className="mb-3">
-            <label className="form-label">
-              Select Policy <span className="text-danger">*</span>
+            <label className="form-label font-weight-bold">
+              Select Active Policy <span className="text-danger">*</span>
             </label>
             <select
-              className={`form-select ${
-                touched.selectedPolicy && fieldErrors.selectedPolicy
-                  ? "is-invalid"
-                  : ""
-              }`}
+              className={`form-select ${touched.selectedPolicy && fieldErrors.selectedPolicy ? "is-invalid" : ""}`}
               value={selectedPolicy}
               onChange={handlePolicyChange}
               onBlur={(e) => handleBlur("selectedPolicy", e.target.value)}
-              aria-invalid={
-                touched.selectedPolicy && !!fieldErrors.selectedPolicy
-              }
             >
-              <option value="">Select a policy</option>
+              <option value="">-- Choose active policy --</option>
               {policies.map((p) => (
                 <option key={p.policyId || p.id} value={p.policyId || p.id}>
                   {p.policyNumber} - {p.planName || "Insurance Plan"}
@@ -247,100 +303,59 @@ Status: SUCCESS
               ))}
             </select>
             {touched.selectedPolicy && fieldErrors.selectedPolicy && (
-              <div className="invalid-feedback d-block">
-                {fieldErrors.selectedPolicy}
-              </div>
+              <div className="invalid-feedback d-block">{fieldErrors.selectedPolicy}</div>
             )}
           </div>
 
           <div className="mb-3">
-            <label className="form-label">Premium Amount</label>
-            <input className="form-control" value={amount} readOnly />
+            <label className="form-label font-weight-bold">Premium Amount Due</label>
+            <input className="form-control bg-light font-weight-bold text-dark" value={amount ? `₹${Number(amount).toLocaleString()}` : ""} readOnly />
           </div>
 
-          <div className="mb-3">
-            <label className="form-label">
-              Payment Mode <span className="text-danger">*</span>
+          <div className="mb-4">
+            <label className="form-label font-weight-bold">
+              Payment Method Chosen <span className="text-danger">*</span>
             </label>
             <select
-              className={`form-select ${
-                touched.paymentMode && fieldErrors.paymentMode
-                  ? "is-invalid"
-                  : ""
-              }`}
+              className={`form-select ${touched.paymentMode && fieldErrors.paymentMode ? "is-invalid" : ""}`}
               value={paymentMode}
               onChange={handleModeChange}
               onBlur={(e) => handleBlur("paymentMode", e.target.value)}
               disabled={isLocked}
-              aria-invalid={touched.paymentMode && !!fieldErrors.paymentMode}
             >
-              <option value="">Select a payment method</option>
-              <option value="UPI">UPI</option>
-              <option value="CARD">CARD</option>
-              <option value="NET_BANKING">NET BANKING</option>
-              <option value="CASH">CASH</option>
+              <option value="">-- Select payment mode --</option>
+              <option value="UPI">UPI (Unified Payments Interface)</option>
+              <option value="CARD">Credit / Debit Card Online</option>
+              <option value="NET_BANKING">Net Banking Transfer</option>
             </select>
             {touched.paymentMode && fieldErrors.paymentMode && (
-              <div className="invalid-feedback d-block">
-                {fieldErrors.paymentMode}
-              </div>
+              <div className="invalid-feedback d-block">{fieldErrors.paymentMode}</div>
             )}
           </div>
 
-          <Button
-            type="submit"
-            variant="success"
-            disabled={!selectedPolicy || !amount || isLocked || submitting}
-          >
-            {submitting ? "Processing..." : "Pay Premium Now"}
-          </Button>
-          <Button
-            type="button"
-            variant="danger"
-            className="ms-2"
-            onClick={handleCancel}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            className="ms-2"
-            disabled={!receiptData}
-            onClick={() => downloadReceiptFile(receiptData)}
-          >
-            Download Receipt
-          </Button>
+          <div className="d-flex gap-2">
+            <Button type="submit" variant="success" disabled={!selectedPolicy || !amount || isLocked || submitting}>
+              {submitting ? "Processing transaction..." : "Pay Premium Now"}
+            </Button>
+            <Button type="button" variant="danger" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button type="button" variant="outline-primary" disabled={!receiptData} onClick={() => downloadReceiptFile(receiptData)}>
+              📥 Download Receipt
+            </Button>
+          </div>
         </form>
 
+        {/* Premium Payment History Table Matrix */}
         <div className="mt-5">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="mb-0">Premium Payment History</h4>
-            <ExportPdfButton
-              title="Premium Payment History"
-              rows={paymentHistory}
-              columns={[
-                { label: "Policy", key: "policyNumber" },
-                {
-                  label: "Date",
-                  value: (row) =>
-                    row.paymentDate
-                      ? new Date(row.paymentDate).toLocaleDateString()
-                      : "N/A",
-                },
-                { label: "Amount", value: (row) => `₹${row.amount}` },
-                { label: "Mode", key: "paymentMode" },
-                { label: "Status", key: "paymentStatus" },
-              ]}
-            />
-          </div>
-
-          <table className="table table-bordered">
-            <thead>
+          <h5 className="font-weight-bold text-secondary mb-3">Premium Payment Settlement Ledger</h5>
+          <table className="table table-bordered align-middle" style={{ fontSize: "0.9rem" }}>
+            <thead className="table-light">
               <tr>
-                <th>Policy</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Mode</th>
+                <th>Policy Number</th>
+                <th>Date Settled</th>
+                <th>Amount Paid</th>
+                <th>Method</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
@@ -349,31 +364,23 @@ Status: SUCCESS
               {paymentHistory.map((item) => (
                 <tr key={item.paymentId || item.id}>
                   <td>{item.policyNumber}</td>
-                  <td>
-                    {item.paymentDate
-                      ? new Date(item.paymentDate).toLocaleDateString()
-                      : "N/A"}
-                  </td>
-                  <td>₹ {item.amount}</td>
+                  <td>{item.paymentDate ? new Date(item.paymentDate).toLocaleDateString() : "N/A"}</td>
+                  <td className="font-weight-bold text-success">₹{Number(item.amount).toLocaleString()}</td>
                   <td>{item.paymentMode}</td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        item.paymentStatus === "SUCCESS" ||
-                        item.paymentStatus === "PAID"
-                          ? "bg-success"
-                          : "bg-warning"
-                      }`}
-                    >
-                      {item.paymentStatus}
-                    </span>
-                  </td>
+                  <td><span className="badge bg-success">{item.paymentStatus || "SUCCESS"}</span></td>
                   <td>
                     <button
-                      className="btn btn-sm btn-outline-primary"
-                      onClick={() => downloadReceiptFile(item)}
+                      className="btn btn-sm btn-outline-primary py-0"
+                      onClick={() => downloadReceiptFile({
+                        date: new Date(item.paymentDate).toLocaleString(),
+                        reference: item.transactionReference,
+                        policyNumber: item.policyNumber,
+                        planName: item.planName || "Insurance Plan",
+                        amountPaid: item.amount,
+                        mode: item.paymentMode
+                      })}
                     >
-                      📥 Download Receipt
+                      📥 Receipt
                     </button>
                   </td>
                 </tr>
@@ -382,6 +389,164 @@ Status: SUCCESS
           </table>
         </div>
       </Card>
+
+      {/* Credit Card Sandbox Checkout Pop-up View Overlay */}
+      {showMockGateway && (
+        <div className="modal show d-block" style={{ backgroundColor: "rgba(15, 23, 42, 0.6)", zIndex: 1050 }}>
+          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: "400px" }}>
+            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: "20px" }}>
+              <div className="modal-header border-0 bg-primary text-white p-4" style={{ borderTopLeftRadius: "20px", borderTopRightRadius: "20px" }}>
+                <div className="d-flex align-items-center gap-2">
+                  <i className="bi bi-shield-lock-fill fs-4"></i>
+                  <div>
+                    <h5 className="modal-title font-weight-bold mb-0">InsurTech Secure Checkout</h5>
+                    <small className="opacity-75">Simulated Payment Sandbox</small>
+                  </div>
+                </div>
+                <button type="button" className="btn-close btn-close-white" onClick={() => !gatewayProcessing && setShowMockGateway(false)} disabled={gatewayProcessing}></button>
+              </div>
+
+              <div className="modal-body p-4 bg-light">
+                <div className="alert alert-primary py-2 px-3 mb-4 rounded d-flex justify-content-between align-items-center">
+                  <span className="font-weight-bold text-muted">Amount Due:</span>
+                                    <span className="font-weight-bold text-primary fs-5">₹{Number(amount).toLocaleString()}</span>
+                </div>
+
+                {gatewayError && <div className="alert alert-danger py-2 px-3 small border-0 font-weight-bold mb-3">{gatewayError}</div>}
+
+                <form onSubmit={handleMockPaymentSubmit}>
+                  <div className="mb-3">
+                    <label className="form-label font-weight-bold text-muted small mb-1">Card Number</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-white border-end-0 text-muted"><i className="bi bi-credit-card-2-front"></i></span>
+                      <input
+                        type="text"
+                        className="form-control border-start-0 ps-0"
+                        placeholder="4111 2222 3333 4444"
+                        maxLength="19"
+                        value={cardForm.cardNumber}
+                        disabled={gatewayProcessing}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "").replace(/(.{4})/g, "$1 ").trim();
+                          setCardForm(prev => ({ ...prev, cardNumber: val }));
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="row">
+                    <div className="col-6 mb-3">
+                      <label className="form-label font-weight-bold text-muted small mb-1">Expiry Date</label>
+                      <input
+                        type="text"
+                        className="form-control text-center"
+                        placeholder="MM/YY"
+                        maxLength="5"
+                        value={cardForm.expiry}
+                        disabled={gatewayProcessing}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(/\D/g, "");
+                          if (val.length > 2) val = val.slice(0, 2) + "/" + val.slice(2, 4);
+                          setCardForm(prev => ({ ...prev, expiry: val }));
+                        }}
+                      />
+                    </div>
+                    <div className="col-6 mb-3">
+                      <label className="form-label font-weight-bold text-muted small mb-1">CVV / CVC</label>
+                      <input
+                        type="password"
+                        className="form-control text-center"
+                        placeholder="***"
+                        maxLength="3"
+                        value={cardForm.cvv}
+                        disabled={gatewayProcessing}
+                        onChange={(e) => setCardForm(prev => ({ ...prev, cvv: e.target.value.replace(/\D/g, "") }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="form-label font-weight-bold text-muted small mb-1">Cardholder Name</label>
+                    <input
+                      type="text"
+                      className="form-control text-uppercase"
+                      placeholder="e.g., JOHN DOE"
+                      value={cardForm.cardName}
+                      disabled={gatewayProcessing}
+                      onChange={(e) => setCardForm(prev => ({ ...prev, cardName: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="d-flex flex-column gap-2">
+                    <button type="submit" className="btn btn-success py-2 font-weight-bold d-flex align-items-center justify-content-center gap-2" disabled={gatewayProcessing}>
+                      {gatewayProcessing ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                          <span>Authorizing payment...</span>
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-lock-fill"></i>
+                          <span>Authorize Settlement Payment</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* UPI QR Code Simulator View Overlay Modal Container */}
+      {showUpiGateway && (
+        <div className="modal show d-block" style={{ backgroundColor: "rgba(15, 23, 42, 0.6)", zIndex: 1050 }}>
+          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: "380px" }}>
+            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: "20px" }}>
+              <div className="modal-header border-0 bg-dark text-white p-4 text-center d-block" style={{ borderTopLeftRadius: "20px", borderTopRightRadius: "20px" }}>
+                <h5 className="modal-title font-weight-bold mb-1">Scan QR Code to Pay</h5>
+                <small className="text-warning font-weight-bold">Simulated UPI Sandbox Environment</small>
+              </div>
+
+              <div className="modal-body p-4 bg-white text-center">
+                <div className="mb-2 text-muted small">Amount to Transfer:</div>
+                <h3 className="font-weight-bold text-dark mb-4">₹{Number(amount).toLocaleString()}</h3>
+
+                <div className="p-3 bg-light rounded d-inline-block border mb-4 shadow-sm">
+                  <div className="d-flex align-items-center justify-content-center bg-white border border-secondary rounded" style={{ width: "180px", height: "180px", position: "relative" }}>
+                    <span className="text-muted fw-bold" style={{ fontSize: "3rem" }}>🏁</span>
+                    <small className="d-block text-dark font-weight-bold position-absolute bottom-0 mb-2" style={{ fontSize: "0.65rem" }}>
+                      INSURTECH_PAY@UPI
+                    </small>
+                  </div>
+                </div>
+
+                <p className="text-muted small px-2 mb-4" style={{ lineHeight: "1.4" }}>
+                  Open your payment app (Google Pay, PhonePe, or Paytm) to scan this test anchor node.
+                </p>
+
+                <div className="d-flex flex-column gap-2">
+                  <button 
+                    type="button" 
+                    className="btn btn-success py-2 font-weight-bold"
+                    onClick={async () => {
+                      setShowUpiGateway(false);
+                      setSubmitting(true);
+                      executeDirectPayment();
+                    }}
+                  >
+                    Simulate Successful Scan ✓
+                  </button>
+                  <button type="button" className="btn btn-link text-muted small text-decoration-none py-1" onClick={() => setShowUpiGateway(false)}>
+                    Cancel Transaction
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

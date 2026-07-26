@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import {
   getUsersByRole,
   createInternalStaff,
   assignProductToUser,
+  updateUser
 } from "../../api/userApi";
 import { getActiveProducts } from "../../api/productApi";
 
@@ -50,6 +52,9 @@ function AdminInternalStaff() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  const [editMode, setEditMode] = useState(false);
+  const [editTargetId, setEditTargetId] = useState(null);
+
   const [showReassignModal, setShowReassignModal] = useState(false);
   const [reassignTarget, setReassignTarget] = useState(null);
   const [reassignProductId, setReassignProductId] = useState("");
@@ -66,9 +71,8 @@ function AdminInternalStaff() {
         getUsersByRole("INTERNAL_STAFF", { size: 100 }),
         getActiveProducts(),
       ]);
-
-      setStaff(staffRes.data.records || []);
-      setProducts(productsRes.data.records || []);
+      setStaff(staffRes.data.records || staffRes.data.content || staffRes.data || []);
+      setProducts(productsRes.data.records || productsRes.data.content || productsRes.data || []);
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Unable to load internal staff"));
     } finally {
@@ -76,15 +80,18 @@ function AdminInternalStaff() {
     }
   }
 
-  const validatorMap = {
+  // Baseline granular field rule definitions
+  const baseValidators = {
     fullName: (v) => validateFullName(v, "Full name"),
     email: (v) => validateEmail(v, "Email"),
-    password: (v) => validatePassword(v, "Password"),
     mobileNumber: (v) => validateMobile(v, "Mobile number"),
   };
 
   function runFieldValidation(field, value) {
-    const message = validatorMap[field](value);
+    if (editMode && field === "password") return;
+    const rule = field === "password" ? (v) => validatePassword(v, "Password") : baseValidators[field];
+    if (!rule) return;
+    const message = rule(value);
     setFieldErrors((prev) => ({ ...prev, [field]: message }));
   }
 
@@ -99,45 +106,90 @@ function AdminInternalStaff() {
   }
 
   function openCreateModal() {
+    setEditMode(false);
+    setEditTargetId(null);
     setForm(emptyForm);
     setTouched({});
     setFieldErrors({});
     setShowCreateModal(true);
   }
 
-  async function submitCreate() {
-    const { errors, isValid } = validateForm(
-      {
-        fullName: form.fullName,
-        email: form.email,
-        password: form.password,
-        mobileNumber: form.mobileNumber,
-      },
-      validatorMap,
-    );
+  function openEditModal(row) {
+    setEditMode(true);
+    setEditTargetId(row.userId || row.id);
+    setForm({
+      fullName: row.fullName || "",
+      email: row.email || "",
+      password: "",
+      mobileNumber: row.mobileNumber ? row.mobileNumber.replace("+91", "") : "",
+      productId: row.assignedProductId ? String(row.assignedProductId) : "",
+    });
+    setTouched({});
+    setFieldErrors({});
+    setShowCreateModal(true);
+  }
 
+  async function submitForm(e) {
+    if (e) e.preventDefault();
+
+    // 📦 DYNAMIC PAYLOAD OBJECT CONTEXT BUILDER
+    const payload = {
+      fullName: form.fullName.trim(),
+      email: form.email.trim(),
+      mobileNumber: form.mobileNumber.trim(),
+    };
+
+    // 📦 DYNAMIC VALIDATION RULES MAP (Prevents undefined parsing thread freezes)
+    const activeRules = { ...baseValidators };
+
+    if (!editMode) {
+      payload.password = form.password;
+      activeRules.password = (v) => validatePassword(v, "Password");
+    }
+
+
+
+    // Runs checking loops cleanly over exact active attributes only
+    const { errors, isValid } = validateForm(payload, activeRules);
     setFieldErrors(errors);
+
     setTouched({
       fullName: true,
       email: true,
-      password: true,
       mobileNumber: true,
+      password: !editMode,
     });
 
-    if (!isValid) return;
+    if (!isValid) {
+      
+      toast.error("Please clean up the highlighted input errors before updating.");
+      return;
+    }
 
     setSubmitting(true);
-    try {
-      await createInternalStaff({
-        fullName: form.fullName.trim(),
-        email: form.email.trim(),
-        password: form.password,
-        mobileNumber: toE164India(form.mobileNumber),
-        role: "INTERNAL_STAFF",
-        assignedProductId: form.productId ? Number(form.productId) : null,
-      });
 
-      toast.success("Agent created successfully");
+    try {
+      if (editMode) {
+        // Enforces country prefix clean wrapping inside backend REST operations
+        const response = await updateUser(editTargetId, {
+          fullName: payload.fullName,
+          email: payload.email,
+          mobileNumber: toE164India(payload.mobileNumber),
+          assignedProductId: form.productId ? Number(form.productId) : null,
+        });
+        
+        toast.success("Agent profile details saved successfully!");
+      } else {
+        await createInternalStaff({
+          fullName: payload.fullName,
+          email: payload.email,
+          password: payload.password,
+          mobileNumber: toE164India(payload.mobileNumber),
+          role: "INTERNAL_STAFF",
+          assignedProductId: form.productId ? Number(form.productId) : null,
+        });
+        toast.success("Agent user node created successfully.");
+      }
       setShowCreateModal(false);
       loadAll();
     } catch (error) {
@@ -145,7 +197,8 @@ function AdminInternalStaff() {
       if (Object.keys(backendErrors).length) {
         setFieldErrors((prev) => ({ ...prev, ...backendErrors }));
       }
-      toast.error(getApiErrorMessage(error, "Unable to create agent"));
+    
+      toast.error(getApiErrorMessage(error, editMode ? "Could not modify agent details." : "Unable to compile agent entry."));
     } finally {
       setSubmitting(false);
     }
@@ -161,21 +214,15 @@ function AdminInternalStaff() {
     setReassignSubmitting(true);
     try {
       await assignProductToUser(
-        reassignTarget.userId,
+        reassignTarget.userId || reassignTarget.id,
         reassignProductId ? Number(reassignProductId) : null,
       );
-
-      toast.success(
-        reassignProductId
-          ? "Product reassigned successfully"
-          : "Product assignment cleared",
-      );
-
+      toast.success(reassignProductId ? "Product reassigned successfully" : "Product domain scope cleared.");
       setShowReassignModal(false);
       setReassignTarget(null);
       loadAll();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Unable to reassign product"));
+      toast.error(getApiErrorMessage(error, "Unable to update product reassignment link."));
     } finally {
       setReassignSubmitting(false);
     }
@@ -188,7 +235,6 @@ function AdminInternalStaff() {
       </DashboardLayout>
     );
   }
-
   return (
     <DashboardLayout>
       <Card title="Agents (Internal Staff)">
@@ -203,12 +249,7 @@ function AdminInternalStaff() {
               {
                 key: "assignedProductName",
                 label: "Assigned Product",
-                render: (row) =>
-                  row.assignedProductName ? (
-                    row.assignedProductName
-                  ) : (
-                    <span className="text-muted">Unassigned</span>
-                  ),
+                render: (row) => row.assignedProductName || <span className="text-muted">Unassigned</span>,
               },
               {
                 key: "activeStatus",
@@ -217,11 +258,16 @@ function AdminInternalStaff() {
               },
               {
                 key: "action",
-                label: "Action",
+                label: "Actions",
                 render: (row) => (
-                  <Button size="sm" onClick={() => openReassignModal(row)}>
-                    Reassign Product
-                  </Button>
+                  <div className="d-flex gap-2">
+                    <Button size="sm" variant="outline-primary" onClick={() => openEditModal(row)}>
+                       Edit
+                    </Button>
+                    <Button size="sm" variant="outline-secondary" onClick={() => openReassignModal(row)}>
+                      Reassign Product
+                    </Button>
+                  </div>
                 ),
               },
             ]}
@@ -233,20 +279,14 @@ function AdminInternalStaff() {
                 <Button onClick={openCreateModal}>+ Create Agent</Button>
 
                 <ExportPdfButton
-                  title="Agents (Internal Staff)"
+                  title="Agents List"
                   rows={staff}
                   columns={[
                     { label: "Name", key: "fullName" },
                     { label: "Email", key: "email" },
                     { label: "Mobile", key: "mobileNumber" },
-                    {
-                      label: "Assigned Product",
-                      value: (row) => row.assignedProductName || "Unassigned",
-                    },
-                    {
-                      label: "Status",
-                      value: (row) => (row.activeStatus ? "Active" : "Inactive"),
-                    },
+                    { label: "Assigned Product", value: (row) => row.assignedProductName || "Unassigned" },
+                    { label: "Status", value: (row) => (row.activeStatus ? "Active" : "Inactive") },
                   ]}
                 />
               </div>
@@ -257,154 +297,128 @@ function AdminInternalStaff() {
         )}
       </Card>
 
-      {/* Create Agent */}
+      {/* Forms Management Modal Wrapper Sheet */}
       <Modal
         show={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Create Agent (Internal Staff)"
+        title={editMode ? "Modify Agent Details" : "Create Agent (Internal Staff)"}
       >
-        <label className="form-label">
-          Full Name <span className="text-danger">*</span>
-        </label>
-        <input
-          className={`form-control ${
-            touched.fullName && fieldErrors.fullName ? "is-invalid" : ""
-          }`}
-          value={form.fullName}
-          onChange={(e) => handleChange("fullName", e.target.value)}
-          onBlur={(e) => handleBlur("fullName", e.target.value)}
-        />
-        {touched.fullName && fieldErrors.fullName && (
-          <div className="invalid-feedback d-block">{fieldErrors.fullName}</div>
-        )}
-
-        <label className="form-label mt-3">
-          Email <span className="text-danger">*</span>
-        </label>
-        <input
-          type="email"
-          className={`form-control ${
-            touched.email && fieldErrors.email ? "is-invalid" : ""
-          }`}
-          value={form.email}
-          onChange={(e) => handleChange("email", e.target.value)}
-          onBlur={(e) => handleBlur("email", e.target.value)}
-        />
-        {touched.email && fieldErrors.email && (
-          <div className="invalid-feedback d-block">{fieldErrors.email}</div>
-        )}
-
-        <label className="form-label mt-3">
-          Password <span className="text-danger">*</span>
-        </label>
-        <input
-          type="password"
-          className={`form-control ${
-            touched.password && fieldErrors.password ? "is-invalid" : ""
-          }`}
-          value={form.password}
-          onChange={(e) => handleChange("password", e.target.value)}
-          onBlur={(e) => handleBlur("password", e.target.value)}
-        />
-        {touched.password && fieldErrors.password && (
-          <div className="invalid-feedback d-block">{fieldErrors.password}</div>
-        )}
-
-        <label className="form-label mt-3">
-          Mobile Number <span className="text-danger">*</span>
-        </label>
-        <input
-          className={`form-control ${
-            touched.mobileNumber && fieldErrors.mobileNumber ? "is-invalid" : ""
-          }`}
-          placeholder="10 digit number"
-          value={form.mobileNumber}
-          onChange={(e) => handleChange("mobileNumber", e.target.value)}
-          onBlur={(e) => handleBlur("mobileNumber", e.target.value)}
-        />
-        {touched.mobileNumber && fieldErrors.mobileNumber && (
-          <div className="invalid-feedback d-block">
-            {fieldErrors.mobileNumber}
+        <form onSubmit={submitForm} noValidate>
+          <div className="mb-3">
+            <label className="form-label font-weight-bold small text-muted">Full Name *</label>
+            <input
+              className={`form-control ${touched.fullName && fieldErrors.fullName ? "is-invalid" : ""}`}
+              value={form.fullName}
+              onChange={(e) => handleChange("fullName", e.target.value)}
+              onBlur={(e) => handleBlur("fullName", e.target.value)}
+              placeholder="Enter full name"
+            />
+            {touched.fullName && fieldErrors.fullName && <div className="invalid-feedback">{fieldErrors.fullName}</div>}
           </div>
-        )}
 
-        <label className="form-label mt-3">Assigned Product (optional)</label>
-        <select
-          className="form-select"
-          value={form.productId}
-          onChange={(e) => handleChange("productId", e.target.value)}
-        >
-          <option value="">-- Unassigned --</option>
-          {products.map((p) => (
-            <option key={p.productId} value={p.productId}>
-              {p.productName}
-            </option>
-          ))}
-        </select>
+          <div className="mb-3">
+            <label className="form-label font-weight-bold small text-muted">Email Address *</label>
+            <input
+              type="email"
+              className={`form-control ${touched.email && fieldErrors.email ? "is-invalid" : ""}`}
+              value={form.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+              onBlur={(e) => handleBlur("email", e.target.value)}
+              placeholder="name@company.com"
+              disabled={editMode}
+            />
+            {touched.email && fieldErrors.email && <div className="invalid-feedback">{fieldErrors.email}</div>}
+          </div>
 
-        <div className="mt-4 d-flex gap-2">
-          <Button disabled={submitting} onClick={submitCreate}>
-            {submitting ? "Creating..." : "Create Agent"}
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={submitting}
-            onClick={() => setShowCreateModal(false)}
-          >
-            Cancel
-          </Button>
-        </div>
-      </Modal>
+          {!editMode && (
+            <div className="mb-3">
+              <label className="form-label font-weight-bold small text-muted">Password *</label>
+              <input
+                type="password"
+                className={`form-control ${touched.password && fieldErrors.password ? "is-invalid" : ""}`}
+                value={form.password}
+                onChange={(e) => handleChange("password", e.target.value)}
+                onBlur={(e) => handleBlur("password", e.target.value)}
+                placeholder="Enter account security password"
+              />
+              {touched.password && fieldErrors.password && <div className="invalid-feedback">{fieldErrors.password}</div>}
+            </div>
+          )}
 
-      {/* Reassign Product */}
-      <Modal
-        show={showReassignModal}
-        onClose={() => setShowReassignModal(false)}
-        title={
-          reassignTarget
-            ? `Reassign Product — ${reassignTarget.fullName}`
-            : "Reassign Product"
-        }
-      >
-        {reassignTarget && (
-          <>
-            <label className="form-label">Assigned Product</label>
+          <div className="mb-3">
+            <label className="form-label font-weight-bold small text-muted">Mobile Number *</label>
+            <div className="input-group">
+              <span className="input-group-text bg-light text-muted">+91</span>
+              <input
+                name="mobileNumber"
+                className={`form-control ${touched.mobileNumber && fieldErrors.mobileNumber ? "is-invalid" : ""}`}
+                value={form.mobileNumber}
+                onChange={(e) => handleChange("mobileNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                onBlur={(e) => handleBlur("mobileNumber", e.target.value)}
+                placeholder="10-digit primary contact number"
+              />
+            </div>
+            {touched.mobileNumber && fieldErrors.mobileNumber && <div className="text-danger small mt-1">{fieldErrors.mobileNumber}</div>}
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label font-weight-bold small text-muted">Assign Insurance Product</label>
             <select
               className="form-select"
-              value={reassignProductId}
-              onChange={(e) => setReassignProductId(e.target.value)}
+              value={form.productId}
+              onChange={(e) => handleChange("productId", e.target.value)}
             >
-              <option value="">-- Unassigned --</option>
+              <option value="">Select a product domain catalog (Optional)</option>
               {products.map((p) => (
-                <option key={p.productId} value={p.productId}>
+                <option key={p.productId || p.id} value={p.productId || p.id}>
                   {p.productName}
                 </option>
               ))}
             </select>
+          </div>
 
-            <p className="text-muted mt-2" style={{ fontSize: "0.85rem" }}>
-              Reassigning only affects new claims/policies going forward —
-              this agent's in-flight claim reviews are not retroactively
-              moved.
-            </p>
+          <div className="d-flex justify-content-end gap-2 pt-2 border-top">
+            <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="success" disabled={submitting}>
+              {submitting ? "Saving changes..." : editMode ? "Save Changes" : "Create Agent"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
-            <div className="mt-3 d-flex gap-2">
-              <Button
-                disabled={reassignSubmitting}
-                onClick={submitReassign}
-              >
-                {reassignSubmitting ? "Saving..." : "Save"}
-              </Button>
-              <Button
-                variant="secondary"
-                disabled={reassignSubmitting}
-                onClick={() => setShowReassignModal(false)}
-              >
-                Cancel
-              </Button>
-            </div>
-          </>
-        )}
+      {/* Product Reassignment Modal Form panel layout container */}
+      <Modal
+        show={showReassignModal}
+        onClose={() => setShowReassignModal(false)}
+        title="Quick Product Reassignment"
+      >
+        <div className="mb-3">
+          <p className="text-muted small">
+            Modify product domain context for: <strong>{reassignTarget?.fullName}</strong>
+          </p>
+          <select
+            className="form-select"
+            value={reassignProductId}
+            onChange={(e) => setReassignProductId(e.target.value)}
+          >
+            <option value="">Unassigned (No restrictions tracking)</option>
+            {products.map((p) => (
+              <option key={p.productId || p.id} value={p.productId || p.id}>
+                {p.productName}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="d-flex justify-content-end gap-2 pt-2 border-top">
+          <Button type="button" variant="secondary" onClick={() => setShowReassignModal(false)}>
+            Cancel
+          </Button>
+          <Button type="button" variant="primary" onClick={submitReassign} disabled={reassignSubmitting}>
+            {reassignSubmitting ? "Updating link..." : "Confirm Reassignment"}
+          </Button>
+        </div>
       </Modal>
     </DashboardLayout>
   );
