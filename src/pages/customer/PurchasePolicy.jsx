@@ -7,9 +7,14 @@ import Button from "../../components/common/Button";
 import BackButton from "../../components/common/BackButton";
 
 import { purchasePolicy } from "../../api/customerApi";
-import { required } from "../../utils/validators";
+import { validateNotPastDate } from "../../utils/validators";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { useToast } from "../../context/ToastContext";
+
+// Native date inputs have no built-in "no past dates" rule, so we floor the
+// picker itself at today in addition to the submit-time check below — a
+// policy can't retroactively start before today.
+const TODAY_ISO = new Date().toISOString().split("T")[0];
 
 function PurchasePolicy() {
   const { planId } = useParams();
@@ -22,7 +27,7 @@ function PurchasePolicy() {
   const [submitting, setSubmitting] = useState(false);
 
   function validate(value) {
-    const message = required(value, "Start date");
+    const message = validateNotPastDate(value, "Start date");
     setFieldError(message);
     return message;
   }
@@ -70,6 +75,7 @@ function PurchasePolicy() {
             </label>
             <input
               type="date"
+              min={TODAY_ISO}
               className={`form-control ${
                 touched && fieldError ? "is-invalid" : ""
               }`}

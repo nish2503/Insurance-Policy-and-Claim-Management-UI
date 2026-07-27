@@ -139,7 +139,7 @@ function PayPremium() {
       setSelectedPolicy(""); setAmount(""); setPaymentMode(""); setTouched({}); setFieldErrors({});
       loadInitialData();
     } catch (error) {
-      toast.error("Direct payment confirmation failed.");
+      toast.error(getApiErrorMessage(error, "Payment could not be completed."));
     } finally {
       setSubmitting(false);
     }

@@ -19,13 +19,18 @@ const HUMAN_LABELS = {
   state: "State",
   pinCode: "PIN Code",
   nomineeName: "Nominee Full Name",
-  nomineeRelation: "Relationship to Nominee"
+  nomineeRelation: "Relationship to Nominee",
 };
 
-// Native date inputs have no built-in "no future dates" rule, so we cap the
-// picker itself at today in addition to the submit-time validateAge() check —
-// this stops a future DOB from being selectable in the first place.
-const TODAY_ISO = new Date().toISOString().split("T")[0];
+// validateAge() also enforces a minimum age of 18, but that check only fires
+// on submit — a date picker with no max still lets someone pick "1 day old"
+// as their DOB. Capping the picker at "18 years ago today" blocks that at
+// selection time instead of only after the fact.
+const MAX_DOB_ISO = (() => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d.toISOString().split("T")[0];
+})();
 
 function MyProfile() {
   const [profile, setProfile] = useState(null);
@@ -98,7 +103,8 @@ function MyProfile() {
     else if (!emailRegex.test(form.email)) localErrors.email = "Invalid email";
 
     if (!form.mobileNumber.trim()) localErrors.mobileNumber = "Mobile required";
-    else if (!mobileRegex.test(cleanedMobile)) localErrors.mobileNumber = "Invalid mobile number";
+    else if (!mobileRegex.test(cleanedMobile))
+      localErrors.mobileNumber = "Invalid mobile number";
 
     if (!form.dateOfBirth) localErrors.dateOfBirth = "DOB required";
     else {
@@ -111,10 +117,13 @@ function MyProfile() {
     if (!form.state.trim()) localErrors.state = "State required";
 
     if (!form.pinCode.trim()) localErrors.pinCode = "PIN required";
-    else if (!pinRegex.test(form.pinCode)) localErrors.pinCode = "PIN must be 6 digits";
+    else if (!pinRegex.test(form.pinCode))
+      localErrors.pinCode = "PIN must be 6 digits";
 
-    if (!form.nomineeName.trim()) localErrors.nomineeName = "Nominee name required";
-    if (!form.nomineeRelation.trim()) localErrors.nomineeRelation = "Nominee relation required";
+    if (!form.nomineeName.trim())
+      localErrors.nomineeName = "Nominee name required";
+    if (!form.nomineeRelation.trim())
+      localErrors.nomineeRelation = "Nominee relation required";
 
     return localErrors;
   }
@@ -155,7 +164,9 @@ function MyProfile() {
       return;
     }
 
-    const isEmailChanged = form.email.trim().toLowerCase() !== (profile?.email || "").trim().toLowerCase();
+    const isEmailChanged =
+      form.email.trim().toLowerCase() !==
+      (profile?.email || "").trim().toLowerCase();
 
     if (isEmailChanged) {
       setSendingOtp(true);
@@ -211,7 +222,9 @@ function MyProfile() {
           <div className="mt-3">
             {edit ? (
               <form onSubmit={(e) => e.preventDefault()} noValidate>
-                <h5 className="mb-4 text-primary font-weight-bold">Modify Profile Information</h5>
+                <h5 className="mb-4 text-primary font-weight-bold">
+                  Modify Profile Information
+                </h5>
                 <div className="row">
                   {Object.keys(form).map((field) => (
                     <div className="col-md-6 mb-3" key={field}>
@@ -220,23 +233,35 @@ function MyProfile() {
                       </label>
                       <input
                         type={field === "dateOfBirth" ? "date" : "text"}
-                        max={field === "dateOfBirth" ? TODAY_ISO : undefined}
+                        max={field === "dateOfBirth" ? MAX_DOB_ISO : undefined}
                         className={`form-control ${errors.validationErrors?.[field] ? "is-invalid" : ""}`}
                         name={field}
                         value={form[field]}
                         onChange={handleChange}
                       />
                       {errors.validationErrors?.[field] && (
-                        <div className="invalid-feedback">{errors.validationErrors[field]}</div>
+                        <div className="invalid-feedback">
+                          {errors.validationErrors[field]}
+                        </div>
                       )}
                     </div>
                   ))}
                 </div>
                 <div className="d-flex gap-2 mt-3 pt-2 border-top">
-                  <Button variant="success" onClick={save} disabled={sendingOtp}>
+                  <Button
+                    variant="success"
+                    onClick={save}
+                    disabled={sendingOtp}
+                  >
                     {sendingOtp ? "Sending code..." : "Save Changes"}
                   </Button>
-                  <Button variant="secondary" onClick={() => { setEdit(false); setErrors({}); }}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setEdit(false);
+                      setErrors({});
+                    }}
+                  >
                     Cancel
                   </Button>
                 </div>
@@ -244,29 +269,76 @@ function MyProfile() {
             ) : (
               <>
                 <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-                  <h5 className="mb-0 text-primary font-weight-bold">Personal Profile Details</h5>
+                  <h5 className="mb-0 text-primary font-weight-bold">
+                    Personal Profile Details
+                  </h5>
                   <Button onClick={() => setEdit(true)}>Edit Profile</Button>
                 </div>
 
                 <div className="row g-3">
-                  <div className="col-md-6"><p className="mb-2"><b>Full Name:</b> {form.fullName || "N/A"}</p></div>
-                  <div className="col-md-6"><p className="mb-2"><b>Email Address:</b> {form.email || "N/A"}</p></div>
-                  <div className="col-md-6"><p className="mb-2"><b>Mobile Number:</b> {form.mobileNumber || "N/A"}</p></div>
-                  <div className="col-md-6"><p className="mb-2"><b>Date of Birth:</b> {form.dateOfBirth || "N/A"}</p></div>
+                  <div className="col-md-6">
+                    <p className="mb-2">
+                      <b>Full Name:</b> {form.fullName || "N/A"}
+                    </p>
+                  </div>
+                  <div className="col-md-6">
+                    <p className="mb-2">
+                      <b>Email Address:</b> {form.email || "N/A"}
+                    </p>
+                  </div>
+                  <div className="col-md-6">
+                    <p className="mb-2">
+                      <b>Mobile Number:</b> {form.mobileNumber || "N/A"}
+                    </p>
+                  </div>
+                  <div className="col-md-6">
+                    <p className="mb-2">
+                      <b>Date of Birth:</b> {form.dateOfBirth || "N/A"}
+                    </p>
+                  </div>
 
                   <hr className="my-3 opacity-25 text-muted" />
-                  <h6 className="mb-2 text-secondary font-weight-bold">Contact & Location</h6>
+                  <h6 className="mb-2 text-secondary font-weight-bold">
+                    Contact & Location
+                  </h6>
 
-                  <div className="col-md-12"><p className="mb-2"><b>Street Address:</b> {form.address || "N/A"}</p></div>
-                  <div className="col-md-4"><p className="mb-2"><b>City:</b> {form.city || "N/A"}</p></div>
-                  <div className="col-md-4"><p className="mb-2"><b>State:</b> {form.state || "N/A"}</p></div>
-                  <div className="col-md-4"><p className="mb-2"><b>PIN Code:</b> {form.pinCode || "N/A"}</p></div>
+                  <div className="col-md-12">
+                    <p className="mb-2">
+                      <b>Street Address:</b> {form.address || "N/A"}
+                    </p>
+                  </div>
+                  <div className="col-md-4">
+                    <p className="mb-2">
+                      <b>City:</b> {form.city || "N/A"}
+                    </p>
+                  </div>
+                  <div className="col-md-4">
+                    <p className="mb-2">
+                      <b>State:</b> {form.state || "N/A"}
+                    </p>
+                  </div>
+                  <div className="col-md-4">
+                    <p className="mb-2">
+                      <b>PIN Code:</b> {form.pinCode || "N/A"}
+                    </p>
+                  </div>
 
                   <hr className="my-3 opacity-25 text-muted" />
-                  <h6 className="mb-2 text-secondary font-weight-bold">Nominee Specifications</h6>
+                  <h6 className="mb-2 text-secondary font-weight-bold">
+                    Nominee Specifications
+                  </h6>
 
-                  <div className="col-md-6"><p className="mb-2"><b>Nominee Name:</b> {form.nomineeName || "N/A"}</p></div>
-                  <div className="col-md-6"><p className="mb-2"><b>Relationship to Nominee:</b> {form.nomineeRelation || "N/A"}</p></div>
+                  <div className="col-md-6">
+                    <p className="mb-2">
+                      <b>Nominee Name:</b> {form.nomineeName || "N/A"}
+                    </p>
+                  </div>
+                  <div className="col-md-6">
+                    <p className="mb-2">
+                      <b>Relationship to Nominee:</b>{" "}
+                      {form.nomineeRelation || "N/A"}
+                    </p>
+                  </div>
                 </div>
               </>
             )}
@@ -283,9 +355,15 @@ function MyProfile() {
         title="Confirm Email Update"
       >
         <p className="text-muted small mb-3">
-          We have dispatched a 6-digit verification code to <strong>{form.email}</strong>. Please enter it below to authorize this change.
+          We have dispatched a 6-digit verification code to{" "}
+          <strong>{form.email}</strong>. Please enter it below to authorize this
+          change.
         </p>
-        {otpError && <div className="alert alert-danger p-2 small border-0 font-weight-bold mb-2">{otpError}</div>}
+        {otpError && (
+          <div className="alert alert-danger p-2 small border-0 font-weight-bold mb-2">
+            {otpError}
+          </div>
+        )}
         <div className="mb-3">
           <input
             type="text"
@@ -297,10 +375,18 @@ function MyProfile() {
           />
         </div>
         <div className="d-flex flex-column gap-2 mt-3">
-          <Button variant="success" className="w-100" onClick={handleVerifyOtpSubmit}>
+          <Button
+            variant="success"
+            className="w-100"
+            onClick={handleVerifyOtpSubmit}
+          >
             Verify and Save Account Updates
           </Button>
-          <button type="button" className="btn btn-link text-muted small text-decoration-none w-100" onClick={() => setShowModal(false)}>
+          <button
+            type="button"
+            className="btn btn-link text-muted small text-decoration-none w-100"
+            onClick={() => setShowModal(false)}
+          >
             Cancel Change
           </button>
         </div>

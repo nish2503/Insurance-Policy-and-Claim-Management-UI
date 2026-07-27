@@ -95,6 +95,8 @@ function MyClaims() {
               { key: "policyNumber", label: "Policy Number" },
               { key: "claimAmount", label: "Amount" },
               { key: "claimReason", label: "Reason" },
+              { key: "incidentDateFormatted", label: "Date of Incident" },
+              { key: "createdDateFormatted", label: "Date Raised" },
               { key: "claimStatusCustom", label: "Status" },
               {
                 key: "action",
@@ -180,6 +182,12 @@ function MyClaims() {
             data={visibleClaims.map((c) => ({
               ...c,
               claimAmount: `₹${c.claimAmount}`,
+              incidentDateFormatted: c.incidentDate
+                ? new Date(c.incidentDate).toLocaleDateString()
+                : "N/A",
+              createdDateFormatted: c.createdDate
+                ? new Date(c.createdDate).toLocaleDateString()
+                : "N/A",
               claimStatusCustom: <StatusBadge status={c.claimStatus} />,
             }))}
             searchKeys={["claimNumber", "policyNumber", "claimReason", "claimStatus"]}
@@ -208,6 +216,20 @@ function MyClaims() {
                     { label: "Policy Number", key: "policyNumber" },
                     { label: "Amount", value: (row) => `₹${row.claimAmount}` },
                     { label: "Reason", key: "claimReason" },
+                    {
+                      label: "Date of Incident",
+                      value: (row) =>
+                        row.incidentDate
+                          ? new Date(row.incidentDate).toLocaleDateString()
+                          : "N/A",
+                    },
+                    {
+                      label: "Date Raised",
+                      value: (row) =>
+                        row.createdDate
+                          ? new Date(row.createdDate).toLocaleDateString()
+                          : "N/A",
+                    },
                     { label: "Status", key: "claimStatus" },
                   ]}
                 />
@@ -258,6 +280,18 @@ function MyClaims() {
               <p className="mb-1"><strong>Claim Code:</strong> {selectedClaim.claimNumber}</p>
               <p className="mb-1"><strong>Policy Number:</strong> {selectedClaim.policyNumber}</p>
               <p className="mb-1"><strong>Claim Amount:</strong> ₹{String(selectedClaim.claimAmount).replace("₹", "")}</p>
+              <p className="mb-1">
+                <strong>Date of Incident:</strong>{" "}
+                {selectedClaim.incidentDate
+                  ? new Date(selectedClaim.incidentDate).toLocaleDateString()
+                  : "N/A"}
+              </p>
+              <p className="mb-1">
+                <strong>Date Raised:</strong>{" "}
+                {selectedClaim.createdDate
+                  ? new Date(selectedClaim.createdDate).toLocaleDateString()
+                  : "N/A"}
+              </p>
               <p className="mb-0">
                 <strong>Current Status:</strong>
                 <span className="badge bg-dark text-capitalize ms-1">

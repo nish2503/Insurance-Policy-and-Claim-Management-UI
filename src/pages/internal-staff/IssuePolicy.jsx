@@ -11,9 +11,14 @@ import {
   getPlans,
 } from "../../api/internalStaffApi";
 
-import { required, validateForm } from "../../utils/validators";
+import { required, validateForm, validateNotPastDate } from "../../utils/validators";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { useToast } from "../../context/ToastContext";
+
+// Native date inputs have no built-in "no past dates" rule, so we floor the
+// picker itself at today in addition to the submit-time check below — a
+// policy can't retroactively be issued to start before today.
+const TODAY_ISO = new Date().toISOString().split("T")[0];
 
 function IssuePolicy() {
   const toast = useToast();
@@ -57,7 +62,7 @@ function IssuePolicy() {
   const validatorMap = {
     customerId: (value) => required(value, "Customer"),
     planId: (value) => required(value, "Plan"),
-    startDate: (value) => required(value, "Start date"),
+    startDate: (value) => validateNotPastDate(value, "Start date"),
   };
 
   function runFieldValidation(field, value) {
@@ -177,6 +182,7 @@ function IssuePolicy() {
                 touched.startDate && fieldErrors.startDate ? "is-invalid" : ""
               }`}
               type="date"
+              min={TODAY_ISO}
               name="startDate"
               value={form.startDate}
               onChange={handleChange}

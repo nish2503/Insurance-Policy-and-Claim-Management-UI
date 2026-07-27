@@ -173,6 +173,27 @@ export function validateNotFutureDate(value, label = "Date") {
   return "";
 }
 
+// Generic "cannot be a past date" check. Used for policy start date
+// (issuing/purchasing a policy can't retroactively start before today) and
+// any other date field that must not be set behind today.
+export function validateNotPastDate(value, label = "Date") {
+  const req = required(value, label);
+  if (req) return req;
+
+  const inputDate = new Date(value);
+  if (Number.isNaN(inputDate.getTime())) {
+    return `${label} must be a valid date`;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (inputDate < today) {
+    return `${label} cannot be a past date`;
+  }
+  return "";
+}
+
 // PAYBR-003: payment transaction reference. Kept permissive (alphanumeric +
 // hyphen/underscore, 6-40 chars) since the exact gateway format is simulated.
 export function validateTransactionReference(
