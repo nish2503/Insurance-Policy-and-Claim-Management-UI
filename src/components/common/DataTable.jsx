@@ -31,6 +31,7 @@ function DataTable({
   searchPlaceholder = "Search...",
   searchKeys = [],
   headerActions,
+  emptyMessage = "No Records Found",
 
   // server-side pagination props (all optional; ignored in client mode)
   serverSide = false,
@@ -163,7 +164,7 @@ function DataTable({
           ) : (
             <tr>
               <td colSpan={columns.length} className="text-center py-4">
-                No Records Found
+                {emptyMessage}
               </td>
             </tr>
           )}

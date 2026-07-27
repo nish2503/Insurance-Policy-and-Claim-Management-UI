@@ -18,7 +18,6 @@ import Button from "../../components/common/Button";
 import StatusBadge from "../../components/common/StatusBadge";
 import StatusFilter from "../../components/common/StatusFilter";
 import Loader from "../../components/common/Loader";
-import EmptyState from "../../components/common/EmptyState";
 import Modal from "../../components/common/Modal";
 import BackButton from "../../components/common/BackButton";
 import ClaimDetailPanel from "../../components/common/ClaimDetailPanel";
@@ -173,8 +172,8 @@ function AdminClaims() {
       <Card title="Claims — Final Decision Queue">
         <BackButton />
 
-        {visibleClaims.length > 0 ? (
-          <DataTable
+        <DataTable
+            emptyMessage="No Claims Awaiting Decision"
             columns={[
               { key: "claimNumber", label: "Claim No." },
               { key: "customerName", label: "Customer" },
@@ -245,9 +244,6 @@ function AdminClaims() {
               </div>
             }
           />
-        ) : (
-          <EmptyState message="No Claims Awaiting Decision" />
-        )}
       </Card>
 
       <Modal
@@ -342,8 +338,7 @@ function AdminClaims() {
             ) : (
               <div className="alert alert-secondary mt-3">
                 This claim has already reached a final status (
-                {selectedClaim.claimStatus}) and cannot be modified again
-                (CLM-BR-009).
+                {selectedClaim.claimStatus}) and cannot be modified again.
               </div>
             )}
           </>

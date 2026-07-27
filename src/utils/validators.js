@@ -26,8 +26,8 @@ export function validateMobile(value, label = "Mobile number") {
   const req = required(value, label);
   if (req) return req;
 
-  if (!/^\d{10}$/.test(value.trim())) {
-    return `${label} must be exactly 10 digits`;
+  if (!/^[6-9]\d{9}$/.test(value.trim())) {
+    return `${label} must be exactly 10 digits and start with 6-9`;
   }
   return "";
 }
@@ -95,13 +95,17 @@ export function validatePassword(value, label = "Password") {
   if (!/[0-9]/.test(value)) {
     return `${label} must contain at least one number`;
   }
-  if (!/[!@#$%^&*(),.?":{}|<>_\-+=]/.test(value)) {
-    return `${label} must contain at least one special character`;
+  if (!/[@$!%*?&#^()_+=-]/.test(value)) {
+    return `${label} must contain at least one special character (@ $ ! % * ? & # ^ ( ) _ + = -)`;
   }
   return "";
 }
 
-export function validateConfirmPassword(value, originalPassword, label = "Confirm password") {
+export function validateConfirmPassword(
+  value,
+  originalPassword,
+  label = "Confirm password",
+) {
   const req = required(value, label);
   if (req) return req;
 
@@ -171,7 +175,10 @@ export function validateNotFutureDate(value, label = "Date") {
 
 // PAYBR-003: payment transaction reference. Kept permissive (alphanumeric +
 // hyphen/underscore, 6-40 chars) since the exact gateway format is simulated.
-export function validateTransactionReference(value, label = "Transaction reference") {
+export function validateTransactionReference(
+  value,
+  label = "Transaction reference",
+) {
   const req = required(value, label);
   if (req) return req;
 
@@ -184,7 +191,11 @@ export function validateTransactionReference(value, label = "Transaction referen
 // PLN-BR-004: coverage amount must be higher than premium amount. Designed to
 // be used as a cross-field validator inside validateForm's validatorMap, e.g.
 //   coverageAmount: (value, values) => validateCoverageAmount(value, values.premiumAmount)
-export function validateCoverageAmount(value, premiumAmount, label = "Coverage amount") {
+export function validateCoverageAmount(
+  value,
+  premiumAmount,
+  label = "Coverage amount",
+) {
   const base = validatePositiveAmount(value, label);
   if (base) return base;
 
@@ -194,7 +205,11 @@ export function validateCoverageAmount(value, premiumAmount, label = "Coverage a
   return "";
 }
 
-export function validatePremiumAmount(value, coverageAmount, label = "Premium amount") {
+export function validatePremiumAmount(
+  value,
+  coverageAmount,
+  label = "Premium amount",
+) {
   const base = validatePositiveAmount(value, label);
   if (base) return base;
 
@@ -245,19 +260,15 @@ export const validateAddress = (value, label = "Address") => {
 
 export const validateCity = (value, label = "City") => {
   if (!value.trim()) return `${label} is required`;
-  if (!/^[A-Za-z ]+$/.test(value))
-    return `${label} can contain only alphabets`;
-  if (value.trim().length < 2)
-    return `${label} must be at least 2 characters`;
+  if (!/^[A-Za-z ]+$/.test(value)) return `${label} can contain only alphabets`;
+  if (value.trim().length < 2) return `${label} must be at least 2 characters`;
   return "";
 };
 
 export const validateState = (value, label = "State") => {
   if (!value.trim()) return `${label} is required`;
-  if (!/^[A-Za-z ]+$/.test(value))
-    return `${label} can contain only alphabets`;
-  if (value.trim().length < 2)
-    return `${label} must be at least 2 characters`;
+  if (!/^[A-Za-z ]+$/.test(value)) return `${label} can contain only alphabets`;
+  if (value.trim().length < 2) return `${label} must be at least 2 characters`;
   return "";
 };
 
@@ -270,16 +281,13 @@ export const validateState = (value, label = "State") => {
 
 export const validateName = (value, label = "Name") => {
   if (!value.trim()) return `${label} is required`;
-  if (!/^[A-Za-z ]+$/.test(value))
-    return `${label} can contain only alphabets`;
-  if (value.trim().length < 3)
-    return `${label} must be at least 3 characters`;
+  if (!/^[A-Za-z ]+$/.test(value)) return `${label} can contain only alphabets`;
+  if (value.trim().length < 3) return `${label} must be at least 3 characters`;
   return "";
 };
 
 export const validateRelation = (value) => {
   if (!value.trim()) return "Nominee relation is required";
-  if (!/^[A-Za-z ]+$/.test(value))
-    return "Relation can contain only alphabets";
+  if (!/^[A-Za-z ]+$/.test(value)) return "Relation can contain only alphabets";
   return "";
 };

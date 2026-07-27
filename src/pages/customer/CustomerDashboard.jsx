@@ -76,105 +76,7 @@ function CustomerDashboard() {
   return (
     <DashboardLayout>
       <div className="dashboard-container">
-        <style>{`
-          .dashboard-container {
-            padding: 10px 0 !important;
-            background-color: var(--bg-main) !important;
-            font-family: 'Inter', system-ui, sans-serif !important;
-            transition: background-color 0.25s ease !important;
-          }
-
-          .dashboard-header {
-            background: var(--theme-header-gradient) !important;
-            padding: 40px !important;
-            border-radius: 24px !important;
-            margin-bottom: 35px !important;
-            border: 1px solid var(--border-color) !important;
-            box-shadow: var(--card-shadow) !important;
-            transition: all 0.25s ease !important;
-          }
-
-          .dashboard-header h2 {
-            font-weight: 700 !important;
-            font-size: 1.85rem !important;
-            letter-spacing: -0.02em !important;
-            margin-bottom: 8px !important;
-            color: var(--theme-header-text) !important;
-          }
-
-          .dashboard-header p {
-            color: var(--theme-header-muted) !important;
-            font-size: 1rem !important;
-            margin: 0 !important;
-          }
-
-          .dashboard-section h3 {
-            font-weight: 700 !important;
-            font-size: 1.35rem !important;
-            color: var(--text-main) !important;
-            letter-spacing: -0.01em !important;
-            margin-top: 35px !important;
-            margin-bottom: 24px !important;
-          }
-
-          .action-grid {
-            display: grid !important;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
-            gap: 24px !important;
-          }
-
-          .action-card {
-            background: var(--panel-bg) !important;
-            padding: 30px 24px !important;
-            border-radius: 16px !important;
-            text-decoration: none !important;
-            color: var(--text-main) !important;
-            box-shadow: var(--card-shadow) !important;
-            border: 1px solid var(--border-color) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-          }
-
-          .action-card:hover {
-            transform: translateY(-6px) !important;
-            border-color: #3b82f6 !important;
-            box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.15) !important;
-          }
-
-          .action-icon-wrapper {
-            width: 48px !important;
-            height: 48px !important;
-            border-radius: 12px !important;
-            background: rgba(59, 130, 246, 0.1) !important;
-            color: #3b82f6 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 24px !important;
-            margin-bottom: 20px !important;
-          }
-
-          .action-card:hover .action-icon-wrapper {
-            background: #3b82f6 !important;
-            color: #ffffff !important;
-          }
-
-          .action-card h5 {
-            font-weight: 600 !important;
-            font-size: 1.15rem !important;
-            margin-bottom: 6px !important;
-          }
-
-          .action-card p {
-            color: var(--text-muted) !important;
-            font-size: 0.9rem !important;
-            margin: 0 !important;
-            line-height: 1.4 !important;
-          }
-        `}</style>
-
-        <div className="dashboard-header">
+        <div className="dashboard-hero">
           {/* 🛠️ HUMANISTIC TEXT TRANSLATION */}
           <h2>Welcome, {profile?.fullName || "Valued Customer"} 👋</h2>
           <p>Here is an overview of your active protection plans and pending claim status history.</p>
@@ -195,33 +97,31 @@ function CustomerDashboard() {
           </div>
         </div>
 
-        <div className="dashboard-section">
-          <h3>Quick Portals</h3>
-          <div className="action-grid">
-            <Link to="/customer/products" className="action-card">
-              <div className="action-icon-wrapper">🛡️</div>
-              <h5>Browse Plans</h5>
-              <p>Explore comprehensive risk coverage layouts and premium plans.</p>
-            </Link>
+        <h3 className="dashboard-section-title">Quick Portals</h3>
+        <div className="dashboard-action-grid">
+          <Link to="/customer/products" className="dashboard-action-card">
+            <div className="dashboard-action-icon">🛡️</div>
+            <h5>Browse Plans</h5>
+            <p>Explore comprehensive risk coverage layouts and premium plans.</p>
+          </Link>
 
-            <Link to="/customer/policies" className="action-card">
-              <div className="action-icon-wrapper">📄</div>
-              <h5>My Policies</h5>
-              <p>View your active insurance plans and check due dates.</p>
-            </Link>
+          <Link to="/customer/policies" className="dashboard-action-card">
+            <div className="dashboard-action-icon">📄</div>
+            <h5>My Policies</h5>
+            <p>View your active insurance plans and check due dates.</p>
+          </Link>
 
-            <Link to="/customer/premium-payments" className="action-card">
-              <div className="action-icon-wrapper">💳</div>
-              <h5>Pay Premium</h5>
-              <p>Make a fast, secure payment on an outstanding premium cycle.</p>
-            </Link>
+          <Link to="/customer/premium-payments" className="dashboard-action-card">
+            <div className="dashboard-action-icon">💳</div>
+            <h5>Pay Premium</h5>
+            <p>Make a fast, secure payment on an outstanding premium cycle.</p>
+          </Link>
 
-            <Link to="/customer/claims" className="action-card">
-              <div className="action-icon-wrapper">📥</div>
-              <h5>My Claims</h5>
-              <p>Track historical settlement tickets or open a new claim file.</p>
-            </Link>
-          </div>
+          <Link to="/customer/claims" className="dashboard-action-card">
+            <div className="dashboard-action-icon">📥</div>
+            <h5>My Claims</h5>
+            <p>Track historical settlement tickets or open a new claim file.</p>
+          </Link>
         </div>
       </div>
     </DashboardLayout>
@@ -229,4 +129,3 @@ function CustomerDashboard() {
 }
 
 export default CustomerDashboard;
-

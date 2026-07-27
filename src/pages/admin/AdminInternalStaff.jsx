@@ -26,7 +26,6 @@ import DataTable from "../../components/common/DataTable";
 import Button from "../../components/common/Button";
 import StatusBadge from "../../components/common/StatusBadge";
 import Loader from "../../components/common/Loader";
-import EmptyState from "../../components/common/EmptyState";
 import Modal from "../../components/common/Modal";
 import BackButton from "../../components/common/BackButton";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
@@ -240,8 +239,8 @@ function AdminInternalStaff() {
       <Card title="Agents (Internal Staff)">
         <BackButton />
 
-        {staff.length > 0 ? (
-          <DataTable
+        <DataTable
+            emptyMessage="No Agents Found"
             columns={[
               { key: "fullName", label: "Name" },
               { key: "email", label: "Email" },
@@ -292,9 +291,6 @@ function AdminInternalStaff() {
               </div>
             }
           />
-        ) : (
-          <EmptyState message="No Agents Found" />
-        )}
       </Card>
 
       {/* Forms Management Modal Wrapper Sheet */}
@@ -305,7 +301,7 @@ function AdminInternalStaff() {
       >
         <form onSubmit={submitForm} noValidate>
           <div className="mb-3">
-            <label className="form-label font-weight-bold small text-muted">Full Name *</label>
+            <label className="form-label font-weight-bold small text-muted">Full Name <span className="text-danger">*</span></label>
             <input
               className={`form-control ${touched.fullName && fieldErrors.fullName ? "is-invalid" : ""}`}
               value={form.fullName}
@@ -317,7 +313,7 @@ function AdminInternalStaff() {
           </div>
 
           <div className="mb-3">
-            <label className="form-label font-weight-bold small text-muted">Email Address *</label>
+            <label className="form-label font-weight-bold small text-muted">Email Address <span className="text-danger">*</span></label>
             <input
               type="email"
               className={`form-control ${touched.email && fieldErrors.email ? "is-invalid" : ""}`}
@@ -327,12 +323,17 @@ function AdminInternalStaff() {
               placeholder="name@company.com"
               disabled={editMode}
             />
+            {editMode && (
+              <div className="form-text small">
+                Email is locked once an agent account exists, since it's their login ID. Deactivate and recreate the account if it must change.
+              </div>
+            )}
             {touched.email && fieldErrors.email && <div className="invalid-feedback">{fieldErrors.email}</div>}
           </div>
 
           {!editMode && (
             <div className="mb-3">
-              <label className="form-label font-weight-bold small text-muted">Password *</label>
+              <label className="form-label font-weight-bold small text-muted">Password <span className="text-danger">*</span></label>
               <input
                 type="password"
                 className={`form-control ${touched.password && fieldErrors.password ? "is-invalid" : ""}`}
@@ -346,7 +347,7 @@ function AdminInternalStaff() {
           )}
 
           <div className="mb-3">
-            <label className="form-label font-weight-bold small text-muted">Mobile Number *</label>
+            <label className="form-label font-weight-bold small text-muted">Mobile Number <span className="text-danger">*</span></label>
             <div className="input-group">
               <span className="input-group-text bg-light text-muted">+91</span>
               <input

@@ -5,6 +5,7 @@ import DataTable from "../../components/common/DataTable";
 import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import StatusBadge from "../../components/common/StatusBadge";
+import StatusFilter from "../../components/common/StatusFilter";
 import BackButton from "../../components/common/BackButton";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
 import Modal from "../../components/common/Modal";
@@ -25,6 +26,8 @@ function MyClaims() {
 
   // Inline withdrawal tracking state variable
   const [confirmId, setConfirmId] = useState(null);
+
+  const [status, setStatus] = useState("ALL");
 
   const toast = useToast();
 
@@ -73,6 +76,12 @@ function MyClaims() {
       </DashboardLayout>
     );
   }
+
+  const visibleClaims =
+    status === "ALL"
+      ? claims
+      : claims.filter((c) => c.claimStatus === status);
+
   return (
     <DashboardLayout>
       <Card title="My Claims">
@@ -80,6 +89,7 @@ function MyClaims() {
 
         {claims.length ? (
           <DataTable
+            emptyMessage="No Claims Match This Filter"
             columns={[
               { key: "claimNumber", label: "Claim Number" },
               { key: "policyNumber", label: "Policy Number" },
@@ -167,24 +177,41 @@ function MyClaims() {
                 },
               },
             ]}
-            data={claims.map((c) => ({
+            data={visibleClaims.map((c) => ({
               ...c,
               claimAmount: `₹${c.claimAmount}`,
               claimStatusCustom: <StatusBadge status={c.claimStatus} />,
             }))}
             searchKeys={["claimNumber", "policyNumber", "claimReason", "claimStatus"]}
             headerActions={
-              <ExportPdfButton
-                title="My Claims"
-                rows={claims}
-                columns={[
-                  { label: "Claim Number", key: "claimNumber" },
-                  { label: "Policy Number", key: "policyNumber" },
-                  { label: "Amount", value: (row) => `₹${row.claimAmount}` },
-                  { label: "Reason", key: "claimReason" },
-                  { label: "Status", key: "claimStatus" },
-                ]}
-              />
+              <div className="d-flex gap-2">
+                <StatusFilter
+                  value={status}
+                  onChange={setStatus}
+                  options={[
+                    { value: "ALL", label: "All Status" },
+                    { value: "SUBMITTED", label: "Submitted" },
+                    { value: "UNDER_REVIEW", label: "Under Review" },
+                    { value: "RECOMMENDED_APPROVAL", label: "Recommended Approval" },
+                    { value: "RECOMMENDED_REJECTION", label: "Recommended Rejection" },
+                    { value: "APPROVED", label: "Approved" },
+                    { value: "REJECTED", label: "Rejected" },
+                  ]}
+                />
+
+                <ExportPdfButton
+                  title="My Claims"
+                  rows={visibleClaims}
+                  meta={{ "Status filter": status === "ALL" ? "All" : status }}
+                  columns={[
+                    { label: "Claim Number", key: "claimNumber" },
+                    { label: "Policy Number", key: "policyNumber" },
+                    { label: "Amount", value: (row) => `₹${row.claimAmount}` },
+                    { label: "Reason", key: "claimReason" },
+                    { label: "Status", key: "claimStatus" },
+                  ]}
+                />
+              </div>
             }
           />
         ) : (

@@ -1,3 +1,5 @@
+import "./Modal.css";
+
 function Modal({ show, onClose, title, children }) {
   if (!show) return null;
 

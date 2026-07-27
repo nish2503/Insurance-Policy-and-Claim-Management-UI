@@ -26,9 +26,10 @@ export const getUsersByStatus = (status, params) => {
   });
 };
 
-export const updateUserStatus = (userId, activeStatus) => {
+export const updateUserStatus = (userId, activeStatus, remarks) => {
   return api.patch(`/users/${userId}/status`, {
     activeStatus,
+    remarks,
   });
 };
 

@@ -13,7 +13,6 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 import DataTable from "../../components/common/DataTable";
 import Loader from "../../components/common/Loader";
-import EmptyState from "../../components/common/EmptyState";
 import BackButton from "../../components/common/BackButton";
 import ProductDetailsModal from "../../components/common/ProductDetailsModal";
 import StatusBadge from "../../components/common/StatusBadge";
@@ -130,6 +129,7 @@ function Products() {
         <BackButton />
 
         <DataTable
+          emptyMessage="No Products Found"
           columns={[
             {
               key: "productId",
@@ -260,8 +260,6 @@ function Products() {
             </div>
           }
         />
-
-        {!products.length && <EmptyState message="No Products Found" />}
       </Card>
 
       <ProductDetailsModal

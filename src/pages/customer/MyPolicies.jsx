@@ -8,12 +8,14 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import BackButton from "../../components/common/BackButton";
 import StatusBadge from "../../components/common/StatusBadge";
+import StatusFilter from "../../components/common/StatusFilter";
 import { getMyPolicies } from "../../api/customerApi";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
 
 function MyPolicies() {
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState("ALL");
 
   useEffect(() => {
     loadPolicies();
@@ -38,6 +40,11 @@ function MyPolicies() {
     );
   }
 
+  const visiblePolicies =
+    status === "ALL"
+      ? policies
+      : policies.filter((p) => p.policyStatus === status);
+
   return (
     <DashboardLayout>
       <Card title="My Policies">
@@ -45,6 +52,7 @@ function MyPolicies() {
 
         {policies.length ? (
           <DataTable
+            emptyMessage="No Policies Match This Filter"
             columns={[
               {
                 key: "policyNumber",
@@ -71,7 +79,7 @@ function MyPolicies() {
                 label: "Coverage",
               },
             ]}
-            data={policies.map((p) => ({
+            data={visiblePolicies.map((p) => ({
               ...p,
               coverageAmount: `₹${Number(p.coverageAmount).toLocaleString()}`,
               premiumAmount: `₹${Number(p.premiumAmount).toLocaleString()} (${p.premiumType || "Annual"})`,
@@ -84,25 +92,40 @@ function MyPolicies() {
               "policyStatus",
             ]}
             headerActions={
-              <ExportPdfButton
-                title="My Policies"
-                rows={policies}
-                columns={[
-                  { label: "Policy Number", key: "policyNumber" },
-                  { label: "Plan", key: "planName" },
-                  { label: "Product", key: "productType" },
-                  {
-                    label: "Premium",
-                    value: (row) => `₹${row.premiumAmount} (${row.premiumType || "Annual"})`,
-                  },
-                  { label: "Status", key: "policyStatus" },
-                  { label: "Coverage", value: (row) => `₹${row.coverageAmount}` },
-                ]}
-              />
+              <div className="d-flex gap-2">
+                <StatusFilter
+                  value={status}
+                  onChange={setStatus}
+                  options={[
+                    { value: "ALL", label: "All Status" },
+                    { value: "ACTIVE", label: "Active" },
+                    { value: "PENDING_PAYMENT", label: "Pending Payment" },
+                    { value: "EXPIRED", label: "Expired" },
+                    { value: "CANCELLED", label: "Cancelled" },
+                  ]}
+                />
+
+                <ExportPdfButton
+                  title="My Policies"
+                  rows={visiblePolicies}
+                  meta={{ "Status filter": status === "ALL" ? "All" : status }}
+                  columns={[
+                    { label: "Policy Number", key: "policyNumber" },
+                    { label: "Plan", key: "planName" },
+                    { label: "Product", key: "productType" },
+                    {
+                      label: "Premium",
+                      value: (row) => `₹${row.premiumAmount} (${row.premiumType || "Annual"})`,
+                    },
+                    { label: "Status", key: "policyStatus" },
+                    { label: "Coverage", value: (row) => `₹${row.coverageAmount}` },
+                  ]}
+                />
+              </div>
             }
           />
         ) : (
-          <EmptyState 
+          <EmptyState
             message={
               <div className="text-center p-4 d-flex flex-column align-items-center justify-content-center">
                 <div className="mb-2 text-muted fs-2">📄</div>
@@ -113,7 +136,7 @@ function MyPolicies() {
                   🛡️ Explore Available Insurance Plans
                 </Link>
               </div>
-            } 
+            }
           />
         )}
       </Card>

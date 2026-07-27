@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { getMyProfile, updateCustomerProfile } from "../../api/customerApi";
+import DashboardLayout from "../../components/layout/DashboardLayout";
+import Card from "../../components/common/Card";
 import BackButton from "../../components/common/BackButton";
+import Modal from "../../components/common/Modal";
+import Button from "../../components/common/Button";
 import api from "../../api/axios";
 import { validateAge } from "../../utils/validators";
 import { useToast } from "../../context/ToastContext";
@@ -17,6 +21,11 @@ const HUMAN_LABELS = {
   nomineeName: "Nominee Full Name",
   nomineeRelation: "Relationship to Nominee"
 };
+
+// Native date inputs have no built-in "no future dates" rule, so we cap the
+// picker itself at today in addition to the submit-time validateAge() check —
+// this stops a future DOB from being selectable in the first place.
+const TODAY_ISO = new Date().toISOString().split("T")[0];
 
 function MyProfile() {
   const [profile, setProfile] = useState(null);
@@ -52,7 +61,7 @@ function MyProfile() {
     try {
       const res = await getMyProfile();
       const rawData = res.data;
-      
+
       setProfile(rawData);
       setErrors({}); // Runs safely now!
 
@@ -186,124 +195,117 @@ function MyProfile() {
       setOtpError(error.response?.data?.message || "OTP verification failed");
     }
   }
+
   return (
-    <div className="container mt-5" style={{ maxWidth: "850px" }}>
-      <BackButton />
+    <DashboardLayout>
+      <Card title="My Profile">
+        <BackButton />
 
-      {errors.general && (
-        <div className="alert alert-danger py-2 px-3 mt-3 small shadow-sm">
-          <strong>Notice:</strong> {errors.general}
-        </div>
-      )}
-
-      <h3 className="mt-3 font-weight-bold text-dark">My Profile</h3>
-
-      {profile && (
-        <div className="card p-4 shadow-sm border rounded-3 bg-white mt-3">
-          {edit ? (
-            <form onSubmit={(e) => e.preventDefault()} noValidate>
-              <h4 className="mb-4 text-primary font-weight-bold">Modify Profile Information</h4>
-              <div className="row">
-                {Object.keys(form).map((field) => (
-                  <div className="col-md-6 mb-3" key={field}>
-                    <label className="form-label font-weight-bold small text-muted">
-                      {HUMAN_LABELS[field] || field}
-                    </label>
-                    <input
-                      type={field === "dateOfBirth" ? "date" : "text"}
-                      className={`form-control ${errors.validationErrors?.[field] ? "is-invalid" : ""}`}
-                      name={field}
-                      value={form[field]}
-                      onChange={handleChange}
-                    />
-                    {errors.validationErrors?.[field] && (
-                      <div className="invalid-feedback">{errors.validationErrors[field]}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="d-flex gap-2 mt-3 pt-2 border-top">
-                <button type="button" className="btn btn-success px-4 font-weight-bold shadow-sm" onClick={save} disabled={sendingOtp}>
-                  {sendingOtp ? "Sending code..." : "Save Changes"}
-                </button>
-                <button type="button" className="btn btn-secondary px-4" onClick={() => { setEdit(false); setErrors({}); }}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          ) : (
-            <>
-              <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-                <h4 className="mb-0 text-primary font-weight-bold">Personal Profile Details</h4>
-                <button className="btn btn-primary px-4 font-weight-bold shadow-sm" onClick={() => setEdit(true)}>
-                  ✏️ Edit Profile
-                </button>
-              </div>
-
-              <div className="row g-3">
-                <div className="col-md-6"><p className="mb-2"><b>Full Name:</b> {form.fullName || "N/A"}</p></div>
-                <div className="col-md-6"><p className="mb-2"><b>Email Address:</b> {form.email || "N/A"}</p></div>
-                <div className="col-md-6"><p className="mb-2"><b>Mobile Number:</b> {form.mobileNumber || "N/A"}</p></div>
-                <div className="col-md-6"><p className="mb-2"><b>Date of Birth:</b> {form.dateOfBirth || "N/A"}</p></div>
-                
-                <hr className="my-3 opacity-25 text-muted" />
-                <h5 className="mb-2 text-secondary font-weight-bold">Contact & Location</h5>
-                
-                <div className="col-md-12"><p className="mb-2"><b>Street Address:</b> {form.address || "N/A"}</p></div>
-                <div className="col-md-4"><p className="mb-2"><b>City:</b> {form.city || "N/A"}</p></div>
-                <div className="col-md-4"><p className="mb-2"><b>State:</b> {form.state || "N/A"}</p></div>
-                <div className="col-md-4"><p className="mb-2"><b>PIN Code:</b> {form.pinCode || "N/A"}</p></div>
-                
-                <hr className="my-3 opacity-25 text-muted" />
-                <h5 className="mb-2 text-secondary font-weight-bold">Nominee Specifications</h5>
-                
-                {/* 🛠️ FIXED: Completed the broken truncated DOM tags safely */}
-                <div className="col-md-6"><p className="mb-2"><b>Nominee Name:</b> {form.nomineeName || "N/A"}</p></div>
-                <div className="col-md-6"><p className="mb-2"><b>Relationship to Nominee:</b> {form.nomineeRelation || "N/A"}</p></div>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* OTP Verification Modal Window Overlay Sheet */}
-      {showOtpModal && (
-        <div className="modal show d-block" style={{ backgroundColor: "rgba(15, 23, 42, 0.5)", zIndex: 1050 }}>
-          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: "380px" }}>
-            <div className="modal-content p-2 border-0 shadow-lg">
-              <div className="modal-header border-0 pb-1">
-                <h5 className="modal-title font-weight-bold text-dark">Confirm Email Update</h5>
-                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
-              </div>
-              <div className="modal-body py-2">
-                <p className="text-muted small mb-3">
-                  We have dispatched a 6-digit verification code to <strong>{form.email}</strong>. Please enter it below to authorize this change.
-                </p>
-                {otpError && <div className="alert alert-danger p-2 small border-0 font-weight-bold mb-2">{otpError}</div>}
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    className="form-control text-center font-weight-bold fs-5"
-                    placeholder="******"
-                    maxLength="6"
-                    value={otpValue}
-                    onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
-                  />
-                </div>
-                <div className="d-flex flex-column gap-2 mt-3">
-                  <button type="button" className="btn btn-success font-weight-bold w-100" onClick={handleVerifyOtpSubmit}>
-                    Verify and Save Account Updates
-                  </button>
-                  <button type="button" className="btn btn-link text-muted small text-decoration-none w-100" onClick={() => setShowModal(false)}>
-                    Cancel Change
-                  </button>
-                </div>
-              </div>
-            </div>
+        {errors.general && (
+          <div className="alert alert-danger py-2 px-3 mt-3 small shadow-sm">
+            <strong>Notice:</strong> {errors.general}
           </div>
+        )}
+
+        {profile && (
+          <div className="mt-3">
+            {edit ? (
+              <form onSubmit={(e) => e.preventDefault()} noValidate>
+                <h5 className="mb-4 text-primary font-weight-bold">Modify Profile Information</h5>
+                <div className="row">
+                  {Object.keys(form).map((field) => (
+                    <div className="col-md-6 mb-3" key={field}>
+                      <label className="form-label font-weight-bold small text-muted">
+                        {HUMAN_LABELS[field] || field}
+                      </label>
+                      <input
+                        type={field === "dateOfBirth" ? "date" : "text"}
+                        max={field === "dateOfBirth" ? TODAY_ISO : undefined}
+                        className={`form-control ${errors.validationErrors?.[field] ? "is-invalid" : ""}`}
+                        name={field}
+                        value={form[field]}
+                        onChange={handleChange}
+                      />
+                      {errors.validationErrors?.[field] && (
+                        <div className="invalid-feedback">{errors.validationErrors[field]}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="d-flex gap-2 mt-3 pt-2 border-top">
+                  <Button variant="success" onClick={save} disabled={sendingOtp}>
+                    {sendingOtp ? "Sending code..." : "Save Changes"}
+                  </Button>
+                  <Button variant="secondary" onClick={() => { setEdit(false); setErrors({}); }}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+                  <h5 className="mb-0 text-primary font-weight-bold">Personal Profile Details</h5>
+                  <Button onClick={() => setEdit(true)}>Edit Profile</Button>
+                </div>
+
+                <div className="row g-3">
+                  <div className="col-md-6"><p className="mb-2"><b>Full Name:</b> {form.fullName || "N/A"}</p></div>
+                  <div className="col-md-6"><p className="mb-2"><b>Email Address:</b> {form.email || "N/A"}</p></div>
+                  <div className="col-md-6"><p className="mb-2"><b>Mobile Number:</b> {form.mobileNumber || "N/A"}</p></div>
+                  <div className="col-md-6"><p className="mb-2"><b>Date of Birth:</b> {form.dateOfBirth || "N/A"}</p></div>
+
+                  <hr className="my-3 opacity-25 text-muted" />
+                  <h6 className="mb-2 text-secondary font-weight-bold">Contact & Location</h6>
+
+                  <div className="col-md-12"><p className="mb-2"><b>Street Address:</b> {form.address || "N/A"}</p></div>
+                  <div className="col-md-4"><p className="mb-2"><b>City:</b> {form.city || "N/A"}</p></div>
+                  <div className="col-md-4"><p className="mb-2"><b>State:</b> {form.state || "N/A"}</p></div>
+                  <div className="col-md-4"><p className="mb-2"><b>PIN Code:</b> {form.pinCode || "N/A"}</p></div>
+
+                  <hr className="my-3 opacity-25 text-muted" />
+                  <h6 className="mb-2 text-secondary font-weight-bold">Nominee Specifications</h6>
+
+                  <div className="col-md-6"><p className="mb-2"><b>Nominee Name:</b> {form.nomineeName || "N/A"}</p></div>
+                  <div className="col-md-6"><p className="mb-2"><b>Relationship to Nominee:</b> {form.nomineeRelation || "N/A"}</p></div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </Card>
+
+      {/* OTP Verification Modal — uses the shared Modal component so it
+          automatically inherits dark-mode theming instead of hardcoding
+          its own bg-white/text-dark markup. */}
+      <Modal
+        show={showOtpModal}
+        onClose={() => setShowModal(false)}
+        title="Confirm Email Update"
+      >
+        <p className="text-muted small mb-3">
+          We have dispatched a 6-digit verification code to <strong>{form.email}</strong>. Please enter it below to authorize this change.
+        </p>
+        {otpError && <div className="alert alert-danger p-2 small border-0 font-weight-bold mb-2">{otpError}</div>}
+        <div className="mb-3">
+          <input
+            type="text"
+            className="form-control text-center font-weight-bold fs-5"
+            placeholder="******"
+            maxLength="6"
+            value={otpValue}
+            onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
+          />
         </div>
-      )}
-    </div>
+        <div className="d-flex flex-column gap-2 mt-3">
+          <Button variant="success" className="w-100" onClick={handleVerifyOtpSubmit}>
+            Verify and Save Account Updates
+          </Button>
+          <button type="button" className="btn btn-link text-muted small text-decoration-none w-100" onClick={() => setShowModal(false)}>
+            Cancel Change
+          </button>
+        </div>
+      </Modal>
+    </DashboardLayout>
   );
 }
 

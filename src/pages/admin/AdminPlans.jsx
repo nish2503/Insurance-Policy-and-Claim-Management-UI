@@ -12,7 +12,6 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 import DataTable from "../../components/common/DataTable";
 import Loader from "../../components/common/Loader";
-import EmptyState from "../../components/common/EmptyState";
 import BackButton from "../../components/common/BackButton";
 import StatusBadge from "../../components/common/StatusBadge";
 import StatusFilter from "../../components/common/StatusFilter";
@@ -150,6 +149,7 @@ function Plans() {
         <BackButton />
 
         <DataTable
+          emptyMessage="No Plans Found"
           columns={[
             {
               key: "planId",
@@ -285,8 +285,6 @@ function Plans() {
             </div>
           }
         />
-
-        {!plans.length && <EmptyState message="No Plans Found" />}
       </Card>
 
       <PlanDetailsModal

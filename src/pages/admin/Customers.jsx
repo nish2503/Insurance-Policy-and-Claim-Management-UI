@@ -7,6 +7,7 @@ import Loader from "../../components/common/Loader";
 import EmptyState from "../../components/common/EmptyState";
 import BackButton from "../../components/common/BackButton";
 import Button from "../../components/common/Button";
+import Modal from "../../components/common/Modal";
 import CustomerDetailsModal from "../../components/common/CustomerDetailsModal";
 import StatusBadge from "../../components/common/StatusBadge";
 import StatusFilter from "../../components/common/StatusFilter";
@@ -29,6 +30,13 @@ function Customers() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
+
+  // Status-change (activate/deactivate) confirmation modal state.
+  // Backend requires a non-blank `remarks` field on this call, so we collect
+  // it here instead of firing the request straight off the table row.
+  const [statusTarget, setStatusTarget] = useState(null);
+  const [statusRemarks, setStatusRemarks] = useState("");
+  const [submittingStatus, setSubmittingStatus] = useState(false);
 
   useEffect(() => {
     loadCustomers();
@@ -54,22 +62,42 @@ function Customers() {
     }
   }
 
-  async function handleStatus(customer) {
+  function openStatusModal(customer) {
+    setStatusTarget(customer);
+    setStatusRemarks("");
+  }
+
+  function closeStatusModal() {
+    setStatusTarget(null);
+    setStatusRemarks("");
+  }
+
+  async function confirmStatusChange() {
+    if (!statusTarget) return;
+
+    setSubmittingStatus(true);
+
     try {
       await updateUserStatus(
-        customer.userId,
-
-        !customer.activeStatus,
+        statusTarget.userId,
+        !statusTarget.activeStatus,
+        statusRemarks.trim(),
       );
 
       toast.success(
-        `Customer ${customer.fullName || ""} ${customer.activeStatus ? "deactivated" : "activated"} successfully`,
+        `Customer ${statusTarget.fullName || ""} ${
+          statusTarget.activeStatus ? "deactivated" : "activated"
+        } successfully`,
       );
+
+      closeStatusModal();
       loadCustomers();
     } catch (err) {
       console.log(err);
 
       toast.error(getApiErrorMessage(err, "Unable to update customer status."));
+    } finally {
+      setSubmittingStatus(false);
     }
   }
 
@@ -149,7 +177,7 @@ function Customers() {
                   <Button
                     variant={customer.activeStatus ? "danger" : "success"}
                     size="sm"
-                    onClick={() => handleStatus(customer)}
+                    onClick={() => openStatusModal(customer)}
                   >
                     {customer.activeStatus ? "Deactivate" : "Activate"}
                   </Button>
@@ -220,6 +248,37 @@ function Customers() {
           setSelectedCustomer(null);
         }}
       />
+
+      <Modal
+        show={!!statusTarget}
+        title={statusTarget?.activeStatus ? "Deactivate Customer" : "Activate Customer"}
+        onClose={closeStatusModal}
+      >
+        <p>
+          {statusTarget?.activeStatus ? "Deactivating" : "Activating"}{" "}
+          <strong>{statusTarget?.fullName}</strong>. Please provide a short
+          reason (minimum 3 characters) for the audit trail.
+        </p>
+        <textarea
+          className="form-control mb-3"
+          rows={3}
+          value={statusRemarks}
+          onChange={(e) => setStatusRemarks(e.target.value)}
+          placeholder="Reason for this status change..."
+        />
+        <div className="d-flex justify-content-end gap-2">
+          <Button variant="secondary" onClick={closeStatusModal}>
+            Cancel
+          </Button>
+          <Button
+            variant={statusTarget?.activeStatus ? "danger" : "success"}
+            disabled={statusRemarks.trim().length < 3 || submittingStatus}
+            onClick={confirmStatusChange}
+          >
+            {submittingStatus ? "Saving..." : "Confirm"}
+          </Button>
+        </div>
+      </Modal>
     </DashboardLayout>
   );
 }

@@ -26,6 +26,11 @@ const FIELD_LABELS = {
   nomineeRelation: "Relationship to Nominee",
 };
 
+// Native date inputs have no built-in "no future dates" rule, so we cap the
+// picker itself at today in addition to the submit-time validateAge() check —
+// this stops a future DOB from being selectable in the first place.
+const TODAY_ISO = new Date().toISOString().split("T")[0];
+
 function CreateProfile() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -121,6 +126,7 @@ function CreateProfile() {
                 </label>
                 <input
                   type={key === "dateOfBirth" ? "date" : "text"}
+                  max={key === "dateOfBirth" ? TODAY_ISO : undefined}
                   className={`form-control ${touched[key] && fieldErrors[key] ? "is-invalid" : ""}`}
                   name={key}
                   value={form[key]}

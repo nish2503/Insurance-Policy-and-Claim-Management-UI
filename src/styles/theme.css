@@ -93,3 +93,194 @@ body.light .form-select {
 .custom-modal .table td {
     color: var(--text-main) !important;
 }
+
+/* ==========================================================================
+   Shared dashboard shell
+   Used by AdminDashboard, InternalStaffDashboard, and CustomerDashboard so
+   all three roles share one hero header + quick-action grid look instead of
+   each page defining its own version via an inline <style> block.
+   ========================================================================== */
+
+.dashboard-container {
+  padding: 10px 0 !important;
+  background-color: var(--bg-main) !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  transition: background-color 0.25s ease !important;
+}
+
+.dashboard-hero {
+  background: var(--theme-header-gradient) !important;
+  padding: 40px !important;
+  border-radius: 24px !important;
+  margin-bottom: 35px !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--card-shadow) !important;
+  transition: all 0.25s ease !important;
+}
+
+.dashboard-hero h2 {
+  font-weight: 700 !important;
+  font-size: 1.85rem !important;
+  letter-spacing: -0.02em !important;
+  margin-bottom: 8px !important;
+  color: var(--theme-header-text) !important;
+}
+
+.dashboard-hero p {
+  color: var(--theme-header-muted) !important;
+  font-size: 1rem !important;
+  margin: 0 !important;
+}
+
+.dashboard-section-title {
+  font-weight: 700 !important;
+  font-size: 1.35rem !important;
+  color: var(--text-main) !important;
+  letter-spacing: -0.01em !important;
+  margin-top: 35px !important;
+  margin-bottom: 24px !important;
+}
+
+.dashboard-action-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  gap: 24px !important;
+}
+
+.dashboard-action-card {
+  background: var(--panel-bg) !important;
+  padding: 30px 24px !important;
+  border-radius: 16px !important;
+  text-decoration: none !important;
+  color: var(--text-main) !important;
+  box-shadow: var(--card-shadow) !important;
+  border: 1px solid var(--border-color) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer;
+}
+
+.dashboard-action-card:hover {
+  transform: translateY(-6px) !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.15) !important;
+  color: var(--text-main) !important;
+}
+
+.dashboard-action-icon {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: #3b82f6 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 24px !important;
+  margin-bottom: 20px !important;
+}
+
+.dashboard-action-card:hover .dashboard-action-icon {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.dashboard-action-card h5 {
+  font-weight: 600 !important;
+  font-size: 1.15rem !important;
+  margin-bottom: 6px !important;
+}
+
+.dashboard-action-card p {
+  color: var(--text-muted) !important;
+  font-size: 0.9rem !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+/* ==========================================================================
+   Admin dashboard — pipeline/queue breakdown panels
+   Specific to AdminDashboard's claims/policy breakdown widgets; moved out of
+   a page-local <style> block so all page-level CSS lives in one place.
+   ========================================================================== */
+
+.col-lg-2-4 {
+  flex: 0 0 20% !important;
+  max-width: 20% !important;
+}
+@media (max-width: 992px) {
+  .col-lg-2-4 { flex: 0 0 33.33% !important; max-width: 33.33% !important; }
+}
+@media (max-width: 576px) {
+  .col-lg-2-4 { flex: 0 0 100% !important; max-width: 100% !important; }
+}
+
+.dash-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: var(--card-shadow);
+  height: 100%;
+}
+
+.dash-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.dash-panel-header h5 {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.dash-panel-total {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.dash-stack-bar {
+  display: flex;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--bg-main);
+  margin-bottom: 16px;
+}
+
+.dash-stack-bar > div {
+  transition: width 0.4s ease;
+}
+
+.dash-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+.dash-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.dash-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dash-empty-note {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0;
+}

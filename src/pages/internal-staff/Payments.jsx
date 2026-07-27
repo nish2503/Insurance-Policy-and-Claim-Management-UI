@@ -3,8 +3,8 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 import DataTable from "../../components/common/DataTable";
 import Loader from "../../components/common/Loader";
-import EmptyState from "../../components/common/EmptyState";
 import StatusBadge from "../../components/common/StatusBadge";
+import StatusFilter from "../../components/common/StatusFilter";
 import { getInternalStaffPayments } from "../../api/internalStaffApi";
 import BackButton from "../../components/common/BackButton";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
@@ -12,6 +12,7 @@ import ExportPdfButton from "../../components/common/ExportPdfButton";
 function Payments() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState("ALL");
 
   useEffect(() => {
     loadPayments();
@@ -36,13 +37,18 @@ function Payments() {
     );
   }
 
+  const visiblePayments =
+    status === "ALL"
+      ? payments
+      : payments.filter((p) => p.paymentStatus === status);
+
   return (
     <DashboardLayout>
       <Card title="Premium Payments">
         <BackButton />
 
-        {payments.length ? (
-          <DataTable
+        <DataTable
+            emptyMessage="No Payments Found"
             columns={[
               {
                 key: "paymentId",
@@ -53,7 +59,7 @@ function Payments() {
                 label: "Policy Number",
               },
               {
-                key: "customerNameCustom", // 🛠️ Injects the fresh database field configuration cleanly
+                key: "customerNameCustom",
                 label: "Customer Name",
               },
               {
@@ -73,7 +79,7 @@ function Payments() {
                 label: "Status",
               },
             ]}
-            data={payments.map((p) => ({
+            data={visiblePayments.map((p) => ({
               ...p,
               customerNameCustom: p.customerName || "N/A",
               amountCustom: `₹${p.amount}`,
@@ -81,30 +87,41 @@ function Payments() {
             }))}
             searchKeys={[
               "policyNumber",
-              "customerNameCustom", // Enables searching by customer names instantly
+              "customerNameCustom",
               "transactionReference",
               "paymentMode",
               "paymentStatus",
             ]}
             headerActions={
-              <ExportPdfButton
-                title="Premium Payments"
-                rows={payments}
-                columns={[
-                  { label: "ID", key: "paymentId" },
-                  { label: "Policy Number", key: "policyNumber" },
-                  { label: "Customer Name", value: (row) => row.customerName || "N/A" },
-                  { label: "Transaction Ref", key: "transactionReference" },
-                  { label: "Amount", value: (row) => `₹${row.amount}` },
-                  { label: "Mode", key: "paymentMode" },
-                  { label: "Status", key: "paymentStatus" },
-                ]}
-              />
+              <div className="d-flex gap-2">
+                <StatusFilter
+                  value={status}
+                  onChange={setStatus}
+                  options={[
+                    { value: "ALL", label: "All Status" },
+                    { value: "SUCCESS", label: "Success" },
+                    { value: "FAILED", label: "Failed" },
+                    { value: "PENDING", label: "Pending" },
+                  ]}
+                />
+
+                <ExportPdfButton
+                  title="Premium Payments"
+                  rows={visiblePayments}
+                  meta={{ "Status filter": status === "ALL" ? "All" : status }}
+                  columns={[
+                    { label: "ID", key: "paymentId" },
+                    { label: "Policy Number", key: "policyNumber" },
+                    { label: "Customer Name", value: (row) => row.customerName || "N/A" },
+                    { label: "Transaction Ref", key: "transactionReference" },
+                    { label: "Amount", value: (row) => `₹${row.amount}` },
+                    { label: "Mode", key: "paymentMode" },
+                    { label: "Status", key: "paymentStatus" },
+                  ]}
+                />
+              </div>
             }
           />
-        ) : (
-          <EmptyState message="No Payments Found" />
-        )}
       </Card>
     </DashboardLayout>
   );

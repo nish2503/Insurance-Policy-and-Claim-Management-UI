@@ -10,7 +10,6 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 import DataTable from "../../components/common/DataTable";
 import Loader from "../../components/common/Loader";
-import EmptyState from "../../components/common/EmptyState";
 import BackButton from "../../components/common/BackButton";
 import StatusBadge from "../../components/common/StatusBadge";
 import StatusFilter from "../../components/common/StatusFilter";
@@ -97,6 +96,7 @@ function AdminPolicies() {
         <BackButton />
 
         <DataTable
+          emptyMessage="No Policies Found"
           columns={[
             {
               key: "policyNumber",
@@ -224,8 +224,6 @@ function AdminPolicies() {
             </div>
           }
         />
-
-        {!policies.length && <EmptyState message="No Policies Found" />}
       </Card>
 
       <PolicyDetailsModal

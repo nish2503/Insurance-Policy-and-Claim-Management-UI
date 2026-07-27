@@ -10,74 +10,54 @@
 
 .custom-modal {
   background-color: var(--modal-bg) !important;
-
   color: var(--text-main) !important;
-
   border-radius: 12px;
-
   width: 650px;
-
   max-height: 90vh;
-
   overflow: auto;
-
   box-shadow: var(--card-shadow);
 }
 
 .custom-modal-header {
   background-color: var(--modal-bg) !important;
-
   color: var(--text-main) !important;
-
   display: flex;
-
   justify-content: space-between;
-
   align-items: center;
-
   padding: 18px 24px;
-
   border-bottom: 1px solid var(--border-color);
 }
 
 .custom-modal-body {
   background-color: var(--modal-bg) !important;
-
   color: var(--text-main) !important;
-
   padding: 24px;
 }
 
+/* NOTE: made !important below — this catch-all previously had no !important,
+   so any Bootstrap utility class with its own !important color rule
+   (.text-muted, .text-primary, .text-warning, etc. are ALL !important in
+   Bootstrap 5.3) could still slip through unstyled in dark mode. */
 .custom-modal,
-.custom-modal *{
-
-    color:var(--text-main);
-
+.custom-modal * {
+    color: var(--text-main) !important;
 }
 
-.custom-modal{
-
-    background-color:var(--modal-bg)!important;
-
+.custom-modal {
+    background-color: var(--modal-bg) !important;
 }
 
-.custom-modal-body{
-
-    background-color:var(--modal-bg)!important;
-
+.custom-modal-body {
+    background-color: var(--modal-bg) !important;
 }
 
-.custom-modal table{
-
-    background:transparent!important;
-
+.custom-modal table {
+    background: transparent !important;
 }
 
 .custom-modal table td,
-.custom-modal table th{
-
-    background:transparent!important;
-
+.custom-modal table th {
+    background: transparent !important;
 }
 
 /* Customer Details Modal */
@@ -87,25 +67,19 @@
 .customer-details-table tr,
 .customer-details-table td,
 .customer-details-table th {
-
     background: transparent !important;
     color: var(--text-main) !important;
     border-color: var(--border-color) !important;
-
 }
 
 .customer-details-table th{
-
     width: 180px;
     font-weight: 600;
     color: var(--text-main) !important;
-
 }
 
 .customer-details-table td{
-
     color: var(--text-main) !important;
-
 }
 
 .custom-modal table,
@@ -144,12 +118,59 @@
 }
 
 .custom-modal .text-dark,
-.custom-modal .text-black {
+.custom-modal .text-black,
+.custom-modal .text-muted,
+.custom-modal .form-label,
+.custom-modal .form-check-label,
+.custom-modal .input-group-text,
+.custom-modal h1,
+.custom-modal h2,
+.custom-modal h3,
+.custom-modal h4,
+.custom-modal h5,
+.custom-modal h6,
+.custom-modal label,
+.custom-modal small,
+.custom-modal p,
+.custom-modal span {
     color: var(--text-main) !important;
+}
+
+.custom-modal .input-group-text {
+    background: var(--modal-bg) !important;
+    border-color: var(--border-color) !important;
 }
 
 .custom-modal .list-group-item {
     background: var(--modal-bg) !important;
     color: var(--text-main) !important;
     border-color: var(--border-color) !important;
+}
+
+.custom-modal .alert {
+    background-color: var(--bg-main) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.custom-modal .alert-secondary { border-left: 3px solid #94a3b8 !important; }
+.custom-modal .alert-primary   { border-left: 3px solid var(--primary) !important; }
+.custom-modal .alert-success   { border-left: 3px solid var(--success) !important; }
+.custom-modal .alert-warning   { border-left: 3px solid var(--warning) !important; }
+.custom-modal .alert-danger    { border-left: 3px solid var(--danger) !important; }
+
+.custom-modal select,
+.custom-modal option,
+.custom-modal input,
+.custom-modal textarea {
+    background-color: var(--input-bg) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+.custom-modal .btn-close {
+  opacity: 0.85;
+}
+
+body.dark .custom-modal .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
 }

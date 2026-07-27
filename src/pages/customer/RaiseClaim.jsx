@@ -10,6 +10,11 @@ import {
 } from "../../api/customerApi";
 import { useToast } from "../../context/ToastContext";
 
+// Native date inputs have no built-in "no future dates" rule, so we cap the
+// picker itself at today in addition to the submit-time check below — this
+// stops a future incident date from being selectable in the first place.
+const TODAY_ISO = new Date().toISOString().split("T")[0];
+
 function RaiseClaim() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -131,8 +136,6 @@ function RaiseClaim() {
   function validateForm() {
     const errors = {};
 
-    const today = new Date().toISOString().split("T")[0];
-
     if (!policyId)
       errors.policyId ="Please select an active policy";
 
@@ -155,7 +158,7 @@ function RaiseClaim() {
 
     if (!incidentDate)
       errors.incidentDate = "Date of incident is required";
-    else if (incidentDate > today)
+    else if (incidentDate > TODAY_ISO)
       errors.incidentDate = "Incident date cannot be set in the future";
 
     return errors;
@@ -322,6 +325,7 @@ function RaiseClaim() {
 
             <input
               type="date"
+              max={TODAY_ISO}
               className={`form-control ${
                 fieldErrors.incidentDate ? "is-invalid" : ""
               }`}

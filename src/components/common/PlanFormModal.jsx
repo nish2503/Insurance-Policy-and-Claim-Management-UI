@@ -5,7 +5,7 @@ import Button from "./Button";
 
 import { getProducts } from "../../api/productApi";
 
-const PREMIUM_TYPES = ["ONE_TIME", "ANNUAL"];
+const PREMIUM_TYPES = ["MONTHLY", "QUARTERLY", "ANNUAL", "ONE_TIME"];
 
 function PlanFormModal({
   show,
@@ -13,6 +13,8 @@ function PlanFormModal({
   onSubmit,
   plan,
 }) {
+  const editModeActiveCheck = Boolean(plan);
+
   const [products, setProducts] = useState([]);
 
   const [form, setForm] = useState({
@@ -56,7 +58,16 @@ function PlanFormModal({
 
     // Formula: Premium = (Coverage / Years) * (1 + Baseline Rate)
     const annualBase = coverageNum / yearsNum;
-    const calculatedPremium = annualBase * (1.0 + baselineRate);
+    let calculatedPremium = annualBase * (1.0 + baselineRate);
+
+    // Guard (PLN-BR-004): premium must always stay below coverage, regardless
+    // of duration. Short-duration plans (e.g. 1 year) could otherwise compute
+    // a premium higher than the coverage amount and fail backend validation
+    // on save. Cap at 95% of coverage as a safety ceiling.
+    const maxAllowedPremium = coverageNum * 0.95;
+    if (calculatedPremium > maxAllowedPremium) {
+      calculatedPremium = maxAllowedPremium;
+    }
 
     return calculatedPremium.toFixed(2);
   };
@@ -97,8 +108,6 @@ function PlanFormModal({
       });
     }
   }, [form.coverageAmount, form.duration]);
-
-  const editModeActiveCheck = Boolean(plan);
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
@@ -159,7 +168,7 @@ function PlanFormModal({
         </div>
 
         <div className="mb-3">
-          <label className="form-label font-weight-bold small text-muted">Plan Name *</label>
+          <label className="form-label font-weight-bold small text-muted">Plan Name <span className="text-danger">*</span></label>
           <input
             className="form-control"
             name="planName"
@@ -172,7 +181,7 @@ function PlanFormModal({
 
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label font-weight-bold small text-muted">Coverage Amount (INR) *</label>
+            <label className="form-label font-weight-bold small text-muted">Coverage Amount (INR) <span className="text-danger">*</span></label>
             <input
               type="number"
               className="form-control"
@@ -207,14 +216,14 @@ function PlanFormModal({
             >
               {PREMIUM_TYPES.map((type) => (
                 <option key={type} value={type}>
-                  {type.replace("_", " ")}
+                  {type.replace(/_/g, " ")}
                 </option>
               ))}
             </select>
           </div>
 
           <div className="col-md-6 mb-3">
-            <label className="form-label font-weight-bold small text-muted">Term Length Duration (Years) *</label>
+            <label className="form-label font-weight-bold small text-muted">Term Length Duration (Years) <span className="text-danger">*</span></label>
             <input
               type="number"
               className="form-control"
@@ -228,7 +237,7 @@ function PlanFormModal({
         </div>
 
         <div className="mb-3">
-          <label className="form-label font-weight-bold small text-muted">Terms & Conditions *</label>
+          <label className="form-label font-weight-bold small text-muted">Terms & Conditions <span className="text-danger">*</span></label>
           <textarea
             rows="4"
             className="form-control"
