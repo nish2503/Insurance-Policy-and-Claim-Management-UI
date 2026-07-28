@@ -42,35 +42,39 @@ function PlanFormModal({
     }
   }
 
-  // 🧮 INTERACTIVE LIVE CALCULATOR UTILITY LOGIC
-  const calculateAutomatedPremiumValue = (coverage, term) => {
+  const calculateAutomatedPremiumValue = (coverage, term, premiumType) => {
     const coverageNum = Number(coverage);
     const yearsNum = Number(term);
-    
+
     if (!coverageNum || coverageNum <= 0 || !yearsNum || yearsNum <= 0) {
-      return "0.00";
+        return "";
     }
 
-    // Risk factors match your backend service implementation exactly
-    let baselineRate = 0.05; // 5% base rate
-    if (yearsNum >= 5) baselineRate = 0.042; // 4.2% rate for mid-length terms
-    if (yearsNum >= 10) baselineRate = 0.035; // 3.5% rate for long-term investments
+    let baselineRate = 0.05;
 
-    // Formula: Premium = (Coverage / Years) * (1 + Baseline Rate)
+    if (yearsNum >= 5) baselineRate = 0.042;
+    if (yearsNum >= 10) baselineRate = 0.035;
+
     const annualBase = coverageNum / yearsNum;
-    let calculatedPremium = annualBase * (1.0 + baselineRate);
 
-    // Guard (PLN-BR-004): premium must always stay below coverage, regardless
-    // of duration. Short-duration plans (e.g. 1 year) could otherwise compute
-    // a premium higher than the coverage amount and fail backend validation
-    // on save. Cap at 95% of coverage as a safety ceiling.
-    const maxAllowedPremium = coverageNum * 0.95;
-    if (calculatedPremium > maxAllowedPremium) {
-      calculatedPremium = maxAllowedPremium;
+    // Calculate annual premium first
+    let calculatedPremium = annualBase * (1 + baselineRate);
+
+    // Adjust based on premium type
+    if (premiumType === "MONTHLY") {
+        calculatedPremium /= 12;
+    } else if (premiumType === "QUARTERLY") {
+        calculatedPremium /= 4;
     }
 
-    return calculatedPremium.toFixed(2);
-  };
+    // Round Annual and One-Time premiums to nearest ₹50,000
+    if (premiumType === "ANNUAL" || premiumType === "ONE_TIME") {
+        calculatedPremium =
+            Math.round(calculatedPremium / 50000) * 50000;
+    }
+
+    return Math.round(calculatedPremium).toString();
+};
 
   useEffect(() => {
     if (plan) {
@@ -101,13 +105,13 @@ function PlanFormModal({
   // Synchronize form calculation state instantly as duration or coverage fields modify
   useEffect(() => {
     if (!editModeActiveCheck) {
-      const computedAmount = calculateAutomatedPremiumValue(form.coverageAmount, form.duration);
+      const computedAmount = calculateAutomatedPremiumValue(form.coverageAmount, form.duration,form.premiumType);
       setForm(prev => {
         if (prev.premiumAmount === computedAmount) return prev;
         return { ...prev, premiumAmount: computedAmount };
       });
     }
-  }, [form.coverageAmount, form.duration]);
+  }, [form.coverageAmount, form.duration, form.premiumType]);
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
@@ -120,7 +124,8 @@ function PlanFormModal({
       if (name === "coverageAmount" || name === "duration") {
         updated.premiumAmount = calculateAutomatedPremiumValue(
           name === "coverageAmount" ? nextValue : prev.coverageAmount,
-          name === "duration" ? nextValue : prev.duration
+          name === "duration" ? nextValue : prev.duration,
+          name === "premiumType" ? nextValue : prev.premiumType
         );
       }
       return updated;
@@ -131,7 +136,13 @@ function PlanFormModal({
     e.preventDefault();
     
     // Ensure final calculated amounts are cleanly integrated right on post back dispatch execution strings
-    const finalAmount = calculateAutomatedPremiumValue(form.coverageAmount, form.duration);
+    const finalAmount = calculateAutomatedPremiumValue(form.coverageAmount, form.duratio,form.premiumType);
+    const coverage = Number(form.coverageAmount);
+
+if (coverage % 50000 !== 0) {
+    alert("Coverage amount must be in multiples of 50,000.");
+    return;
+}
     onSubmit({
       ...form,
       premiumAmount: Number(finalAmount)
@@ -184,6 +195,8 @@ function PlanFormModal({
             <label className="form-label font-weight-bold small text-muted">Coverage Amount (INR) <span className="text-danger">*</span></label>
             <input
               type="number"
+              step="50000"
+              min="50000"
               className="form-control"
               name="coverageAmount"
               value={form.coverageAmount}
@@ -226,6 +239,8 @@ function PlanFormModal({
             <label className="form-label font-weight-bold small text-muted">Term Length Duration (Years) <span className="text-danger">*</span></label>
             <input
               type="number"
+              step="1"
+              min="1"
               className="form-control"
               name="duration"
               value={form.duration}

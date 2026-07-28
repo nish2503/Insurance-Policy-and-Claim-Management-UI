@@ -147,6 +147,8 @@ function RaiseClaim() {
     else if (Number(claimAmount) <= 0)
       errors.claimAmount =
         "Claim amount must be a positive value greater than zero";
+    else if (!Number.isInteger(Number(claimAmount)))
+  errors.claimAmount = "Claim amount must be a whole number (no decimals)";
     else if (maxCoverage && Number(claimAmount) > Number(maxCoverage))
       errors.claimAmount = `Claim amount cannot exceed your policy total coverage limit of ₹${maxCoverage}`;
 
@@ -288,6 +290,8 @@ function RaiseClaim() {
 
             <input
               type="number"
+              min="1"
+              step="1"
               className={`form-control ${
                 fieldErrors.claimAmount ? "is-invalid" : ""
               }`}

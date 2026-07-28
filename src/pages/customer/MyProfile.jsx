@@ -135,23 +135,41 @@ function MyProfile() {
     });
   }
 
-  async function executeProfileUpdate() {
-    try {
-      await updateCustomerProfile({
-        ...form,
-        email: form.email.trim().toLowerCase(),
-        mobileNumber: form.mobileNumber.replace(/\D/g, "").slice(-10),
-      });
+ async function executeProfileUpdate() {
+  try {
+    const emailChanged =
+      profile.email.trim().toLowerCase() !==
+      form.email.trim().toLowerCase();
 
-      setErrors({});
+    await updateCustomerProfile({
+      ...form,
+      email: form.email.trim().toLowerCase(),
+      mobileNumber: form.mobileNumber.replace(/\D/g, "").slice(-10),
+    });
+
+    setErrors({});
+
+    if (emailChanged) {
+      toast.success(
+        "Email updated successfully. Please log in again using your new email."
+      );
+
+      localStorage.removeItem("token");
+
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1500);
+    } else {
       toast.success("Profile updated successfully!");
       setEdit(false);
-      setShowModal(false);
       loadProfile();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Profile update failed");
     }
+
+    setShowModal(false);
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Profile update failed");
   }
+}
 
   async function save() {
     setErrors({});
