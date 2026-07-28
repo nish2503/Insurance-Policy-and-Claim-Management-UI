@@ -26,10 +26,15 @@ const FIELD_LABELS = {
   nomineeRelation: "Relationship to Nominee",
 };
 
-// Native date inputs have no built-in "no future dates" rule, so we cap the
-// picker itself at today in addition to the submit-time validateAge() check —
-// this stops a future DOB from being selectable in the first place.
-const TODAY_ISO = new Date().toISOString().split("T")[0];
+// validateAge() also enforces a minimum age of 18, but that check only fires
+// on submit — a date picker with no max still lets someone pick "1 day old"
+// as their DOB. Capping the picker at "18 years ago today" blocks that at
+// selection time instead of only after the fact.
+const MAX_DOB_ISO = (() => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d.toISOString().split("T")[0];
+})();
 
 function CreateProfile() {
   const navigate = useNavigate();
@@ -126,7 +131,7 @@ function CreateProfile() {
                 </label>
                 <input
                   type={key === "dateOfBirth" ? "date" : "text"}
-                  max={key === "dateOfBirth" ? TODAY_ISO : undefined}
+                  max={key === "dateOfBirth" ? MAX_DOB_ISO : undefined}
                   className={`form-control ${touched[key] && fieldErrors[key] ? "is-invalid" : ""}`}
                   name={key}
                   value={form[key]}
