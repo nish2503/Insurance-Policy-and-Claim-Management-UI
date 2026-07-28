@@ -240,6 +240,54 @@ export function validatePremiumAmount(
   return "";
 }
 
+// Rejects decimal input for fields that must always be whole numbers
+// (amounts, months/duration). Distinct from validatePositiveAmount, which
+// allows decimals.
+export function validateWholeNumber(value, label = "Value") {
+  const req = required(value, label);
+  if (req) return req;
+
+  const num = Number(value);
+  if (Number.isNaN(num)) {
+    return `${label} must be a valid number`;
+  }
+  if (!Number.isInteger(num)) {
+    return `${label} must be a whole number (no decimal values allowed)`;
+  }
+  if (num <= 0) {
+    return `${label} must be greater than zero`;
+  }
+  return "";
+}
+
+// PLN-BR / PAYBR: coverage and premium amounts must be in multiples of ₹50,000.
+export function validateMultipleOf50000(value, label = "Amount") {
+  const base = validateWholeNumber(value, label);
+  if (base) return base;
+
+  if (Number(value) % 50000 !== 0) {
+    return `${label} must be in multiples of 50,000`;
+  }
+  return "";
+}
+
+// Discount percent fields (annualDiscountPercent, oneTimeDiscountPercent)
+// must be a number between 0 and 100, inclusive. Decimals are allowed here
+// (e.g. 7.5%) — this is a rate, not a money amount, so no whole-number rule.
+export function validatePercentRange(value, label = "Percent") {
+  const req = required(value, label);
+  if (req) return req;
+
+  const num = Number(value);
+  if (Number.isNaN(num)) {
+    return `${label} must be a valid number`;
+  }
+  if (num < 0 || num > 100) {
+    return `${label} must be between 0 and 100`;
+  }
+  return "";
+}
+
 // Used for any "remarks" / justification free-text field (claim review
 // recommendations, claim final decisions, etc.) so every such form shares one
 // rule instead of re-deriving a minimum length locally.

@@ -160,8 +160,15 @@ function Plans() {
               label: "Plan",
             },
             {
-              key: "premiumAmount",
-              label: "Premium",
+              key: "coverageRange",
+              label: "Coverage Range",
+              render: (plan) =>
+                `₹${Number(plan.minCoverageAmount).toLocaleString()} – ₹${Number(plan.maxCoverageAmount).toLocaleString()}`,
+            },
+            {
+              key: "ratePerUnit",
+              label: "Rate / ₹50,000",
+              render: (plan) => `₹${plan.ratePerUnit}`,
             },
             {
               key: "duration",
@@ -273,8 +280,14 @@ function Plans() {
                 columns={[
                   { label: "ID", key: "planId" },
                   { label: "Plan", key: "planName" },
-                  { label: "Premium", value: (row) => `₹${row.premiumAmount}` },
-                  { label: "Coverage", value: (row) => `₹${row.coverageAmount ?? "-"}` },
+                  {
+                    label: "Coverage Range",
+                    value: (row) =>
+                      `₹${Number(row.minCoverageAmount).toLocaleString()} – ₹${Number(row.maxCoverageAmount).toLocaleString()}`,
+                  },
+                  { label: "Rate / ₹50,000", value: (row) => `₹${row.ratePerUnit ?? "-"}` },
+                  { label: "Annual Discount", value: (row) => `${row.annualDiscountPercent ?? 0}%` },
+                  { label: "One-Time Discount", value: (row) => `${row.oneTimeDiscountPercent ?? 0}%` },
                   { label: "Duration", value: (row) => `${row.duration} Years` },
                   {
                     label: "Status",

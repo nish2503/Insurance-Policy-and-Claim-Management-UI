@@ -33,17 +33,29 @@ function PlanDetailsModal({
           </tr>
 
           <tr>
-            <th>Coverage</th>
+            <th>Coverage Range</th>
 
-            <td>₹ {plan.coverageAmount}</td>
+            <td>
+              ₹ {Number(plan.minCoverageAmount).toLocaleString()} – ₹ {Number(plan.maxCoverageAmount).toLocaleString()}
+            </td>
           </tr>
 
           <tr>
-            <th>Premium</th>
+            <th>Rate</th>
 
-            <td>
-              ₹ {plan.premiumAmount} ({plan.premiumType})
-            </td>
+            <td>₹ {plan.ratePerUnit} per ₹50,000 of coverage, per year</td>
+          </tr>
+
+          <tr>
+            <th>Annual Payment Discount</th>
+
+            <td>{plan.annualDiscountPercent ?? 0}%</td>
+          </tr>
+
+          <tr>
+            <th>One-Time Payment Discount</th>
+
+            <td>{plan.oneTimeDiscountPercent ?? 0}%</td>
           </tr>
 
           <tr>
