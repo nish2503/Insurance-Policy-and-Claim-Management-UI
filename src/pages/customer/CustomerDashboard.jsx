@@ -84,16 +84,36 @@ function CustomerDashboard() {
 
         <div className="row g-4 mt-2">
           <div className="col-12 col-sm-6 col-md-3">
-            <DashboardCard title="Profile Status" count="Active Account" variant="success" />
+            <DashboardCard
+              title="Profile Status"
+              count="Active Account"
+              variant="success"
+              onClick={() => navigate("/customer/profile")}
+            />
           </div>
           <div className="col-12 col-sm-6 col-md-3">
-            <DashboardCard title="My Policies" count={policies.length} variant="primary" />
+            <DashboardCard
+              title="My Policies"
+              count={policies.length}
+              variant="primary"
+              onClick={() => navigate("/customer/policies")}
+            />
           </div>
           <div className="col-12 col-sm-6 col-md-3">
-            <DashboardCard title="Claims Filed" count={claims.length} variant="info" />
+            <DashboardCard
+              title="Claims Filed"
+              count={claims.length}
+              variant="info"
+              onClick={() => navigate("/customer/claims")}
+            />
           </div>
           <div className="col-12 col-sm-6 col-md-3">
-            <DashboardCard title="Premium Due" count={`₹${pendingPremiumTotal.toLocaleString()}`} variant="warning" />
+            <DashboardCard
+              title="Premium Due"
+              count={`₹${pendingPremiumTotal.toLocaleString()}`}
+              variant="warning"
+              onClick={() => navigate("/customer/premium-payments")}
+            />
           </div>
         </div>
 
