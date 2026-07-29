@@ -4,8 +4,12 @@ import Modal from "./Modal";
 import Button from "./Button";
 
 import { getProducts } from "../../api/productApi";
-
-const PREMIUM_TYPES = ["MONTHLY", "QUARTERLY", "ANNUAL", "ONE_TIME"];
+import { calculatePremium, PREMIUM_TYPES } from "../../utils/premiumFormula";
+import {
+  validateWholeNumber,
+  validateMultipleOf50000,
+  validatePercentRange,
+} from "../../utils/validators";
 
 function PlanFormModal({
   show,
@@ -20,13 +24,18 @@ function PlanFormModal({
   const [form, setForm] = useState({
     productId: "",
     planName: "",
-    coverageAmount: "",
-    premiumAmount: "",
+    minCoverageAmount: "",
+    maxCoverageAmount: "",
+    ratePerUnit: "",
+    annualDiscountPercent: "0",
+    oneTimeDiscountPercent: "0",
     premiumType: PREMIUM_TYPES[0],
     duration: "",
     termsAndConditions: "",
     activeStatus: true,
   });
+
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     loadProducts();
@@ -35,54 +44,28 @@ function PlanFormModal({
   async function loadProducts() {
     try {
       const res = await getProducts();
-      // Flexible array unpacking supports both raw lists and spring boot paginated content wrappers
       setProducts(res.data.records || res.data.content || res.data || []);
     } catch (err) {
       console.error("Failed to load products directory: ", err);
     }
   }
 
-  const calculateAutomatedPremiumValue = (coverage, term, premiumType) => {
-    const coverageNum = Number(coverage);
-    const yearsNum = Number(term);
-
-    if (!coverageNum || coverageNum <= 0 || !yearsNum || yearsNum <= 0) {
-        return "";
-    }
-
-    let baselineRate = 0.05;
-
-    if (yearsNum >= 5) baselineRate = 0.042;
-    if (yearsNum >= 10) baselineRate = 0.035;
-
-    const annualBase = coverageNum / yearsNum;
-
-    // Calculate annual premium first
-    let calculatedPremium = annualBase * (1 + baselineRate);
-
-    // Adjust based on premium type
-    if (premiumType === "MONTHLY") {
-        calculatedPremium /= 12;
-    } else if (premiumType === "QUARTERLY") {
-        calculatedPremium /= 4;
-    }
-
-    // Round Annual and One-Time premiums to nearest ₹50,000
-    if (premiumType === "ANNUAL" || premiumType === "ONE_TIME") {
-        calculatedPremium =
-            Math.round(calculatedPremium / 50000) * 50000;
-    }
-
-    return Math.round(calculatedPremium).toString();
-};
-
   useEffect(() => {
     if (plan) {
       setForm({
         productId: plan.productId || "",
         planName: plan.planName || "",
-        coverageAmount: plan.coverageAmount || "",
-        premiumAmount: plan.premiumAmount || "",
+        minCoverageAmount: plan.minCoverageAmount || "",
+        maxCoverageAmount: plan.maxCoverageAmount || "",
+        ratePerUnit: plan.ratePerUnit || "",
+        annualDiscountPercent:
+          plan.annualDiscountPercent !== undefined && plan.annualDiscountPercent !== null
+            ? String(plan.annualDiscountPercent)
+            : "0",
+        oneTimeDiscountPercent:
+          plan.oneTimeDiscountPercent !== undefined && plan.oneTimeDiscountPercent !== null
+            ? String(plan.oneTimeDiscountPercent)
+            : "0",
         premiumType: plan.premiumType || PREMIUM_TYPES[0],
         duration: plan.duration || "",
         termsAndConditions: plan.termsAndConditions || "",
@@ -92,60 +75,82 @@ function PlanFormModal({
       setForm({
         productId: "",
         planName: "",
-        coverageAmount: "",
-        premiumAmount: "",
+        minCoverageAmount: "",
+        maxCoverageAmount: "",
+        ratePerUnit: "",
+        annualDiscountPercent: "0",
+        oneTimeDiscountPercent: "0",
         premiumType: PREMIUM_TYPES[0],
         duration: "",
         termsAndConditions: "",
         activeStatus: true,
       });
     }
+    setFieldErrors({});
   }, [plan, show]);
 
-  // Synchronize form calculation state instantly as duration or coverage fields modify
-  useEffect(() => {
-    if (!editModeActiveCheck) {
-      const computedAmount = calculateAutomatedPremiumValue(form.coverageAmount, form.duration,form.premiumType);
-      setForm(prev => {
-        if (prev.premiumAmount === computedAmount) return prev;
-        return { ...prev, premiumAmount: computedAmount };
-      });
-    }
-  }, [form.coverageAmount, form.duration, form.premiumType]);
+  // Live, informational-only reference premium: "what would a customer pay
+  // at max coverage under the selected frequency". Purely a mirror of the
+  // admin's own just-typed numbers — the backend recomputes independently
+  // whenever a real quote or purchase happens.
+  const referencePremium = calculatePremium({
+    coverageAmount: form.maxCoverageAmount,
+    ratePerUnit: form.ratePerUnit,
+    duration: form.duration,
+    premiumType: form.premiumType,
+    annualDiscountPercent: form.annualDiscountPercent,
+    oneTimeDiscountPercent: form.oneTimeDiscountPercent,
+  });
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
     const nextValue = type === "checkbox" ? checked : value;
+    setForm((prev) => ({ ...prev, [name]: nextValue }));
+  }
 
-    setForm((prev) => {
-      const updated = { ...prev, [name]: nextValue };
-      
-      // Auto-recalculate immediately if changing criteria parameters
-      if (name === "coverageAmount" || name === "duration") {
-        updated.premiumAmount = calculateAutomatedPremiumValue(
-          name === "coverageAmount" ? nextValue : prev.coverageAmount,
-          name === "duration" ? nextValue : prev.duration,
-          name === "premiumType" ? nextValue : prev.premiumType
-        );
-      }
-      return updated;
-    });
+  function validateBeforeSubmit() {
+    const errors = {};
+
+    const minError = validateMultipleOf50000(form.minCoverageAmount, "Minimum coverage amount");
+    if (minError) errors.minCoverageAmount = minError;
+
+    const maxError = validateMultipleOf50000(form.maxCoverageAmount, "Maximum coverage amount");
+    if (maxError) errors.maxCoverageAmount = maxError;
+
+    if (!minError && !maxError && Number(form.minCoverageAmount) > Number(form.maxCoverageAmount)) {
+      errors.maxCoverageAmount = "Maximum coverage amount must be greater than or equal to the minimum coverage amount";
+    }
+
+    if (!form.ratePerUnit || Number(form.ratePerUnit) <= 0) {
+      errors.ratePerUnit = "Rate per ₹50,000 of coverage must be greater than zero";
+    }
+
+    const annualDiscountError = validatePercentRange(form.annualDiscountPercent, "Annual payment discount");
+    if (annualDiscountError) errors.annualDiscountPercent = annualDiscountError;
+
+    const oneTimeDiscountError = validatePercentRange(form.oneTimeDiscountPercent, "One-time payment discount");
+    if (oneTimeDiscountError) errors.oneTimeDiscountPercent = oneTimeDiscountError;
+
+    const durationError = validateWholeNumber(form.duration, "Duration (years)");
+    if (durationError) errors.duration = durationError;
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   }
 
   function handleSubmit(e) {
     e.preventDefault();
-    
-    // Ensure final calculated amounts are cleanly integrated right on post back dispatch execution strings
-    const finalAmount = calculateAutomatedPremiumValue(form.coverageAmount, form.duratio,form.premiumType);
-    const coverage = Number(form.coverageAmount);
 
-if (coverage % 50000 !== 0) {
-    alert("Coverage amount must be in multiples of 50,000.");
-    return;
-}
+    if (!validateBeforeSubmit()) return;
+
     onSubmit({
       ...form,
-      premiumAmount: Number(finalAmount)
+      minCoverageAmount: Number(form.minCoverageAmount),
+      maxCoverageAmount: Number(form.maxCoverageAmount),
+      ratePerUnit: Number(form.ratePerUnit),
+      annualDiscountPercent: Number(form.annualDiscountPercent),
+      oneTimeDiscountPercent: Number(form.oneTimeDiscountPercent),
+      duration: Number(form.duration),
     });
   }
 
@@ -192,35 +197,65 @@ if (coverage % 50000 !== 0) {
 
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label font-weight-bold small text-muted">Coverage Amount (INR) <span className="text-danger">*</span></label>
+            <label className="form-label font-weight-bold small text-muted">Minimum Coverage a Customer May Choose (INR) <span className="text-danger">*</span></label>
             <input
               type="number"
               step="50000"
               min="50000"
-              className="form-control"
-              name="coverageAmount"
-              value={form.coverageAmount}
+              className={`form-control ${fieldErrors.minCoverageAmount ? "is-invalid" : ""}`}
+              name="minCoverageAmount"
+              value={form.minCoverageAmount}
               onChange={handleChange}
-              placeholder="Total available payout limit"
+              placeholder="e.g., 100000"
               required
             />
+            {fieldErrors.minCoverageAmount && (
+              <div className="invalid-feedback d-block">{fieldErrors.minCoverageAmount}</div>
+            )}
           </div>
 
           <div className="col-md-6 mb-3">
-            <label className="form-label font-weight-bold small text-muted">Automated Premium Due (INR)</label>
+            <label className="form-label font-weight-bold small text-muted">Maximum Coverage a Customer May Choose (INR) <span className="text-danger">*</span></label>
             <input
-              type="text"
-              className="form-control bg-light text-primary font-weight-bold"
-              name="premiumAmount"
-              value={form.premiumAmount ? `₹${Number(form.premiumAmount).toLocaleString()}` : "Awaiting coverage variables..."}
-              readOnly // 🔒 Secured read-only state block prevents text-field typing tamperings
+              type="number"
+              step="50000"
+              min="50000"
+              className={`form-control ${fieldErrors.maxCoverageAmount ? "is-invalid" : ""}`}
+              name="maxCoverageAmount"
+              value={form.maxCoverageAmount}
+              onChange={handleChange}
+              placeholder="Ceiling coverage amount for this plan"
+              required
             />
+            {fieldErrors.maxCoverageAmount && (
+              <div className="invalid-feedback d-block">{fieldErrors.maxCoverageAmount}</div>
+            )}
           </div>
         </div>
 
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label font-weight-bold small text-muted">Payment Frequency</label>
+            <label className="form-label font-weight-bold small text-muted">
+              Rate per ₹50,000 of Coverage (INR/year) <span className="text-danger">*</span>
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0.01"
+              className={`form-control ${fieldErrors.ratePerUnit ? "is-invalid" : ""}`}
+              name="ratePerUnit"
+              value={form.ratePerUnit}
+              onChange={handleChange}
+              placeholder="e.g., 500"
+              required
+            />
+            {fieldErrors.ratePerUnit && (
+              <div className="invalid-feedback d-block">{fieldErrors.ratePerUnit}</div>
+            )}
+          </div>
+
+          <div className="col-md-6 mb-3">
+            <label className="form-label font-weight-bold small text-muted">Default Payment Frequency</label>
             <select
               className="form-select"
               name="premiumType"
@@ -234,21 +269,80 @@ if (coverage % 50000 !== 0) {
               ))}
             </select>
           </div>
+        </div>
 
+        <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label font-weight-bold small text-muted">Term Length Duration (Years) <span className="text-danger">*</span></label>
+            <label className="form-label font-weight-bold small text-muted">Annual Payment Discount (%)</label>
             <input
               type="number"
-              step="1"
-              min="1"
-              className="form-control"
-              name="duration"
-              value={form.duration}
+              step="0.1"
+              min="0"
+              max="100"
+              className={`form-control ${fieldErrors.annualDiscountPercent ? "is-invalid" : ""}`}
+              name="annualDiscountPercent"
+              value={form.annualDiscountPercent}
               onChange={handleChange}
-              placeholder="e.g., 5"
-              required
+              placeholder="e.g., 8"
             />
+            {fieldErrors.annualDiscountPercent && (
+              <div className="invalid-feedback d-block">{fieldErrors.annualDiscountPercent}</div>
+            )}
           </div>
+
+          <div className="col-md-6 mb-3">
+            <label className="form-label font-weight-bold small text-muted">One-Time Payment Discount (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              className={`form-control ${fieldErrors.oneTimeDiscountPercent ? "is-invalid" : ""}`}
+              name="oneTimeDiscountPercent"
+              value={form.oneTimeDiscountPercent}
+              onChange={handleChange}
+              placeholder="e.g., 15"
+            />
+            {fieldErrors.oneTimeDiscountPercent && (
+              <div className="invalid-feedback d-block">{fieldErrors.oneTimeDiscountPercent}</div>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label font-weight-bold small text-muted">Reference Premium at Max Coverage (INR)</label>
+          <input
+            type="text"
+            className="form-control bg-light text-primary font-weight-bold"
+            value={
+              referencePremium !== null
+                ? `₹${referencePremium.toLocaleString()} (${form.premiumType.replace(/_/g, " ")})`
+                : "Awaiting coverage/rate/duration..."
+            }
+            readOnly
+          />
+          <small className="text-muted d-block mt-1">
+            Informational preview only, computed from the values above. The server independently
+            recalculates the actual premium for every customer purchase.
+          </small>
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label font-weight-bold small text-muted">Term Length Duration (Years) <span className="text-danger">*</span></label>
+          <input
+            type="number"
+            step="1"
+            min="1"
+            className={`form-control ${fieldErrors.duration ? "is-invalid" : ""}`}
+            name="duration"
+            value={form.duration}
+            onChange={handleChange}
+            placeholder="e.g., 5"
+            required
+          />
+          {fieldErrors.duration && (
+            <div className="invalid-feedback d-block">{fieldErrors.duration}</div>
+          )}
         </div>
 
         <div className="mb-3">
