@@ -73,18 +73,30 @@ export function validateFullName(value, label = "Full name") {
   if (value.trim().length < 3) {
     return `${label} must be at least 3 characters`;
   }
-  if (!/^[a-zA-Z\s.]+$/.test(value.trim())) {
+  // Must match the backend exactly (RegistrationRequestDTO / UserRequestDTO
+  // both use ^[A-Za-z ]+$ — letters and spaces only, no periods or other
+  // punctuation). A looser client-side check here lets a name like
+  // "Dr. Jane Smith" pass validation in the browser and then get rejected
+  // by the server on submit.
+  if (!/^[a-zA-Z\s]+$/.test(value.trim())) {
     return `${label} must only contain letters and spaces`;
   }
   return "";
 }
 
-export function validatePassword(value, label = "Password") {
+export function validatePassword(value, label = "Password", { maxLength } = {}) {
   const req = required(value, label);
   if (req) return req;
 
   if (value.length < 8) {
     return `${label} must be at least 8 characters long`;
+  }
+  // Registration (RegistrationRequestDTO) and staff creation (UserRequestDTO)
+  // both cap the password at 20 chars server-side (@Size(min = 8, max = 20)).
+  // Reset Password has no server-side max, so callers only pass maxLength
+  // where the backend actually enforces one — don't hardcode it here.
+  if (maxLength && value.length > maxLength) {
+    return `${label} must not exceed ${maxLength} characters`;
   }
   if (!/[A-Z]/.test(value)) {
     return `${label} must contain at least one uppercase letter`;
@@ -126,11 +138,15 @@ export function validateOtp(value, label = "OTP") {
 }
 
 // CUS-BR / validation §17.2: Indian 6-digit PIN code.
+// Must match the backend exactly (CustomerRequestDTO uses ^[1-9][0-9]{5}$ —
+// exactly 6 digits, first digit cannot be 0). A looser client-side check
+// here would let something like "012345" pass in the browser and then get
+// rejected by the server on submit.
 export function validatePinCode(value, label = "PIN code") {
   const req = required(value, label);
   if (req) return req;
 
-  if (!/^\d{6}$/.test(String(value).trim())) {
+  if (!/^[1-9]\d{5}$/.test(String(value).trim())) {
     return `${label} must be a valid 6 digit PIN code`;
   }
   return "";

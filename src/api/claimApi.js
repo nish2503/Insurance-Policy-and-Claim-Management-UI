@@ -1,7 +1,7 @@
 import api from "./axios";
 
 // Legacy — kept for any existing callers.
-export const getClaims = () => api.get("/claims");
+export const getClaims = (params) => api.get("/claims", { params });
 
 // Admin: claims that have moved past initial internal-staff review and are
 // ready for a final approve/reject decision. Excludes SUBMITTED claims that

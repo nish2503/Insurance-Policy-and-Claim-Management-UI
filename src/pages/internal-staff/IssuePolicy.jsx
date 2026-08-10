@@ -13,6 +13,7 @@ import {
 
 import { required, validateForm, validateNotPastDate } from "../../utils/validators";
 import { getApiErrorMessage } from "../../utils/apiError";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 import { useToast } from "../../context/ToastContext";
 
 // Native date inputs have no built-in "no past dates" rule, so we floor the
@@ -43,8 +44,10 @@ function IssuePolicy() {
 
   async function loadCustomers() {
     try {
-      const res = await getInternalStaffCustomers();
-      setCustomers(res.data.records || []);
+      const records = await fetchAllPages((page, size) =>
+        getInternalStaffCustomers({ page, size }),
+      );
+      setCustomers(records);
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Unable to load customers"));
     }
@@ -52,8 +55,8 @@ function IssuePolicy() {
 
   async function loadPlans() {
     try {
-      const res = await getPlans();
-      setPlans(res.data.records || []);
+      const records = await fetchAllPages((page, size) => getPlans({ page, size }));
+      setPlans(records);
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Unable to load plans"));
     }

@@ -45,12 +45,19 @@ export const getMyPolicies = (params) => {
   });
 };
 
-export const getProducts = () => {
-  return api.get("/products");
+// Customer-facing product browsing must only ever surface active products.
+// Deactivating a product in Admin should make it disappear from Browse
+// Products (and, transitively, the purchase flow) immediately — hitting the
+// unfiltered /products endpoint here would leak inactive products to
+// customers, since that endpoint returns every product regardless of status.
+export const getProducts = (params) => {
+  return api.get("/products/status/true", { params });
 };
 
-export const getPlans = () => {
-  return api.get("/plans");
+// Same reasoning as getProducts above: customers should only ever see plans
+// belonging to active products/plans, never deactivated ones.
+export const getPlans = (params) => {
+  return api.get("/plans", { params: { ...params, status: true } });
 };
 
 export const getMyPremiumPayments = (params) => {
@@ -67,8 +74,8 @@ export const createCustomerProfile = (data) => {
   return api.post("/customers/profile", data);
 };
 
-export const getPlansByProduct = (productId) => {
-  return api.get(`/plans/product/${productId}`);
+export const getPlansByProduct = (productId, params) => {
+  return api.get(`/plans/product/${productId}`, { params: { ...params, status: true } });
 };
 
 export const purchasePolicy = (data) => {

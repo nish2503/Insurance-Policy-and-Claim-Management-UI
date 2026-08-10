@@ -10,6 +10,7 @@ import StatusFilter from "../../components/common/StatusFilter";
 
 import { getInternalStaffPolicies } from "../../api/internalStaffApi";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 function Policies() {
   const [policies, setPolicies] = useState([]);
@@ -22,8 +23,10 @@ function Policies() {
 
   async function loadPolicies() {
     try {
-      const res = await getInternalStaffPolicies();
-      setPolicies(res.data.records || []);
+      const records = await fetchAllPages((page, size) =>
+        getInternalStaffPolicies({ page, size }),
+      );
+      setPolicies(records);
     } catch (error) {
       console.log(error);
     } finally {
@@ -80,33 +83,34 @@ function Policies() {
             "planName",
             "policyStatus",
           ]}
-          headerActions={
-            <div className="d-flex gap-2">
-              <StatusFilter
-                value={status}
-                onChange={setStatus}
-                options={[
-                  { value: "ALL", label: "All Status" },
-                  { value: "PENDING_PAYMENT", label: "Pending Payment" },
-                  { value: "ACTIVE", label: "Active" },
-                  { value: "EXPIRED", label: "Expired" },
-                  { value: "CANCELLED", label: "Cancelled" },
-                ]}
-              />
+          headerActions={({ pageRows, filteredRows }) => {
+            const columns = [
+              { label: "Policy Number", key: "policyNumber" },
+              { label: "Customer", key: "customerName" },
+              { label: "Plan", key: "planName" },
+              { label: "Status", key: "policyStatus" },
+            ];
+            const meta = { "Status filter": status === "ALL" ? "All" : status };
 
-              <ExportPdfButton
-                title="Policies"
-                rows={visiblePolicies}
-                meta={{ "Status filter": status === "ALL" ? "All" : status }}
-                columns={[
-                  { label: "Policy Number", key: "policyNumber" },
-                  { label: "Customer", key: "customerName" },
-                  { label: "Plan", key: "planName" },
-                  { label: "Status", key: "policyStatus" },
-                ]}
-              />
-            </div>
-          }
+            return (
+              <div className="d-flex gap-2">
+                <StatusFilter
+                  value={status}
+                  onChange={setStatus}
+                  options={[
+                    { value: "ALL", label: "All Status" },
+                    { value: "PENDING_PAYMENT", label: "Pending Payment" },
+                    { value: "ACTIVE", label: "Active" },
+                    { value: "EXPIRED", label: "Expired" },
+                    { value: "CANCELLED", label: "Cancelled" },
+                  ]}
+                />
+
+                <ExportPdfButton title="Policies (This Page)" fileName="internal-policies-page" label="Export Page" rows={pageRows} meta={meta} columns={columns} />
+                <ExportPdfButton title="Policies (All)" fileName="internal-policies-all" label="Export All" rows={filteredRows} meta={meta} columns={columns} />
+              </div>
+            );
+          }}
         />
       </Card>
     </DashboardLayout>

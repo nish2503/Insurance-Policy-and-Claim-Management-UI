@@ -10,6 +10,7 @@ import { getCustomers } from "../../api/customerApi";
 import { getPolicies } from "../../api/policyApi";
 import { getClaims } from "../../api/claimApi";
 import { getPlans } from "../../api/planApi";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 const CLAIM_STAGES = [
   { key: "SUBMITTED", label: "Submitted", color: "var(--warning, #f59e0b)" },
@@ -18,6 +19,7 @@ const CLAIM_STAGES = [
   { key: "RECOMMENDED_REJECTION", label: "Recommended", color: "#06b6d4" },
   { key: "APPROVED", label: "Approved", color: "var(--success, #10b981)" },
   { key: "REJECTED", label: "Rejected", color: "var(--danger, #ef4444)" },
+  { key: "CANCELLED", label: "Cancelled", color: "#6b7280" },
 ];
 
 const POLICY_STAGES = [
@@ -43,20 +45,20 @@ function AdminDashboard() {
 
   async function loadData() {
     try {
-      const [productRes, customerRes, policyRes, claimRes, planRes] =
+      const [productRecords, customerRecords, policyRecords, claimRecords, planRecords] =
         await Promise.all([
-          getProducts(),
-          getCustomers(),
-          getPolicies(),
-          getClaims(),
-          getPlans(),
+          fetchAllPages((page, size) => getProducts({ page, size })),
+          fetchAllPages((page, size) => getCustomers({ page, size })),
+          fetchAllPages((page, size) => getPolicies({ page, size })),
+          fetchAllPages((page, size) => getClaims({ page, size })),
+          fetchAllPages((page, size) => getPlans({ page, size })),
         ]);
 
-      setProducts(productRes.data.records || []);
-      setCustomers(customerRes.data.records || []);
-      setPolicies(policyRes.data.records || []);
-      setClaims(claimRes.data.records || []);
-      setPlans(planRes.data.records || []);
+      setProducts(productRecords);
+      setCustomers(customerRecords);
+      setPolicies(policyRecords);
+      setClaims(claimRecords);
+      setPlans(planRecords);
     } catch (error) {
       console.log(error);
     } finally {

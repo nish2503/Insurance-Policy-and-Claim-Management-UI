@@ -25,9 +25,10 @@ export const getInternalStaffPayments = (params) => {
   return api.get("/premium-payments/internal-staff", { params });
 };
 // Get plans for issue policy dropdown
-export const getPlans = () => {
-  return api.get("/plans");
+export const getPlans = (params) => {
+  return api.get("/plans", { params });
 };
+
 export const getClaimHistory = (claimId) => {
   return api.get(`/claim-history/claim/${claimId}`);
 };

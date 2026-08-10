@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate,useLocation } from "react-router-dom";
 import { verifyRegister, resendOtp } from "../../api/authApi";
 import useOtpTimer from "../../hooks/useOtpTimer";
@@ -8,12 +8,28 @@ import { getApiErrorMessage } from "../../utils/apiError";
 import { validateEmail, validateMobile, validateOtp, validateForm, toE164India } from "../../utils/validators";
 
 
+// BUG FIX (QA — browser refresh mid-flow): react-router `location.state` is
+// held in memory only and is wiped out by a hard refresh/reload of this
+// page. That used to leave the user on a blank, suddenly-editable OTP form
+// with no email/mobile and no explanation of what happened. Register.jsx
+// mirrors the same values into sessionStorage right before navigating here,
+// so on refresh we can recover them from there instead of losing the flow.
+function loadPendingVerification() {
+  try {
+    const raw = sessionStorage.getItem("pendingOtpVerification");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 function VerifyOtp() {
   const location = useLocation();
-  const fromRegister = !!location.state;
-const [email, setEmail] = useState(location.state?.email || "");
+  const recovered = !location.state ? loadPendingVerification() : null;
+  const fromRegister = !!location.state || !!recovered;
+const [email, setEmail] = useState(location.state?.email || recovered?.email || "");
 const [mobileNumber, setMobileNumber] = useState(
-  location.state?.mobileNumber || ""
+  location.state?.mobileNumber || recovered?.mobileNumber || ""
 );
   const [emailOtp, setEmailOtp] = useState("");
   const [phoneOtp, setPhoneOtp] = useState("");
@@ -23,6 +39,16 @@ const [mobileNumber, setMobileNumber] = useState(
   const navigate = useNavigate();
   const toast = useToast();
   const { timeLeft, canResend, resetTimer } = useOtpTimer(60);
+
+  // Let the user know their session was recovered after a refresh, since
+  // the readOnly email/mobile fields would otherwise look unexplained, and
+  // the OTP inputs are always blank again (OTP codes are never persisted).
+  useEffect(() => {
+    if (!location.state && recovered) {
+      toast.success("Welcome back — resend the OTP to continue verifying.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const clearFieldError = (field) => {
     setErrors((prev) => {
@@ -61,6 +87,7 @@ const [mobileNumber, setMobileNumber] = useState(
         phoneOtp,
       });
       toast.success("Email and Mobile verified successfully");
+      sessionStorage.removeItem("pendingOtpVerification");
       navigate("/login");
     } catch (error) {
       toast.error(getApiErrorMessage(error, "OTP verification failed"));
@@ -300,6 +327,17 @@ const [mobileNumber, setMobileNumber] = useState(
               <span className="field-error-text">{errors.mobileNumber}</span>
             )}
           </div>
+
+          <p
+            style={{
+              color: "var(--text-muted)",
+              fontSize: "0.8rem",
+              margin: "0 0 12px",
+              textAlign: "center",
+            }}
+          >
+            Email OTP is valid for 5 minutes · Phone OTP is valid for 10 minutes
+          </p>
 
           <div className="mb-3">
             <input

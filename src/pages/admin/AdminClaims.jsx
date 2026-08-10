@@ -22,6 +22,7 @@ import Modal from "../../components/common/Modal";
 import BackButton from "../../components/common/BackButton";
 import ClaimDetailPanel from "../../components/common/ClaimDetailPanel";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 // Claim statuses that still need a final admin decision. Claims already
 // APPROVED/REJECTED are shown for audit purposes but rendered read-only
@@ -59,8 +60,10 @@ function AdminClaims() {
       // CLC-RUL-004 / SRS §7.1: this endpoint already excludes SUBMITTED
       // claims that haven't been reviewed by internal staff yet — admin's
       // authority is the final decision only, not initial triage.
-      const response = await getClaimsPendingAdminDecision({ size: 100 });
-      setClaims(response.data.records || []);
+      const records = await fetchAllPages((page, size) =>
+        getClaimsPendingAdminDecision({ page, size }),
+      );
+      setClaims(records);
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Unable to load claims"));
     } finally {
@@ -207,42 +210,58 @@ function AdminClaims() {
             data={visibleClaims}
             searchKeys={["claimNumber", "customerName", "policyNumber"]}
             searchPlaceholder="Search claims..."
-            headerActions={
-              <div className="d-flex gap-2">
-                <StatusFilter
-                  value={statusFilter}
-                  onChange={setStatusFilter}
-                  options={[
-                    { value: "ALL", label: "All (excl. Submitted)" },
-                    { value: "UNDER_REVIEW", label: "Under Review" },
-                    { value: "RECOMMENDED_APPROVAL", label: "Recommended Approval" },
-                    { value: "RECOMMENDED_REJECTION", label: "Recommended Rejection" },
-                    { value: "APPROVED", label: "Approved" },
-                    { value: "REJECTED", label: "Rejected" },
-                  ]}
-                />
+            headerActions={({ pageRows, filteredRows }) => {
+              const columns = [
+                { label: "Claim No.", key: "claimNumber" },
+                { label: "Customer", key: "customerName" },
+                { label: "Policy No.", key: "policyNumber" },
+                { label: "Amount", value: (row) => `₹${Number(row.claimAmount).toLocaleString()}` },
+                { label: "Status", key: "claimStatus" },
+                {
+                  label: "Submitted",
+                  value: (row) =>
+                    row.createdDate ? new Date(row.createdDate).toLocaleDateString() : "-",
+                },
+              ];
+              const meta = {
+                "Status filter": statusFilter === "ALL" ? "All (excl. Submitted)" : statusFilter,
+              };
 
-                <ExportPdfButton
-                  title="Claims — Final Decision Queue"
-                  rows={visibleClaims}
-                  meta={{ "Status filter": statusFilter === "ALL" ? "All (excl. Submitted)" : statusFilter }}
-                  columns={[
-                    { label: "Claim No.", key: "claimNumber" },
-                    { label: "Customer", key: "customerName" },
-                    { label: "Policy No.", key: "policyNumber" },
-                    { label: "Amount", value: (row) => `₹${row.claimAmount}` },
-                    { label: "Status", key: "claimStatus" },
-                    {
-                      label: "Submitted",
-                      value: (row) =>
-                        row.createdDate
-                          ? new Date(row.createdDate).toLocaleDateString()
-                          : "-",
-                    },
-                  ]}
-                />
-              </div>
-            }
+              return (
+                <div className="d-flex gap-2">
+                  <StatusFilter
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                    options={[
+                      { value: "ALL", label: "All (excl. Submitted)" },
+                      { value: "UNDER_REVIEW", label: "Under Review" },
+                      { value: "RECOMMENDED_APPROVAL", label: "Recommended Approval" },
+                      { value: "RECOMMENDED_REJECTION", label: "Recommended Rejection" },
+                      { value: "APPROVED", label: "Approved" },
+                      { value: "REJECTED", label: "Rejected" },
+                    ]}
+                  />
+
+                  <ExportPdfButton
+                    title="Claims — Final Decision Queue (This Page)"
+                    fileName="claims-decision-queue-page"
+                    label="Export Page"
+                    rows={pageRows}
+                    meta={meta}
+                    columns={columns}
+                  />
+
+                  <ExportPdfButton
+                    title="Claims — Final Decision Queue (All)"
+                    fileName="claims-decision-queue-all"
+                    label="Export All"
+                    rows={filteredRows}
+                    meta={meta}
+                    columns={columns}
+                  />
+                </div>
+              );
+            }}
           />
       </Card>
 

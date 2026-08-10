@@ -29,7 +29,15 @@ api.interceptors.response.use(
   },
 
   (error) => {
-    if (error.response?.status === 401) {
+    const isAuthRoute = error.config?.url?.startsWith("/auth/");
+
+    // Only treat 401 as "session expired" for authenticated (non-auth) API
+    // calls. A 401 from /auth/login, /auth/forgot-password, or
+    // /auth/reset-password is a normal business-logic response (bad
+    // credentials, invalid/expired/reused token, etc.) that the calling
+    // page's own catch block needs to show to the user — it must not
+    // trigger a hard redirect that wipes the toast before it's readable.
+    if (error.response?.status === 401 && !isAuthRoute) {
       localStorage.clear();
 
       window.location.href = "/login";

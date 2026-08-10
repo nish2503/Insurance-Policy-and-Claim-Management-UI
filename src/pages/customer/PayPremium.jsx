@@ -6,6 +6,8 @@ import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import BackButton from "../../components/common/BackButton";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
+import DataTable from "../../components/common/DataTable";
+import StatusBadge from "../../components/common/StatusBadge";
 
 import {
   getMyPolicies,
@@ -72,8 +74,13 @@ function PayPremium() {
 
   async function loadPayments() {
     try {
+      // NOTE: unlike other /my endpoints, GET /premium-payments/my returns a
+      // plain List<PremiumPaymentResponseDTO>, not the paginated
+      // { records, content, totalPages, isLastPage } shape. Don't run it
+      // through fetchAllPages (which expects that paginated shape) — it
+      // would silently resolve to an empty array every time.
       const res = await getMyPremiumPayments();
-      setPaymentHistory(res.data.records || res.data.content || res.data || []);
+      setPaymentHistory(res.data || []);
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Unable to load payment history"));
     }
@@ -114,19 +121,32 @@ function PayPremium() {
     }
   }
 
-  async function executeDirectPayment() {
+  async function executeDirectPayment(simulateFailure = false) {
     const matchedPolicy = policies.find(p => String(p.policyId || p.id) === String(selectedPolicy));
     const ref = "TXN_DIR_" + Date.now();
     try {
-      await payPremium({
+      const res = await payPremium({
         policyId: Number(selectedPolicy),
         amount: Number(amount),
         paymentMode: paymentMode,
         transactionReference: ref,
-        paymentStatus: "SUCCESS",
+        simulateFailure,
       });
+
+      // The backend is the source of truth for the outcome — a simulated
+      // (or real, future) gateway decline comes back as a normal 201
+      // response with paymentStatus: "FAILED", not an HTTP error. Only
+      // treat the payment as settled, and only show the receipt, when the
+      // server confirms SUCCESS. The policy itself is never touched by the
+      // backend on a FAILED outcome, so we just refresh and surface it.
+      if (res.data.paymentStatus === "FAILED") {
+        toast.error("Payment declined by the gateway. The policy has not been charged — please try again.");
+        loadInitialData();
+        return;
+      }
+
       toast.success("Premium settled successfully!");
-      
+
       setReceiptData({
         policyNumber: matchedPolicy?.policyNumber || selectedPolicy,
         planName: matchedPolicy?.planName || "Insurance Plan",
@@ -166,6 +186,11 @@ function PayPremium() {
       return;
     }
 
+    // Standard test card number for simulating a bank decline (same number
+    // real gateways like Stripe reserve for this in test mode), so the
+    // decline path can be exercised without a real payment processor.
+    const isDeclineTestCard = cardForm.cardNumber.replace(/\s/g, "") === "4000000000000002";
+
     setGatewayProcessing(true);
     
     setTimeout(async () => {
@@ -175,13 +200,22 @@ function PayPremium() {
       const ref = "MOCK_TXN_" + Date.now();
 
       try {
-        await payPremium({
+        const res = await payPremium({
           policyId: Number(selectedPolicy),
           amount: Number(amount),
           paymentMode: paymentMode,
           transactionReference: ref,
-          paymentStatus: "SUCCESS",
+          simulateFailure: isDeclineTestCard,
         });
+
+        // The backend, not this mock UI, decides the outcome — a decline
+        // comes back as a normal response with paymentStatus: "FAILED".
+        // The policy is never touched by the backend in that case.
+        if (res.data.paymentStatus === "FAILED") {
+          setGatewayError("Your card was declined by the issuing bank. No charge was made.");
+          loadInitialData();
+          return;
+        }
 
         toast.success("Premium paid successfully!");
 
@@ -296,11 +330,15 @@ Status: SUCCESS
               onBlur={(e) => handleBlur("selectedPolicy", e.target.value)}
             >
               <option value="">-- Choose active policy --</option>
-              {policies.map((p) => (
-                <option key={p.policyId || p.id} value={p.policyId || p.id}>
-                  {p.policyNumber} - {p.planName || "Insurance Plan"}
-                </option>
-              ))}
+              {policies
+                .filter((p) =>
+                  ["PENDING_PAYMENT", "ACTIVE"].includes(p.policyStatus)
+                )
+                .map((p) => (
+                  <option key={p.policyId || p.id} value={p.policyId || p.id}>
+                    {p.policyNumber} - {p.planName || "Insurance Plan"}
+                  </option>
+                ))}
             </select>
             {touched.selectedPolicy && fieldErrors.selectedPolicy && (
               <div className="invalid-feedback d-block">{fieldErrors.selectedPolicy}</div>
@@ -349,44 +387,88 @@ Status: SUCCESS
         {/* Premium Payment History Table Matrix */}
         <div className="mt-5">
           <h5 className="font-weight-bold text-secondary mb-3">Premium Payment Settlement Ledger</h5>
-          <table className="table table-bordered align-middle" style={{ fontSize: "0.9rem" }}>
-            <thead className="table-light">
-              <tr>
-                <th>Policy Number</th>
-                <th>Date Settled</th>
-                <th>Amount Paid</th>
-                <th>Method</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paymentHistory.map((item) => (
-                <tr key={item.paymentId || item.id}>
-                  <td>{item.policyNumber}</td>
-                  <td>{item.paymentDate ? new Date(item.paymentDate).toLocaleDateString() : "N/A"}</td>
-                  <td className="font-weight-bold text-success">₹{Number(item.amount).toLocaleString()}</td>
-                  <td>{item.paymentMode}</td>
-                  <td><span className="badge bg-success">{item.paymentStatus || "SUCCESS"}</span></td>
-                  <td>
-                    <button
-                      className="btn btn-sm btn-outline-primary py-0"
-                      onClick={() => downloadReceiptFile({
-                        date: new Date(item.paymentDate).toLocaleString(),
-                        reference: item.transactionReference,
-                        policyNumber: item.policyNumber,
-                        planName: item.planName || "Insurance Plan",
-                        amountPaid: item.amount,
-                        mode: item.paymentMode
-                      })}
-                    >
-                      📥 Receipt
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <DataTable
+            emptyMessage="No Payments Found"
+            columns={[
+              { key: "policyNumber", label: "Policy Number" },
+              {
+                key: "paymentDate",
+                label: "Date Settled",
+                render: (row) =>
+                  row.paymentDate ? new Date(row.paymentDate).toLocaleDateString() : "N/A",
+              },
+              {
+                key: "amount",
+                label: "Amount Paid",
+                render: (row) => (
+                  <span className="font-weight-bold text-success">
+                    ₹{Number(row.amount).toLocaleString()}
+                  </span>
+                ),
+              },
+              { key: "paymentMode", label: "Method" },
+              {
+                key: "paymentStatus",
+                label: "Status",
+                render: (row) => <StatusBadge status={row.paymentStatus || "SUCCESS"} />,
+              },
+              {
+                key: "action",
+                label: "Action",
+                render: (row) => (
+                  <button
+                    className="btn btn-sm btn-outline-primary py-0"
+                    onClick={() => downloadReceiptFile({
+                      date: new Date(row.paymentDate).toLocaleString(),
+                      reference: row.transactionReference,
+                      policyNumber: row.policyNumber,
+                      planName: row.planName || "Insurance Plan",
+                      amountPaid: row.amount,
+                      mode: row.paymentMode
+                    })}
+                  >
+                    📥 Receipt
+                  </button>
+                ),
+              },
+            ]}
+            data={paymentHistory}
+            searchKeys={["policyNumber", "transactionReference", "paymentMode", "paymentStatus"]}
+            headerActions={({ pageRows, filteredRows }) => {
+              const columns = [
+                { label: "Policy Number", key: "policyNumber" },
+                {
+                  label: "Date Settled",
+                  value: (row) =>
+                    row.paymentDate ? new Date(row.paymentDate).toLocaleDateString() : "N/A",
+                },
+                { label: "Amount Paid", value: (row) => `₹${Number(row.amount).toLocaleString()}` },
+                { label: "Method", key: "paymentMode" },
+                { label: "Status", key: "paymentStatus" },
+                { label: "Transaction Ref", key: "transactionReference" },
+              ];
+
+              return (
+                <div className="d-flex gap-2">
+                  <ExportPdfButton
+                    title="Premium Payments (This Page)"
+                    fileName="premium-payments-page"
+                    label="Export Page"
+                    rows={pageRows}
+                    columns={columns}
+                  />
+
+                  <ExportPdfButton
+                    title="Premium Payments (All)"
+                    fileName="premium-payments-all"
+                    label="Export All"
+                    rows={filteredRows}
+                    columns={columns}
+                  />
+                </div>
+              );
+            }}
+          />
         </div>
       </Card>
 
@@ -413,6 +495,11 @@ Status: SUCCESS
                 </div>
 
                 {gatewayError && <div className="alert alert-danger py-2 px-3 small border-0 font-weight-bold mb-3">{gatewayError}</div>}
+
+                <div className="alert alert-secondary py-2 px-3 small mb-3">
+                  Sandbox mode: use <strong>4111 1111 1111 1111</strong> for a successful test payment,
+                  or <strong>4000 0000 0000 0002</strong> to simulate a declined card.
+                </div>
 
                 <form onSubmit={handleMockPaymentSubmit}>
                   <div className="mb-3">
@@ -533,10 +620,21 @@ Status: SUCCESS
                     onClick={async () => {
                       setShowUpiGateway(false);
                       setSubmitting(true);
-                      executeDirectPayment();
+                      executeDirectPayment(false);
                     }}
                   >
                     Simulate Successful Scan ✓
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger py-2 font-weight-bold"
+                    onClick={async () => {
+                      setShowUpiGateway(false);
+                      setSubmitting(true);
+                      executeDirectPayment(true);
+                    }}
+                  >
+                    Simulate Failed Scan ✕
                   </button>
                   <button type="button" className="btn btn-link text-muted small text-decoration-none py-1" onClick={() => setShowUpiGateway(false)}>
                     Cancel Transaction
