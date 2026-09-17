@@ -4,16 +4,42 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 import BackButton from "../../components/common/BackButton";
 import {
+  getMyClaims,
   getMyPolicies,
   raiseClaim,
   uploadClaimDocument,
 } from "../../api/customerApi";
 import { useToast } from "../../context/ToastContext";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 // Native date inputs have no built-in "no future dates" rule, so we cap the
 // picker itself at today in addition to the submit-time check below — this
 // stops a future incident date from being selectable in the first place.
-const TODAY_ISO = new Date().toISOString().split("T")[0];
+// Local calendar date, not UTC (UTC is still "yesterday" in India before 05:30).
+// Today's date in the browser's LOCAL calendar, as YYYY-MM-DD.
+// (Defined here rather than imported so this page has no extra dependency.)
+// new Date().toISOString() would give the UTC date, which in India is still
+// yesterday between midnight and 05:30.
+function todayLocalISO() {
+  const d = new Date();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
+const TODAY_ISO = todayLocalISO();
+
+// Claim statuses that still count as "in progress". The backend refuses a new
+// claim while one of these is open on the same policy, so the form says so up
+// front instead of failing on submit.
+const OPEN_CLAIM_STATUSES = [
+  "SUBMITTED",
+  "UNDER_REVIEW",
+  "RECOMMENDED_APPROVAL",
+  "RECOMMENDED_REJECTION",
+];
+
+const formatINR = (value) => Number(value || 0).toLocaleString("en-IN");
 
 function RaiseClaim() {
   const navigate = useNavigate();
@@ -26,7 +52,12 @@ function RaiseClaim() {
   const [file, setFile] = useState(null);
 
   const [fieldErrors, setFieldErrors] = useState({});
-  const [maxCoverage, setMaxCoverage] = useState(null);
+  // Coverage figures for the selected policy: total, already approved and what
+  // is actually still claimable (total - approved), which is the limit the
+  // backend enforces in ClaimServiceImpl.raiseClaim.
+  const [coverage, setCoverage] = useState(null);
+  const [openClaimNumber, setOpenClaimNumber] = useState("");
+  const [claimsByPolicy, setClaimsByPolicy] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -35,9 +66,39 @@ function RaiseClaim() {
 
   async function loadPolicies() {
     try {
-      const res = await getMyPolicies();
+      // All pages (the unpaged call returned only 10 policies), and only
+      // policies a claim can actually be raised on: ACTIVE, coverage started,
+      // not past the end date.
+      const records = await fetchAllPages((page, size) =>
+        getMyPolicies({ page, size }),
+      );
+      setPolicies(
+        records.filter(
+          (p) =>
+            p.policyStatus === "ACTIVE" &&
+            (!p.startDate || p.startDate <= TODAY_ISO) &&
+            (!p.endDate || p.endDate >= TODAY_ISO),
+        ),
+      );
+      // Claims are needed to work out how much coverage is left on each
+      // policy: the backend subtracts APPROVED claims from the coverage
+      // amount, and blocks a new claim while another one is still open.
+      const claims = await fetchAllPages((page, size) =>
+        getMyClaims({ page, size }),
+      );
 
-      setPolicies(res.data.records || res.data.content || res.data || []);
+      const byPolicy = {};
+      for (const claim of claims) {
+        const key = claim.policyNumber;
+        if (!key) continue;
+        if (!byPolicy[key]) byPolicy[key] = { approved: 0, openClaim: null };
+        if (claim.claimStatus === "APPROVED") {
+          byPolicy[key].approved += Number(claim.claimAmount || 0);
+        } else if (OPEN_CLAIM_STATUSES.includes(claim.claimStatus)) {
+          byPolicy[key].openClaim = claim.claimNumber;
+        }
+      }
+      setClaimsByPolicy(byPolicy);
     } catch (error) {
       console.error("Error loading customer active policy files:", error);
     }
@@ -57,7 +118,8 @@ function RaiseClaim() {
     }
 
     if (!selectedId) {
-      setMaxCoverage(null);
+      setCoverage(null);
+      setOpenClaimNumber("");
       return;
     }
 
@@ -65,11 +127,24 @@ function RaiseClaim() {
       (p) => String(p.policyId || p.id) === String(selectedId),
     );
 
-    if (matchedPolicy) {
-      setMaxCoverage(matchedPolicy.coverageAmount || null);
-    } else {
-      setMaxCoverage(null);
+    if (!matchedPolicy) {
+      setCoverage(null);
+      setOpenClaimNumber("");
+      return;
     }
+
+    const total = Number(matchedPolicy.coverageAmount || 0);
+    const history = claimsByPolicy[matchedPolicy.policyNumber] || {
+      approved: 0,
+      openClaim: null,
+    };
+
+    setCoverage({
+      total,
+      approved: history.approved,
+      remaining: Math.max(total - history.approved, 0),
+    });
+    setOpenClaimNumber(history.openClaim || "");
   }
 
   function handleFileChange(e) {
@@ -131,6 +206,10 @@ function RaiseClaim() {
     };
   }
 
+  // True as soon as the typed amount passes the claimable limit.
+  const exceedsRemaining =
+    Boolean(coverage) && claimAmount !== "" && Number(claimAmount) > coverage.remaining;
+
   function handleCancel() {
     navigate("/customer/claims");
   }
@@ -140,6 +219,11 @@ function RaiseClaim() {
 
     if (!policyId)
       errors.policyId ="Please select an active policy";
+    else if (openClaimNumber)
+      errors.policyId = `Claim ${openClaimNumber} is still being processed on this policy. You can raise a new claim once it is decided or withdrawn.`;
+    else if (coverage && coverage.remaining <= 0)
+      errors.policyId =
+        "The full coverage on this policy has already been claimed.";
 
     if (!file) {
       errors.file = "Please upload a supporting document for your claim";
@@ -151,8 +235,10 @@ function RaiseClaim() {
         "Claim amount must be a positive value greater than zero";
     else if (!Number.isInteger(Number(claimAmount)))
   errors.claimAmount = "Claim amount must be a whole number (no decimals)";
-    else if (maxCoverage && Number(claimAmount) > Number(maxCoverage))
-      errors.claimAmount = `Claim amount cannot exceed your policy total coverage limit of ₹${maxCoverage}`;
+    else if (coverage && Number(claimAmount) > coverage.remaining)
+      errors.claimAmount = `Claim amount cannot exceed the remaining coverage of ₹${formatINR(
+        coverage.remaining,
+      )} on this policy`;
 
     if (!claimReason.trim()) {
       errors.claimReason = "Please provide a reason for your claim";
@@ -279,9 +365,30 @@ function RaiseClaim() {
             )}
           </div>
 
-          {maxCoverage && (
-            <div className="alert alert-info py-2">
-              ℹ️ Maximum available coverage limit: ₹{maxCoverage}
+          {coverage && (
+            <div
+              className={`alert py-2 ${
+                coverage.remaining > 0 ? "alert-info" : "alert-warning"
+              }`}
+            >
+              <div>
+                <strong>
+                  Remaining coverage you can claim: ₹{formatINR(coverage.remaining)}
+                </strong>
+              </div>
+              <div className="small">
+                Total coverage ₹{formatINR(coverage.total)}
+                {coverage.approved > 0 && (
+                  <> · already approved ₹{formatINR(coverage.approved)}</>
+                )}
+              </div>
+            </div>
+          )}
+
+          {openClaimNumber && (
+            <div className="alert alert-warning py-2">
+              Claim <strong>{openClaimNumber}</strong> is still being processed on
+              this policy. Only one claim can be open at a time.
             </div>
           )}
 
@@ -294,13 +401,21 @@ function RaiseClaim() {
               type="number"
               min="1"
               step="1"
+              max={coverage ? coverage.remaining : undefined}
               className={`form-control ${
-                fieldErrors.claimAmount ? "is-invalid" : ""
+                fieldErrors.claimAmount || exceedsRemaining ? "is-invalid" : ""
               }`}
               value={claimAmount}
               onChange={handleInputChange(setClaimAmount, "claimAmount")}
               disabled={submitting || !policyId}
             />
+            {/* Live check while typing, so the limit is clear before submit. */}
+            {exceedsRemaining && !fieldErrors.claimAmount && (
+              <div className="invalid-feedback d-block">
+                Only ₹{formatINR(coverage.remaining)} of coverage is left on this
+                policy.
+              </div>
+            )}
             {fieldErrors.claimAmount && (
               <div className="invalid-feedback d-block">
                 {fieldErrors.claimAmount}
@@ -370,7 +485,7 @@ function RaiseClaim() {
             <button
               type="submit"
               className="btn btn-danger px-4 shadow-sm"
-              disabled={submitting || !policyId}
+              disabled={submitting || !policyId || exceedsRemaining || Boolean(openClaimNumber)}
             >
               {submitting
                 ? "Uploading & Processing..."
