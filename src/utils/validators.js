@@ -1,9 +1,3 @@
-// Shared, reusable field-level validators.
-// Every function returns an error message string, or "" when the value is valid.
-// Message format is kept consistent everywhere:
-//   - Missing value:  "<Label> is required"
-//   - Invalid value:  "<Label> must <specific rule>"
-
 export function required(value, label = "This field") {
   if (value === undefined || value === null || String(value).trim() === "") {
     return `${label} is required`;
@@ -136,9 +130,6 @@ export function validatePinCode(value, label = "PIN code") {
   return "";
 }
 
-// Generic "must be greater than zero" numeric check, shared by claim amount
-// (CLM-BR-003), payment amount (PAYBR-002), coverage amount (PLN-BR-002), and
-// premium amount (PLN-BR-003) instead of re-deriving it per form.
 export function validatePositiveAmount(value, label = "Amount") {
   const req = required(value, label);
   if (req) return req;
@@ -154,7 +145,6 @@ export function validatePositiveAmount(value, label = "Amount") {
 }
 
 // Generic "cannot be a future date" check. Used for claim incident date
-// (CLM-BR-005) and any other date field that must not be set ahead of today.
 export function validateNotFutureDate(value, label = "Date") {
   const req = required(value, label);
   if (req) return req;
