@@ -19,6 +19,7 @@ import Button from "../../components/common/Button";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
 import { useToast } from "../../context/ToastContext";
 import { getApiErrorMessage } from "../../utils/apiError";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 import PlanDetailsModal from "../../components/common/PlanDetailsModal";
 import PlanFormModal from "../../components/common/PlanFormModal";
@@ -31,12 +32,6 @@ function Plans() {
 
   const [status, setStatus] = useState("ALL");
 
-  // Server-side pagination state.
-  // NOTE: DataTable's pages are 1-based; the backend's `page` param is 0-based.
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-
   const [selectedPlan, setSelectedPlan] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
@@ -47,33 +42,21 @@ function Plans() {
 
   useEffect(() => {
     loadPlans();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, currentPage, rowsPerPage]);
+  }, []);
 
   async function loadPlans() {
     setLoading(true);
 
     try {
-      const res = await getPlans({
-        page: currentPage - 1, // backend is 0-indexed
-        size: rowsPerPage,
-        sortBy: "createdDate",
-        direction: "desc",
-      });
-
-      let records = res.data.records || [];
-
-      // activeStatus filtering still happens client-side for now, since the
-      // backend endpoint doesn't accept a status filter param. This means
-      // "Active"/"Inactive" filters only apply within the current page of
-      // results, not across the whole dataset — a known limitation until
-      // the backend adds a `status` query param to /api/plans.
-      if (status !== "ALL") {
-        records = records.filter((p) => p.activeStatus === status);
-      }
+      // Fetch the whole dataset once (not just one page) so the status
+      // filter, on-screen table, and PDF export are all working from the
+      // same complete list — filtering/pagination below is done entirely
+      // client-side, the same pattern used by the other admin list pages.
+      const records = await fetchAllPages((page, size) =>
+        getPlans({ page, size, sortBy: "createdDate", direction: "desc" }),
+      );
 
       setPlans(records);
-      setTotalPages(res.data.totalPages || 1);
     } catch (err) {
       console.log(err);
     } finally {
@@ -93,8 +76,12 @@ function Plans() {
     } else {
       setStatus(newStatus === "true");
     }
-    setCurrentPage(1); // reset to first page whenever the filter changes
   }
+
+  // Status filtering now runs over the complete fetched list, so it applies
+  // across every plan — not just whichever page happened to be showing.
+  const visiblePlans =
+    status === "ALL" ? plans : plans.filter((p) => p.activeStatus === status);
 
   async function handlePlanStatus(plan, activate) {
     try {
@@ -231,72 +218,57 @@ function Plans() {
               ),
             },
           ]}
-          data={plans}
+          data={visiblePlans}
           searchKeys={["planId", "planName"]}
           searchPlaceholder="Search plans..."
-          serverSide
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={(size) => {
-            setRowsPerPage(size);
-            setCurrentPage(1);
+          headerActions={({ pageRows, filteredRows }) => {
+            const columns = [
+              { label: "ID", key: "planId" },
+              { label: "Plan", key: "planName" },
+              {
+                label: "Coverage Range",
+                value: (row) =>
+                  `₹${Number(row.minCoverageAmount).toLocaleString()} – ₹${Number(row.maxCoverageAmount).toLocaleString()}`,
+              },
+              { label: "Rate / ₹50,000", value: (row) => `₹${row.ratePerUnit ?? "-"}` },
+              { label: "Annual Discount", value: (row) => `${row.annualDiscountPercent ?? 0}%` },
+              { label: "One-Time Discount", value: (row) => `${row.oneTimeDiscountPercent ?? 0}%` },
+              { label: "Duration", value: (row) => `${row.duration} Years` },
+              {
+                label: "Status",
+                value: (row) => (row.activeStatus ? "Active" : "Inactive"),
+              },
+            ];
+            const meta = {
+              "Status filter": status === "ALL" ? "All" : status ? "Active" : "Inactive",
+            };
+
+            return (
+              <div className="d-flex gap-2">
+                <StatusFilter
+                  value={status}
+                  onChange={handleStatusChange}
+                  options={[
+                    { value: "ALL", label: "All Status" },
+                    { value: true, label: "Active" },
+                    { value: false, label: "Inactive" },
+                  ]}
+                />
+
+                <Button
+                  onClick={() => {
+                    setEditingPlan(null);
+                    setShowForm(true);
+                  }}
+                >
+                  + Add Plan
+                </Button>
+
+                <ExportPdfButton title="Plans (This Page)" fileName="plans-page" label="Export Page" rows={pageRows} meta={meta} columns={columns} />
+                <ExportPdfButton title="Plans (All)" fileName="plans-all" label="Export All" rows={filteredRows} meta={meta} columns={columns} />
+              </div>
+            );
           }}
-          headerActions={
-            <div className="d-flex gap-2">
-              <StatusFilter
-                value={status}
-                onChange={handleStatusChange}
-                options={[
-                  {
-                    value: "ALL",
-                    label: "All Status",
-                  },
-                  {
-                    value: true,
-                    label: "Active",
-                  },
-                  {
-                    value: false,
-                    label: "Inactive",
-                  },
-                ]}
-              />
-
-              <Button
-                onClick={() => {
-                  setEditingPlan(null);
-                  setShowForm(true);
-                }}
-              >
-                + Add Plan
-              </Button>
-
-              <ExportPdfButton
-                title="Policy Plans"
-                rows={plans}
-                meta={{ "Status filter": status === "ALL" ? "All" : status ? "Active" : "Inactive" }}
-                columns={[
-                  { label: "ID", key: "planId" },
-                  { label: "Plan", key: "planName" },
-                  {
-                    label: "Coverage Range",
-                    value: (row) =>
-                      `₹${Number(row.minCoverageAmount).toLocaleString()} – ₹${Number(row.maxCoverageAmount).toLocaleString()}`,
-                  },
-                  { label: "Rate / ₹50,000", value: (row) => `₹${row.ratePerUnit ?? "-"}` },
-                  { label: "Annual Discount", value: (row) => `${row.annualDiscountPercent ?? 0}%` },
-                  { label: "One-Time Discount", value: (row) => `${row.oneTimeDiscountPercent ?? 0}%` },
-                  { label: "Duration", value: (row) => `${row.duration} Years` },
-                  {
-                    label: "Status",
-                    value: (row) => (row.activeStatus ? "Active" : "Inactive"),
-                  },
-                ]}
-              />
-            </div>
-          }
         />
       </Card>
 

@@ -21,6 +21,7 @@ import Button from "../../components/common/Button";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
 import { useToast } from "../../context/ToastContext";
 import { getApiErrorMessage } from "../../utils/apiError";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 function Products() {
   const toast = useToast();
@@ -46,15 +47,12 @@ function Products() {
     setLoading(true);
 
     try {
-      let res;
+      const records =
+        status === "ALL"
+          ? await fetchAllPages((page, size) => getProducts({ page, size }))
+          : await fetchAllPages((page, size) => getProductsByStatus(status, { page, size }));
 
-      if (status === "ALL") {
-        res = await getProducts();
-      } else {
-        res = await getProductsByStatus(status);
-      }
-
-      setProducts(res.data.records || []);
+      setProducts(records);
     } catch (err) {
       console.log(err);
     } finally {
@@ -210,55 +208,46 @@ function Products() {
           data={products}
           searchKeys={["productId", "productName", "description"]}
           searchPlaceholder="Search products..."
-          headerActions={
-            <div className="d-flex gap-2">
-              <StatusFilter
-                value={status}
-                onChange={setStatus}
-                options={[
-                  {
-                    value: "ALL",
-                    label: "All Status",
-                  },
-                  {
-                    value: true,
-                    label: "Active",
-                  },
-                  {
-                    value: false,
-                    label: "Inactive",
-                  },
-                ]}
-              />
+          headerActions={({ pageRows, filteredRows }) => {
+            const columns = [
+              { label: "ID", key: "productId" },
+              { label: "Product", key: "productName" },
+              { label: "Description", key: "description" },
+              {
+                label: "Status",
+                value: (row) => (row.activeStatus ? "Active" : "Inactive"),
+              },
+            ];
+            const meta = {
+              "Status filter": status === "ALL" ? "All" : status ? "Active" : "Inactive",
+            };
 
-              <Button
-                onClick={() => {
-                  setEditingProduct(null);
-                  setShowForm(true);
-                }}
-              >
-                + Add Product
-              </Button>
+            return (
+              <div className="d-flex gap-2">
+                <StatusFilter
+                  value={status}
+                  onChange={setStatus}
+                  options={[
+                    { value: "ALL", label: "All Status" },
+                    { value: true, label: "Active" },
+                    { value: false, label: "Inactive" },
+                  ]}
+                />
 
-              <ExportPdfButton
-                title="Insurance Products"
-                rows={products}
-                meta={{
-                  "Status filter":
-                    status === "ALL" ? "All" : status ? "Active" : "Inactive",
-                }}
-                columns={[
-                  { label: "ID", key: "productId" },
-                  { label: "Product", key: "productName" },
-                  { label: "Description", key: "description" },
-                  {
-                    label: "Status",
-                    value: (row) => (row.activeStatus ? "Active" : "Inactive"),
-                  },
-                ]}
-              />
-            </div>
-          }
+                <Button
+                  onClick={() => {
+                    setEditingProduct(null);
+                    setShowForm(true);
+                  }}
+                >
+                  + Add Product
+                </Button>
+
+                <ExportPdfButton title="Products (This Page)" fileName="products-page" label="Export Page" rows={pageRows} meta={meta} columns={columns} />
+                <ExportPdfButton title="Products (All)" fileName="products-all" label="Export All" rows={filteredRows} meta={meta} columns={columns} />
+              </div>
+            );
+          }}
         />
       </Card>
 

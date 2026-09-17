@@ -7,6 +7,7 @@ import Loader from "../../components/common/Loader";
 
 import { getProducts } from "../../api/customerApi";
 import BackButton from "../../components/common/BackButton";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 function BrowseProducts() {
   const [products, setProducts] = useState([]);
@@ -18,9 +19,8 @@ function BrowseProducts() {
 
   async function loadProducts() {
     try {
-      const response = await getProducts();
-      // Unpack response objects flexibly matching backend paginated collection array patterns
-      setProducts(response.data.records || response.data.content || response.data || []);
+      const records = await fetchAllPages((page, size) => getProducts({ page, size }));
+      setProducts(records);
     } catch (error) {
       console.error("Failed to load products registry logs: ", error);
     } finally {

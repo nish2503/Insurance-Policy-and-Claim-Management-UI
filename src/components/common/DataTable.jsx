@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * DataTable
@@ -22,6 +22,12 @@ import { useState } from "react";
  *    since the backend endpoint doesn't (yet) accept a search term. If you
  *    need "search across all records", that has to become a backend query
  *    param (e.g. `?search=`) rather than something the table can do alone.
+ *
+ * `headerActions` can be either a plain node, or a function
+ * `({ pageRows, filteredRows }) => node`. Use the function form when a page
+ * wants to offer both "export this page" and "export all" — `pageRows` is
+ * exactly what's currently rendered in the table, `filteredRows` is every
+ * row matching the search/filter (across all pages).
  */
 function DataTable({
   columns,
@@ -48,7 +54,23 @@ function DataTable({
   const [uncontrolledRowsPerPage, setUncontrolledRowsPerPage] = useState(5);
   const [uncontrolledPage, setUncontrolledPage] = useState(1);
 
-  const rowsPerPage = serverSide ? controlledRowsPerPage : uncontrolledRowsPerPage;
+  // Client-side mode only: a parent can swap `data` out from under us (most
+  // commonly a status filter like Products/AdminPlans' Active/Inactive
+  // toggle). If we were sitting on, say, page 3 of the old set, that page
+  // index can point past the end of the new, usually-smaller array, so the
+  // table would render "No Records Found" even though the new filter still
+  // has matches on page 1. Reset back to page 1 whenever the underlying
+  // dataset changes.
+  useEffect(() => {
+    if (!serverSide) {
+      setUncontrolledPage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, serverSide]);
+
+  const rowsPerPage = serverSide
+    ? controlledRowsPerPage
+    : uncontrolledRowsPerPage;
   const currentPage = serverSide ? controlledPage : uncontrolledPage;
 
   function goToPage(page) {
@@ -83,7 +105,7 @@ function DataTable({
   // Server-side: trust the backend, `data` is already just this page.
   // Client-side: slice the full array ourselves.
   const totalPages = serverSide
-    ? controlledTotalPages ?? 1
+    ? (controlledTotalPages ?? 1)
     : Math.ceil(filteredData.length / rowsPerPage);
 
   const paginatedData = serverSide
@@ -125,51 +147,69 @@ function DataTable({
             </select>
           </div>
 
-          <div>{headerActions}</div>
+          <div>
+            {typeof headerActions === "function"
+              ? headerActions({
+                  pageRows: paginatedData,
+                  filteredRows: filteredData,
+                })
+              : headerActions}
+          </div>
         </div>
       )}
 
-      <table className="table table-hover table-bordered align-middle">
-        <thead className="table-dark">
-          <tr>
-            {columns.map((col) => (
-              <th key={col.key}>{col.label}</th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody>
-          {paginatedData.length ? (
-            paginatedData.map((row, index) => (
-              <tr
-                key={
-                  row.customerId ||
-                  row.productId ||
-                  row.planId ||
-                  row.policyId ||
-                  row.claimId ||
-                  row.paymentId ||
-                  row.userId ||
-                  row.id ||
-                  index
-                }
-              >
-                {columns.map((col) => (
-                  <td key={col.key}>
-                    {col.render ? col.render(row) : row[col.key]}
-                  </td>
-                ))}
-              </tr>
-            ))
-          ) : (
+      {/*
+        BUG FIX (QA #8 — Responsive check): the table previously had no
+        horizontal-scroll wrapper. On a narrow/mobile viewport, tables with
+        many columns (Products, Policies, Claims, etc.) got visually clipped
+        by the page width instead of becoming scrollable, so right-most
+        columns were unreachable. `table-responsive` (Bootstrap) makes this
+        div scroll horizontally whenever its content is wider than the
+        viewport, while leaving the desktop layout unchanged.
+      */}
+      <div className="table-responsive">
+        <table className="table table-hover table-bordered align-middle mb-0">
+          <thead className="table-dark">
             <tr>
-              <td colSpan={columns.length} className="text-center py-4">
-                {emptyMessage}
-              </td>
+              {columns.map((col) => (
+                <th key={col.key}>{col.label}</th>
+              ))}
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {paginatedData.length ? (
+              paginatedData.map((row, index) => (
+                <tr
+                  key={
+                    row.customerId ||
+                    row.productId ||
+                    row.planId ||
+                    row.policyId ||
+                    row.claimId ||
+                    row.paymentId ||
+                    row.userId ||
+                    row.id ||
+                    index
+                  }
+                >
+                  {columns.map((col) => (
+                    <td key={col.key}>
+                      {col.render ? col.render(row) : row[col.key]}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={columns.length} className="text-center py-4">
+                  {emptyMessage}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {totalPages > 1 && (
         <div className="d-flex justify-content-center align-items-center gap-2 mt-3">

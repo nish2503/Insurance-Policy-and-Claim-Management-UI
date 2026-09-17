@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import Home from "../pages/public/Home";
 import Login from "../pages/public/Login";
@@ -35,6 +35,7 @@ import MyClaims from "../pages/customer/MyClaims";
 import Profile from "../pages/customer/MyProfile";
 
 import ProtectedRoute from "../components/protected/ProtectedRoute";
+import RequireProfile from "../components/protected/RequireProfile";
 
 function AppRoutes() {
   return (
@@ -186,7 +187,9 @@ function AppRoutes() {
         path="/customer/products"
         element={
           <ProtectedRoute allowedRole="CUSTOMER">
-            <BrowseProducts />
+            <RequireProfile>
+              <BrowseProducts />
+            </RequireProfile>
           </ProtectedRoute>
         }
       />
@@ -194,7 +197,9 @@ function AppRoutes() {
         path="/customer/plans/:productId"
         element={
           <ProtectedRoute allowedRole="CUSTOMER">
-            <CustomerPlans />
+            <RequireProfile>
+              <CustomerPlans />
+            </RequireProfile>
           </ProtectedRoute>
         }
       />
@@ -202,7 +207,9 @@ function AppRoutes() {
         path="/customer/purchase-policy/:planId"
         element={
           <ProtectedRoute allowedRole="CUSTOMER">
-            <PurchasePolicy />
+            <RequireProfile>
+              <PurchasePolicy />
+            </RequireProfile>
           </ProtectedRoute>
         }
       />
@@ -210,7 +217,9 @@ function AppRoutes() {
         path="/customer/policies"
         element={
           <ProtectedRoute allowedRole="CUSTOMER">
-            <MyPolicies />
+            <RequireProfile>
+              <MyPolicies />
+            </RequireProfile>
           </ProtectedRoute>
         }
       />
@@ -218,7 +227,9 @@ function AppRoutes() {
         path="/customer/premium-payments"
         element={
           <ProtectedRoute allowedRole="CUSTOMER">
-            <PayPremium />
+            <RequireProfile>
+              <PayPremium />
+            </RequireProfile>
           </ProtectedRoute>
         }
       />
@@ -227,7 +238,9 @@ function AppRoutes() {
         path="/customer/raise-claim"
         element={
           <ProtectedRoute allowedRole="CUSTOMER">
-            <RaiseClaim />
+            <RequireProfile>
+              <RaiseClaim />
+            </RequireProfile>
           </ProtectedRoute>
         }
       />
@@ -236,10 +249,16 @@ function AppRoutes() {
         path="/customer/claims"
         element={
           <ProtectedRoute allowedRole="CUSTOMER">
-            <MyClaims />
+            <RequireProfile>
+              <MyClaims />
+            </RequireProfile>
           </ProtectedRoute>
         }
       />
+
+      {/* Any unmatched/mistyped URL — without this, React Router renders
+          nothing at all for an unrecognized path, i.e. a blank page. */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

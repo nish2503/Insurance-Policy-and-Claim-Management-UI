@@ -21,6 +21,7 @@ import {
 
 import { validateRemarks, validateForm } from "../../utils/validators";
 import { getApiErrorMessage } from "../../utils/apiError";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 import { useToast } from "../../context/ToastContext";
 
 const REVIEWABLE_STATUSES = ["SUBMITTED", "UNDER_REVIEW"];
@@ -49,10 +50,10 @@ function ReviewClaims() {
   async function loadClaims() {
     setLoading(true);
     try {
-      const response = await getInternalStaffClaims({ size: 100 });
-      setClaims(
-        response.data.records || response.data.content || response.data || [],
+      const records = await fetchAllPages((page, size) =>
+        getInternalStaffClaims({ page, size }),
       );
+      setClaims(records);
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Unable to load claims"));
     } finally {
@@ -221,44 +222,58 @@ function ReviewClaims() {
             data={visibleClaims}
             searchKeys={["claimNumber", "customerName", "policyNumber"]}
             searchPlaceholder="Search claims..."
-            headerActions={
-              <div className="d-flex gap-2">
-                <StatusFilter
-                  value={statusFilter}
-                  onChange={setStatusFilter}
-                  options={[
-                    { value: "ACTIONABLE", label: "Needs Action (default)" },
-                    { value: "ALL", label: "All Statuses" },
-                    { value: "SUBMITTED", label: "Submitted" },
-                    { value: "UNDER_REVIEW", label: "Under Review" },
-                    { value: "RECOMMENDED_APPROVAL", label: "Recommended Approval" },
-                    { value: "RECOMMENDED_REJECTION", label: "Recommended Rejection" },
-                    { value: "APPROVED", label: "Approved" },
-                    { value: "REJECTED", label: "Rejected" },
-                  ]}
-                />
+            headerActions={({ pageRows, filteredRows }) => {
+              const columns = [
+                { label: "Claim No.", key: "claimNumber" },
+                { label: "Customer", key: "customerName" },
+                { label: "Policy No.", key: "policyNumber" },
+                { label: "Amount", value: (row) => `₹${Number(row.claimAmount).toLocaleString()}` },
+                { label: "Status", key: "claimStatus" },
+                {
+                  label: "Submitted",
+                  value: (row) =>
+                    row.createdDate ? new Date(row.createdDate).toLocaleDateString() : "-",
+                },
+              ];
+              const meta = { "Status filter": statusFilter };
 
-                <ExportPdfButton
-                  title="Review Claims Queue"
-                  rows={visibleClaims}
-                  meta={{ "Status filter": statusFilter }}
-                  columns={[
-                    { label: "Claim No.", key: "claimNumber" },
-                    { label: "Customer", key: "customerName" },
-                    { label: "Policy No.", key: "policyNumber" },
-                    { label: "Amount", value: (row) => `₹${row.claimAmount}` },
-                    { label: "Status", key: "claimStatus" },
-                    {
-                      label: "Submitted",
-                      value: (row) =>
-                        row.createdDate
-                          ? new Date(row.createdDate).toLocaleDateString()
-                          : "-",
-                    },
-                  ]}
-                />
-              </div>
-            }
+              return (
+                <div className="d-flex gap-2">
+                  <StatusFilter
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                    options={[
+                      { value: "ACTIONABLE", label: "Needs Action (default)" },
+                      { value: "ALL", label: "All Statuses" },
+                      { value: "SUBMITTED", label: "Submitted" },
+                      { value: "UNDER_REVIEW", label: "Under Review" },
+                      { value: "RECOMMENDED_APPROVAL", label: "Recommended Approval" },
+                      { value: "RECOMMENDED_REJECTION", label: "Recommended Rejection" },
+                      { value: "APPROVED", label: "Approved" },
+                      { value: "REJECTED", label: "Rejected" },
+                    ]}
+                  />
+
+                  <ExportPdfButton
+                    title="Review Claims Queue (This Page)"
+                    fileName="review-claims-page"
+                    label="Export Page"
+                    rows={pageRows}
+                    meta={meta}
+                    columns={columns}
+                  />
+
+                  <ExportPdfButton
+                    title="Review Claims Queue (All)"
+                    fileName="review-claims-all"
+                    label="Export All"
+                    rows={filteredRows}
+                    meta={meta}
+                    columns={columns}
+                  />
+                </div>
+              );
+            }}
           />
       </Card>
 

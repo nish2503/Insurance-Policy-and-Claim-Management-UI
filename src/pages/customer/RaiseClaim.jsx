@@ -75,6 +75,13 @@ function RaiseClaim() {
   function handleFileChange(e) {
     const selectedFile = e.target.files[0];
 
+    if (!selectedFile) {
+      // User opened the file picker and cancelled — leave any previously
+      // chosen file/error state as-is rather than crashing on
+      // selectedFile.type below.
+      return;
+    }
+
     const allowedTypes = ["application/pdf", "image/png", "image/jpeg"];
 
     if (!allowedTypes.includes(selectedFile.type)) {
@@ -93,11 +100,6 @@ function RaiseClaim() {
         ...prev,
         file: "",
       }));
-    }
-
-    if (!selectedFile) {
-      setFile(null);
-      return;
     }
 
     if (selectedFile.size > 5 * 1024 * 1024) {

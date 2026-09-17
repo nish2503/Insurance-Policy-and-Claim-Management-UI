@@ -4,7 +4,6 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import Card from "../../components/common/Card";
 import DataTable from "../../components/common/DataTable";
 import Loader from "../../components/common/Loader";
-import EmptyState from "../../components/common/EmptyState";
 import BackButton from "../../components/common/BackButton";
 import Button from "../../components/common/Button";
 import Modal from "../../components/common/Modal";
@@ -14,8 +13,14 @@ import StatusFilter from "../../components/common/StatusFilter";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
 import { useToast } from "../../context/ToastContext";
 import { getApiErrorMessage } from "../../utils/apiError";
+import { fetchAllPages } from "../../utils/fetchAllPages";
+import useDebounce from "../../hooks/useDebounce";
 
-import { getCustomers, getCustomersByStatus } from "../../api/customerApi";
+import {
+  getCustomers,
+  getCustomersByStatus,
+  searchCustomers,
+} from "../../api/customerApi";
 
 import { updateUserStatus } from "../../api/userApi";
 
@@ -26,6 +31,18 @@ function Customers() {
   const [loading, setLoading] = useState(true);
 
   const [status, setStatus] = useState("ALL");
+
+  // Server-side search — wired to the previously-unused GET /customers/search
+  // endpoint. Searches the whole customer table, not just the loaded page.
+  const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebounce(searchInput, 400);
+
+  // Server-side pagination. DataTable's `currentPage` is 1-based; the
+  // backend's `page` query param is 0-based.
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
@@ -39,27 +56,57 @@ function Customers() {
   const [submittingStatus, setSubmittingStatus] = useState(false);
 
   useEffect(() => {
+    setPage(1);
+  }, [status, debouncedSearch]);
+
+  useEffect(() => {
     loadCustomers();
-  }, [status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, debouncedSearch, page, rowsPerPage]);
 
   async function loadCustomers() {
     setLoading(true);
 
     try {
       let res;
+      const params = { page: page - 1, size: rowsPerPage };
 
-      if (status === "ALL") {
-        res = await getCustomers();
+      if (debouncedSearch.trim()) {
+        // Search overrides the status filter — the search endpoint doesn't
+        // accept a status param, so this matches across ALL customers.
+        res = await searchCustomers(debouncedSearch.trim(), params);
+      } else if (status === "ALL") {
+        res = await getCustomers(params);
       } else {
-        res = await getCustomersByStatus(status);
+        res = await getCustomersByStatus(status, params);
       }
 
       setCustomers(res.data.records || []);
+      setTotalPages(res.data.totalPages || 1);
+      setTotalRecords(res.data.totalRecords ?? (res.data.records || []).length);
     } catch (err) {
       console.log(err);
+      toast.error(getApiErrorMessage(err, "Unable to load customers."));
     } finally {
       setLoading(false);
     }
+  }
+
+  // Pulls the FULL matching dataset for export (same filters, but a page
+  // size large enough to cover every record) instead of just the page
+  // currently on screen. `customers`/`page`/`rowsPerPage` are for display
+  // pagination only and must not be reused for the export.
+  async function fetchAllCustomersForExport() {
+    return fetchAllPages((page, size) => {
+      const params = { page, size };
+      if (debouncedSearch.trim()) {
+        return searchCustomers(debouncedSearch.trim(), params);
+      }
+      if (status === "ALL") {
+        return getCustomers(params);
+      }
+      return getCustomersByStatus(status, params);
+    });
   }
 
   function openStatusModal(customer) {
@@ -101,7 +148,7 @@ function Customers() {
     }
   }
 
-  if (loading) {
+  if (loading && customers.length === 0) {
     return (
       <DashboardLayout>
         <Loader />
@@ -115,6 +162,21 @@ function Customers() {
         <BackButton />
 
         <DataTable
+          searchable={false}
+          serverSide
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(size) => {
+            setRowsPerPage(size);
+            setPage(1);
+          }}
+          emptyMessage={
+            debouncedSearch.trim()
+              ? `No customers match "${debouncedSearch.trim()}"`
+              : "No Customers Found"
+          }
           columns={[
             {
               key: "customerId",
@@ -186,20 +248,16 @@ function Customers() {
             },
           ]}
           data={customers}
-          searchKeys={[
-            "customerId",
-
-            "fullName",
-
-            "email",
-
-            "mobileNumber",
-
-            "city",
-          ]}
-          searchPlaceholder="Search customers..."
           headerActions={
-            <div className="d-flex gap-2">
+            <div className="d-flex gap-2 align-items-center">
+              <input
+                className="form-control"
+                style={{ width: "220px" }}
+                placeholder="Search name, email, mobile..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+
               <StatusFilter
                 value={status}
                 onChange={setStatus}
@@ -222,7 +280,12 @@ function Customers() {
               <ExportPdfButton
                 title="Customers"
                 rows={customers}
-                meta={{ "Status filter": status === "ALL" ? "All" : status }}
+                fetchRows={fetchAllCustomersForExport}
+                meta={{
+                  "Status filter": status === "ALL" ? "All" : status,
+                  "Search term": debouncedSearch.trim() || "—",
+                  Note: `Page export: page ${page} of ${totalPages}. All export: all ${totalRecords} matching customers.`,
+                }}
                 columns={[
                   { label: "ID", key: "customerId" },
                   { label: "Name", key: "fullName" },

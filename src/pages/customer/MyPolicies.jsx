@@ -11,6 +11,7 @@ import StatusBadge from "../../components/common/StatusBadge";
 import StatusFilter from "../../components/common/StatusFilter";
 import { getMyPolicies } from "../../api/customerApi";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 function MyPolicies() {
   const [policies, setPolicies] = useState([]);
@@ -23,8 +24,8 @@ function MyPolicies() {
 
   async function loadPolicies() {
     try {
-      const res = await getMyPolicies();
-      setPolicies(res.data.records || res.data.content || res.data || []);
+      const records = await fetchAllPages((page, size) => getMyPolicies({ page, size }));
+      setPolicies(records);
     } catch (error) {
       console.error("Failed to re-hydrate customer policies ledger matrix:", error);
     } finally {
@@ -54,75 +55,84 @@ function MyPolicies() {
           <DataTable
             emptyMessage="No Policies Match This Filter"
             columns={[
-              {
-                key: "policyNumber",
-                label: "Policy Number",
-              },
-              {
-                key: "planName",
-                label: "Plan",
-              },
-              {
-                key: "productType",
-                label: "Product",
-              },
+              { key: "policyNumber", label: "Policy Number" },
+              { key: "planName", label: "Plan" },
+              { key: "productType", label: "Product" },
               {
                 key: "premiumAmount",
                 label: "Premium",
+                render: (row) =>
+                  `₹${Number(row.premiumAmount).toLocaleString()} (${row.premiumType || "Annual"})`,
               },
               {
-                key: "policyStatusCustom",
+                key: "policyStatus",
                 label: "Status",
+                render: (row) => <StatusBadge status={row.policyStatus} />,
               },
               {
                 key: "coverageAmount",
                 label: "Coverage",
+                render: (row) => `₹${Number(row.coverageAmount).toLocaleString()}`,
               },
             ]}
-            data={visiblePolicies.map((p) => ({
-              ...p,
-              coverageAmount: `₹${Number(p.coverageAmount).toLocaleString()}`,
-              premiumAmount: `₹${Number(p.premiumAmount).toLocaleString()} (${p.premiumType || "Annual"})`,
-              policyStatusCustom: <StatusBadge status={p.policyStatus} />
-            }))}
+            data={visiblePolicies}
             searchKeys={[
               "policyNumber",
               "planName",
               "productType",
               "policyStatus",
             ]}
-            headerActions={
-              <div className="d-flex gap-2">
-                <StatusFilter
-                  value={status}
-                  onChange={setStatus}
-                  options={[
-                    { value: "ALL", label: "All Status" },
-                    { value: "ACTIVE", label: "Active" },
-                    { value: "PENDING_PAYMENT", label: "Pending Payment" },
-                    { value: "EXPIRED", label: "Expired" },
-                    { value: "CANCELLED", label: "Cancelled" },
-                  ]}
-                />
+            headerActions={({ pageRows, filteredRows }) => {
+              const columns = [
+                { label: "Policy Number", key: "policyNumber" },
+                { label: "Plan", key: "planName" },
+                { label: "Product", key: "productType" },
+                {
+                  label: "Premium",
+                  value: (row) => `₹${Number(row.premiumAmount).toLocaleString()} (${row.premiumType || "Annual"})`,
+                },
+                { label: "Status", key: "policyStatus" },
+                {
+                  label: "Coverage",
+                  value: (row) => `₹${Number(row.coverageAmount).toLocaleString()}`,
+                },
+              ];
+              const meta = { "Status filter": status === "ALL" ? "All" : status };
 
-                <ExportPdfButton
-                  title="My Policies"
-                  rows={visiblePolicies}
-                  meta={{ "Status filter": status === "ALL" ? "All" : status }}
-                  columns={[
-                    { label: "Policy Number", key: "policyNumber" },
-                    { label: "Plan", key: "planName" },
-                    { label: "Product", key: "productType" },
-                    {
-                      label: "Premium",
-                      value: (row) => `₹${row.premiumAmount} (${row.premiumType || "Annual"})`,
-                    },
-                    { label: "Status", key: "policyStatus" },
-                    { label: "Coverage", value: (row) => `₹${row.coverageAmount}` },
-                  ]}
-                />
-              </div>
-            }
+              return (
+                <div className="d-flex gap-2">
+                  <StatusFilter
+                    value={status}
+                    onChange={setStatus}
+                    options={[
+                      { value: "ALL", label: "All Status" },
+                      { value: "ACTIVE", label: "Active" },
+                      { value: "PENDING_PAYMENT", label: "Pending Payment" },
+                      { value: "EXPIRED", label: "Expired" },
+                      { value: "CANCELLED", label: "Cancelled" },
+                    ]}
+                  />
+
+                  <ExportPdfButton
+                    title="My Policies (This Page)"
+                    fileName="my-policies-page"
+                    label="Export Page"
+                    rows={pageRows}
+                    meta={meta}
+                    columns={columns}
+                  />
+
+                  <ExportPdfButton
+                    title="My Policies (All)"
+                    fileName="my-policies-all"
+                    label="Export All"
+                    rows={filteredRows}
+                    meta={meta}
+                    columns={columns}
+                  />
+                </div>
+              );
+            }}
           />
         ) : (
           <EmptyState

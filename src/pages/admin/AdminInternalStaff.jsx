@@ -29,6 +29,7 @@ import Loader from "../../components/common/Loader";
 import Modal from "../../components/common/Modal";
 import BackButton from "../../components/common/BackButton";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 const emptyForm = {
   fullName: "",
@@ -66,12 +67,12 @@ function AdminInternalStaff() {
   async function loadAll() {
     setLoading(true);
     try {
-      const [staffRes, productsRes] = await Promise.all([
-        getUsersByRole("INTERNAL_STAFF", { size: 100 }),
-        getActiveProducts(),
+      const [staffRecords, productRecords] = await Promise.all([
+        fetchAllPages((page, size) => getUsersByRole("INTERNAL_STAFF", { page, size })),
+        fetchAllPages((page, size) => getActiveProducts({ page, size })),
       ]);
-      setStaff(staffRes.data.records || staffRes.data.content || staffRes.data || []);
-      setProducts(productsRes.data.records || productsRes.data.content || productsRes.data || []);
+      setStaff(staffRecords);
+      setProducts(productRecords);
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Unable to load internal staff"));
     } finally {
@@ -88,7 +89,7 @@ function AdminInternalStaff() {
 
   function runFieldValidation(field, value) {
     if (editMode && field === "password") return;
-    const rule = field === "password" ? (v) => validatePassword(v, "Password") : baseValidators[field];
+    const rule = field === "password" ? (v) => validatePassword(v, "Password", { maxLength: 20 }) : baseValidators[field];
     if (!rule) return;
     const message = rule(value);
     setFieldErrors((prev) => ({ ...prev, [field]: message }));
@@ -143,7 +144,7 @@ function AdminInternalStaff() {
 
     if (!editMode) {
       payload.password = form.password;
-      activeRules.password = (v) => validatePassword(v, "Password");
+      activeRules.password = (v) => validatePassword(v, "Password", { maxLength: 20 });
     }
 
 
@@ -216,7 +217,7 @@ function AdminInternalStaff() {
         reassignTarget.userId || reassignTarget.id,
         reassignProductId ? Number(reassignProductId) : null,
       );
-      toast.success(reassignProductId ? "Product reassigned successfully" : "Product domain scope cleared.");
+      toast.success(reassignProductId ? "Product assignment updated successfully" : "Product assignment cleared.");
       setShowReassignModal(false);
       setReassignTarget(null);
       loadAll();
@@ -273,23 +274,24 @@ function AdminInternalStaff() {
             data={staff}
             searchKeys={["fullName", "email", "mobileNumber"]}
             searchPlaceholder="Search agents..."
-            headerActions={
-              <div className="d-flex gap-2">
-                <Button onClick={openCreateModal}>+ Create Agent</Button>
+            headerActions={({ pageRows, filteredRows }) => {
+              const columns = [
+                { label: "Name", key: "fullName" },
+                { label: "Email", key: "email" },
+                { label: "Mobile", key: "mobileNumber" },
+                { label: "Assigned Product", value: (row) => row.assignedProductName || "Unassigned" },
+                { label: "Status", value: (row) => (row.activeStatus ? "Active" : "Inactive") },
+              ];
 
-                <ExportPdfButton
-                  title="Agents List"
-                  rows={staff}
-                  columns={[
-                    { label: "Name", key: "fullName" },
-                    { label: "Email", key: "email" },
-                    { label: "Mobile", key: "mobileNumber" },
-                    { label: "Assigned Product", value: (row) => row.assignedProductName || "Unassigned" },
-                    { label: "Status", value: (row) => (row.activeStatus ? "Active" : "Inactive") },
-                  ]}
-                />
-              </div>
-            }
+              return (
+                <div className="d-flex gap-2">
+                  <Button onClick={openCreateModal}>+ Create Agent</Button>
+
+                  <ExportPdfButton title="Agents (This Page)" fileName="agents-page" label="Export Page" rows={pageRows} columns={columns} />
+                  <ExportPdfButton title="Agents (All)" fileName="agents-all" label="Export All" rows={filteredRows} columns={columns} />
+                </div>
+              );
+            }}
           />
       </Card>
 
@@ -404,7 +406,7 @@ function AdminInternalStaff() {
             value={reassignProductId}
             onChange={(e) => setReassignProductId(e.target.value)}
           >
-            <option value="">Unassigned (No restrictions tracking)</option>
+            <option value="">Unassigned (organizational tag only — not an access restriction)</option>
             {products.map((p) => (
               <option key={p.productId || p.id} value={p.productId || p.id}>
                 {p.productName}

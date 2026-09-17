@@ -97,7 +97,7 @@ function InternalStaffDashboard() {
           <div className="dashboard-action-card" role="button" tabIndex={0} onClick={() => navigate("/internal-staff/customers")}>
             <div className="dashboard-action-icon">👥</div>
             <h5>Customers</h5>
-            <p>Look up customer accounts assigned to your product line.</p>
+            <p>Look up customer accounts across the system.</p>
           </div>
 
           <div className="dashboard-action-card" role="button" tabIndex={0} onClick={() => navigate("/internal-staff/policies")}>

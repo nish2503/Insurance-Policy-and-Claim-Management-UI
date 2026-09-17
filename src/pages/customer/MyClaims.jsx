@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import { getMyClaims } from "../../api/customerApi";
 import api from "../../api/axios";
 import { useToast } from "../../context/ToastContext";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 function MyClaims() {
   const [claims, setClaims] = useState([]);
@@ -37,8 +38,8 @@ function MyClaims() {
 
   async function loadClaims() {
     try {
-      const res = await getMyClaims();
-      setClaims(res.data.records || res.data.content || res.data || []);
+      const records = await fetchAllPages((page, size) => getMyClaims({ page, size }));
+      setClaims(records);
     } catch (error) {
       console.log("Error loading claims:", error);
     } finally {
@@ -191,77 +192,90 @@ function MyClaims() {
               claimStatusCustom: <StatusBadge status={c.claimStatus} />,
             }))}
             searchKeys={["claimNumber", "policyNumber", "claimReason", "claimStatus"]}
-            headerActions={
-              <div className="d-flex gap-2">
-                <StatusFilter
-                  value={status}
-                  onChange={setStatus}
-                  options={[
-                    { value: "ALL", label: "All Status" },
-                    { value: "SUBMITTED", label: "Submitted" },
-                    { value: "UNDER_REVIEW", label: "Under Review" },
-                    { value: "RECOMMENDED_APPROVAL", label: "Recommended Approval" },
-                    { value: "RECOMMENDED_REJECTION", label: "Recommended Rejection" },
-                    { value: "APPROVED", label: "Approved" },
-                    { value: "REJECTED", label: "Rejected" },
-                  ]}
-                />
+            headerActions={({ pageRows, filteredRows }) => {
+              const columns = [
+                { label: "Claim Number", key: "claimNumber" },
+                { label: "Policy Number", key: "policyNumber" },
+                { label: "Amount", key: "claimAmount" },
+                { label: "Reason", key: "claimReason" },
+                {
+                  label: "Date of Incident",
+                  value: (row) =>
+                    row.incidentDate
+                      ? new Date(row.incidentDate).toLocaleDateString()
+                      : "N/A",
+                },
+                {
+                  label: "Date Raised",
+                  value: (row) =>
+                    row.createdDate
+                      ? new Date(row.createdDate).toLocaleDateString()
+                      : "N/A",
+                },
+                { label: "Status", key: "claimStatus" },
+              ];
+              const meta = { "Status filter": status === "ALL" ? "All" : status };
 
-                <ExportPdfButton
-                  title="My Claims"
-                  rows={visibleClaims}
-                  meta={{ "Status filter": status === "ALL" ? "All" : status }}
-                  columns={[
-                    { label: "Claim Number", key: "claimNumber" },
-                    { label: "Policy Number", key: "policyNumber" },
-                    { label: "Amount", value: (row) => `₹${row.claimAmount}` },
-                    { label: "Reason", key: "claimReason" },
-                    {
-                      label: "Date of Incident",
-                      value: (row) =>
-                        row.incidentDate
-                          ? new Date(row.incidentDate).toLocaleDateString()
-                          : "N/A",
-                    },
-                    {
-                      label: "Date Raised",
-                      value: (row) =>
-                        row.createdDate
-                          ? new Date(row.createdDate).toLocaleDateString()
-                          : "N/A",
-                    },
-                    { label: "Status", key: "claimStatus" },
-                  ]}
-                />
+              return (
+                <div className="d-flex gap-2">
+                  <StatusFilter
+                    value={status}
+                    onChange={setStatus}
+                    options={[
+                      { value: "ALL", label: "All Status" },
+                      { value: "SUBMITTED", label: "Submitted" },
+                      { value: "UNDER_REVIEW", label: "Under Review" },
+                      { value: "RECOMMENDED_APPROVAL", label: "Recommended Approval" },
+                      { value: "RECOMMENDED_REJECTION", label: "Recommended Rejection" },
+                      { value: "APPROVED", label: "Approved" },
+                      { value: "REJECTED", label: "Rejected" },
+                    ]}
+                  />
+
+                  <ExportPdfButton
+                    title="My Claims (This Page)"
+                    fileName="my-claims-page"
+                    label="Export Page"
+                    rows={pageRows}
+                    meta={meta}
+                    columns={columns}
+                  />
+
+                  <ExportPdfButton
+                    title="My Claims (All)"
+                    fileName="my-claims-all"
+                    label="Export All"
+                    rows={filteredRows}
+                    meta={meta}
+                    columns={columns}
+                  />
+                </div>
+              );
+            }}
+          />
+        ) : (
+          <EmptyState
+            message={
+              <div className="d-flex flex-column align-items-center justify-content-center text-center p-3">
+                <div className="mb-3 text-muted display-6" style={{ fontSize: "2.4rem" }}>
+                  📋
+                </div>
+                <h5 className="font-weight-bold text-dark mb-2" style={{ letterSpacing: "-0.01em" }}>
+                  No Claims Found
+                </h5>
+                <p className="text-muted small mb-4" style={{ maxWidth: "340px", lineHeight: "1.5", fontSize: "0.875rem" }}>
+                  You haven't filed any insurance settlement requests yet. If you recently experienced an incident, you can start your request right now.
+                </p>
+                <Link
+                  to="/customer/raise-claim"
+                  className="btn btn-primary font-weight-bold shadow-sm px-4 py-2 d-inline-flex align-items-center gap-2"
+                  style={{ letterSpacing: "0.01em", borderRadius: "8px" }}
+                >
+                  <span>➕</span> File a New Claim
+                </Link>
               </div>
             }
           />
-        ) : (
-          // 🛠️ REPLACE YOUR OLD EMPTYSTATE PROPERTY REGION WITH THIS PRECISE LAYOUT:
-<EmptyState 
-  message={
-    <div className="d-flex flex-column align-items-center justify-content-center text-center p-3">
-      {/* 📋 Clean Clipboard Icon Wrapper - Spaced perfectly without floating artifact folders */}
-      <div className="mb-3 text-muted display-6" style={{ fontSize: "2.4rem" }}>
-        📋
-      </div>
-      <h5 className="font-weight-bold text-dark mb-2" style={{ letterSpacing: "-0.01em" }}>
-        No Claims Found
-      </h5>
-      <p className="text-muted small mb-4" style={{ maxWidth: "340px", lineHeight: "1.5", fontSize: "0.875rem" }}>
-        You haven't filed any insurance settlement requests yet. If you recently experienced an incident, you can start your request right now.
-      </p>
-      <Link 
-        to="/customer/raise-claim" 
-        className="btn btn-primary font-weight-bold shadow-sm px-4 py-2 d-inline-flex align-items-center gap-2"
-        style={{ letterSpacing: "0.01em", borderRadius: "8px" }}
-      >
-        <span>➕</span> File a New Claim
-      </Link>
-    </div>
-  } 
-/>
-
         )}
       </Card>
 
@@ -321,8 +335,8 @@ function MyClaims() {
                           {doc.documentName || `Document_${index + 1}`}
                         </span>
                       </div>
-                      <a
-                        href={doc.documentReference}
+                      
+                        <a href={doc.documentReference}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn-sm btn-primary"

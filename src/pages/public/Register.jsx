@@ -1,5 +1,3 @@
-
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { register } from "../../api/authApi";
@@ -57,7 +55,7 @@ function Register() {
       fullName: (v) => validateFullName(v, "Full name"),
       email: (v) => validateEmail(v, "Email"),
       mobileNumber: (v) => validateMobile(v, "Mobile number"),
-      password: (v) => validatePassword(v, "Password"),
+      password: (v) => validatePassword(v, "Password", { maxLength: 20 }),
     });
 
     if (!isValid) {
@@ -70,12 +68,25 @@ function Register() {
       setSubmitting(true);
       await register({ ...form, mobileNumber: toE164India(form.mobileNumber) });
       toast.success("Registration successful. Verify OTP");
+
+      // BUG FIX (QA — browser refresh mid-flow): router `state` alone does
+      // not survive a hard refresh/reload of /verify-register, which used
+      // to drop the user onto a blank, now-editable OTP form with no email
+      // or mobile number and no explanation. Mirror the same values into
+      // sessionStorage so VerifyOtp can recover them after a refresh.
+      // sessionStorage (not localStorage) is used deliberately so this data
+      // doesn't linger past the current tab/session.
+      sessionStorage.setItem(
+        "pendingOtpVerification",
+        JSON.stringify({ email: form.email, mobileNumber: form.mobileNumber }),
+      );
+
       navigate("/verify-register", {
-  state: {
-    email: form.email,
-    mobileNumber: form.mobileNumber,
-  },
-});
+        state: {
+          email: form.email,
+          mobileNumber: form.mobileNumber,
+        },
+      });
     } catch (error) {
 
        const serverFieldErrors = extractValidationErrors(error);
@@ -305,6 +316,7 @@ function Register() {
                 name="password"
                 placeholder="Password"
                 value={form.password}
+                maxLength="20"
                 onChange={handleChange}
               />
               <button

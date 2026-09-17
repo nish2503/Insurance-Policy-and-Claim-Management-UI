@@ -10,6 +10,7 @@ import StatusFilter from "../../components/common/StatusFilter";
 import { getInternalStaffCustomers } from "../../api/internalStaffApi";
 import BackButton from "../../components/common/BackButton";
 import ExportPdfButton from "../../components/common/ExportPdfButton";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -22,8 +23,10 @@ function Customers() {
 
   async function loadCustomers() {
     try {
-      const res = await getInternalStaffCustomers();
-      setCustomers(res.data.records || []);
+      const records = await fetchAllPages((page, size) =>
+        getInternalStaffCustomers({ page, size }),
+      );
+      setCustomers(records);
     } catch (error) {
       console.log(error);
     } finally {
@@ -72,34 +75,35 @@ function Customers() {
           ]}
           data={visibleCustomers}
           searchKeys={["fullName", "email", "mobileNumber"]}
-          headerActions={
-            <div className="d-flex gap-2">
-              <StatusFilter
-                value={status}
-                onChange={setStatus}
-                options={[
-                  { value: "ALL", label: "All Status" },
-                  { value: "true", label: "Active" },
-                  { value: "false", label: "Inactive" },
-                ]}
-              />
+          headerActions={({ pageRows, filteredRows }) => {
+            const columns = [
+              { label: "Name", key: "fullName" },
+              { label: "Email", key: "email" },
+              { label: "Mobile", key: "mobileNumber" },
+              {
+                label: "Status",
+                value: (row) => (row.activeStatus ? "Active" : "Inactive"),
+              },
+            ];
+            const meta = { "Status filter": status === "ALL" ? "All" : status };
 
-              <ExportPdfButton
-                title="Customers"
-                rows={visibleCustomers}
-                meta={{ "Status filter": status === "ALL" ? "All" : status }}
-                columns={[
-                  { label: "Name", key: "fullName" },
-                  { label: "Email", key: "email" },
-                  { label: "Mobile", key: "mobileNumber" },
-                  {
-                    label: "Status",
-                    value: (row) => (row.activeStatus ? "Active" : "Inactive"),
-                  },
-                ]}
-              />
-            </div>
-          }
+            return (
+              <div className="d-flex gap-2">
+                <StatusFilter
+                  value={status}
+                  onChange={setStatus}
+                  options={[
+                    { value: "ALL", label: "All Status" },
+                    { value: "true", label: "Active" },
+                    { value: "false", label: "Inactive" },
+                  ]}
+                />
+
+                <ExportPdfButton title="Customers (This Page)" fileName="customers-page" label="Export Page" rows={pageRows} meta={meta} columns={columns} />
+                <ExportPdfButton title="Customers (All)" fileName="customers-all" label="Export All" rows={filteredRows} meta={meta} columns={columns} />
+              </div>
+            );
+          }}
         />
       </Card>
     </DashboardLayout>

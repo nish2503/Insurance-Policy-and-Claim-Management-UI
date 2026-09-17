@@ -9,6 +9,7 @@ import Loader from "../../components/common/Loader";
 import { getPlansByProduct } from "../../api/customerApi";
 import { calculatePremium } from "../../utils/premiumFormula";
 import BackButton from "../../components/common/BackButton";
+import { fetchAllPages } from "../../utils/fetchAllPages";
 
 function Plans() {
   const { productId } = useParams();
@@ -23,9 +24,11 @@ function Plans() {
 
   async function loadPlans() {
     try {
-      const response = await getPlansByProduct(productId);
+      const records = await fetchAllPages((page, size) =>
+        getPlansByProduct(productId, { page, size }),
+      );
 
-      setPlans(response.data.records || []);
+      setPlans(records);
     } catch (error) {
       console.log(error);
     } finally {
