@@ -50,8 +50,12 @@ export const getMyPolicies = (params) => {
 // Products (and, transitively, the purchase flow) immediately — hitting the
 // unfiltered /products endpoint here would leak inactive products to
 // customers, since that endpoint returns every product regardless of status.
+// Customers use GET /products. The backend returns only ACTIVE products to the
+// CUSTOMER role there. "/products/status/{status}" is restricted to
+// ADMIN/INTERNAL_STAFF, so calling it from the customer portal got a 403 and
+// Browse Products rendered empty.
 export const getProducts = (params) => {
-  return api.get("/products/status/true", { params });
+  return api.get("/products", { params });
 };
 
 // Same reasoning as getProducts above: customers should only ever see plans

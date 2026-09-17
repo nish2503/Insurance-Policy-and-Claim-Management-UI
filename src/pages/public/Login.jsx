@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../../api/authApi";
@@ -8,6 +8,7 @@ import { useToast } from "../../context/ToastContext";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { required, validateEmail, validateForm } from "../../utils/validators";
 import { profileExists } from "../../api/customerApi";
+import { getSession, homePathForRole } from "../../utils/session";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -19,6 +20,29 @@ function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const toast = useToast();
+
+  // Already signed in with a valid token: go straight to that role's home
+  // instead of showing the login form again.
+  useEffect(() => {
+    const session = getSession();
+    if (!session) return;
+
+    if (session.role === "CUSTOMER") {
+      // Same routing as a fresh login: customers without a profile go to
+      // Create Profile first.
+      profileExists()
+        .then((res) =>
+          navigate(res.data ? "/customer" : "/customer/create-profile", { replace: true }),
+        )
+        .catch(() => {
+          // Token rejected by the server (expired/deactivated): stay on login.
+        });
+      return;
+    }
+
+    navigate(homePathForRole(session.role), { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const clearFieldError = (field) => {
     setErrors((prev) => {
